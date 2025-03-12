@@ -52,7 +52,11 @@ namespace Lively.Core.Wallpapers
                 _ => "--autoscale",
             };
 
-            StringBuilder cmdArgs = new StringBuilder();
+
+            // Ref: https://wiki.videolan.org/VLC_command-line_help/
+            var cmdArgs = new StringBuilder();
+            //repeat file
+            cmdArgs.Append("--loop ");
             //--no-video-title.
             cmdArgs.Append("--no-osd ");
             //video stretch algorithm.
