@@ -3,10 +3,11 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:ext="clr-namespace:Lively.Extensions"
     xmlns:local="clr-namespace:Lively.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:p="clr-namespace:Lively.Properties"
-    Title="{x:Static p:Resources.PreviewWallpaper_Text}"
+    Title="{ext:LocalizedString PreviewWallpaper_Text}"
     Width="1281"
     Height="762"
     Background="Black"
@@ -48,7 +49,7 @@
                 <TextBlock
                     FontSize="14"
                     Foreground="White"
-                    Text="{x:Static p:Resources.PleaseWait_Text}" />
+                    Text="{ext:LocalizedString PleaseWait_Text}" />
                 <ProgressBar
                     Grid.Row="1"
                     Width="350"

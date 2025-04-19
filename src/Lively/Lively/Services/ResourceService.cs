@@ -5,6 +5,8 @@ using System.Globalization;
 using System.Resources;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Windows;
+using System.Windows.Markup;
 using Windows.ApplicationModel.Resources;
 
 namespace Lively.Services
@@ -29,6 +31,10 @@ namespace Lively.Services
             CultureInfo.DefaultThreadCurrentCulture = culture;
             CultureInfo.DefaultThreadCurrentUICulture = culture;
 
+            // Force UI refresh
+            foreach (Window window in Application.Current.Windows)
+                window.Language = XmlLanguage.GetLanguage(name);
+
             CultureChanged?.Invoke(this, name);
         }
 
@@ -40,7 +46,8 @@ namespace Lively.Services
         public string GetString(string resource)
         {
             // Compatibility with UWP .resw shared classes.
-            var formattedResource = resource.Replace("/", ".");
+            // Compatibility with WPF Xaml.
+            var formattedResource = resource.Replace("/", ".").Replace("_", ".");
             var culture = CultureInfo.DefaultThreadCurrentCulture;
             return culture != null ? 
                 resourceManager.GetString(formattedResource, culture) : resourceManager.GetString(formattedResource);

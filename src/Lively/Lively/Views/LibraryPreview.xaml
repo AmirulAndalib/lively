@@ -4,10 +4,11 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:converters="clr-namespace:Lively.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:ext="clr-namespace:Lively.Extensions"
     xmlns:local="clr-namespace:Lively.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:p="clr-namespace:Lively.Properties"
-    Title="{x:Static p:Resources.TitleLibrary}"
+    Title="{ext:LocalizedString TitleLibrary}"
     Width="410"
     Height="630"
     Closing="Window_Closing"
@@ -44,7 +45,7 @@
 
         <ScrollViewer VerticalAlignment="Bottom" VerticalScrollBarVisibility="Auto">
             <StackPanel>
-                <Label Margin="0,10,0,0" Content="{x:Static p:Resources.Title_Text}" />
+                <Label Margin="0,10,0,0" Content="{ext:LocalizedString Title_Text}" />
                 <TextBox
                     Name="textboxTitle"
                     Height="20"
@@ -57,7 +58,7 @@
                     IsEnabled="{Binding IsUserEditable}"
                     Text="{Binding Title, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-                <Label Content="{x:Static p:Resources.Description_Text}" />
+                <Label Content="{ext:LocalizedString Description_Text}" />
                 <TextBox
                     Name="textboxDesc"
                     Height="81"
@@ -71,7 +72,7 @@
                     TextWrapping="Wrap"
                     VerticalScrollBarVisibility="Auto" />
 
-                <Label Content="{x:Static p:Resources.Author_Text}" />
+                <Label Content="{ext:LocalizedString Author_Text}" />
                 <TextBox
                     Name="textboxAuthor"
                     Height="20"
@@ -84,7 +85,7 @@
                     IsEnabled="{Binding IsUserEditable}"
                     Text="{Binding Author, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-                <Label Content="{x:Static p:Resources.Website_Header}" />
+                <Label Content="{ext:LocalizedString Website_Header}" />
                 <TextBox
                     Name="textboxContact"
                     Height="20"
@@ -108,12 +109,12 @@
                             MinHeight="30"
                             Margin="0,0,10,0"
                             Command="{Binding CancelCommand}"
-                            Content="{x:Static p:Resources.Cancel_Content}" />
+                            Content="{ext:LocalizedString Cancel_Content}" />
                         <Button
                             x:Name="OkBtn"
                             MinWidth="100"
                             Command="{Binding CaptureCommand}"
-                            Content="{x:Static p:Resources.TextOK}"
+                            Content="{ext:LocalizedString TextOK}"
                             IsDefault="True"
                             IsEnabled="{Binding IsUserEditable}" />
                     </StackPanel>
