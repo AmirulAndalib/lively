@@ -509,7 +509,7 @@ namespace Lively.Commandline
             if (opts.Show != null || opts.ShowExclusive != null)
             {
                 if (opts.Show == true || opts.ShowExclusive == true)
-                    _ = screenSaver.StartAsync();
+                    _ = screenSaver.StartAsync(true);
                 else
                     screenSaver.Stop();
             }

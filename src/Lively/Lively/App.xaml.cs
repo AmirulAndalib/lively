@@ -245,7 +245,7 @@ namespace Lively
                     App.QuitApp();
                 };
                 // Custom theme resources are not this early, make sure not to call any window or control using it.
-                _ = screenSaverService.StartAsync();
+                _ = screenSaverService.StartAsync(false);
             }
             else
             {

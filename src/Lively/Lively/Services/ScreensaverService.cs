@@ -68,20 +68,61 @@ namespace Lively.Services
             idleTimer.Interval = 30000;
         }
 
-        public async Task StartAsync()
+        public async Task StartAsync(bool isFadeIn)
         {
-            if (IsRunning)
+            if (IsRunning || startAsyncExecuting)
                 return;
 
-            IsRunning = true;
             startAsyncExecuting = true;
             await Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new ThreadStart(async () =>
             {
-                // Move cursor outside screen region.
-                _ = NativeMethods.SetCursorPos(int.MaxValue, 0);
-                Logger.Info("Starting screensaver..");
-                await ShowScreensavers();
-                startAsyncExecuting = false;
+                // Fade-in
+                // Ref: https://github.com/rocksdanister/lively/issues/2736
+                BlankWindow fadeInWindow = null;
+                try
+                {
+                    if (isFadeIn)
+                    {
+                        Logger.Info("Showing screensaver transition..");
+                        var tcs = new TaskCompletionSource<bool>();
+                        fadeInWindow = new BlankWindow(fadeInDuration: 10000, fadeOutDuration: 500)
+                        {
+                            WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                            BorderThickness = new Thickness(0),
+                            Topmost = true
+                        };
+                        fadeInWindow.Loaded += async (s, e) =>
+                        {
+                            fadeInWindow.NativeResize(displayManager.VirtualScreenBounds);
+                            fadeInWindow.WindowStyle = WindowStyle.None;
+                            fadeInWindow.ResizeMode = ResizeMode.NoResize;
+
+                            // To prevent MouseMove firing immediately
+                            await Task.Delay(1000);
+                            fadeInWindow.PreviewKeyDown += (s, e) => tcs.TrySetResult(false);
+                            fadeInWindow.PreviewMouseDown += (s, e) => tcs.TrySetResult(false);
+                            fadeInWindow.PreviewMouseMove += (s, e) => tcs.TrySetResult(false);
+                        };
+                        fadeInWindow.FadeInAnimationCompleted += (s, e) => tcs.TrySetResult(true);
+                        fadeInWindow.Show();
+
+                        await tcs.Task;
+                        if (!tcs.Task.Result)
+                            return;
+                    }
+
+                    IsRunning = true;
+                    // Move cursor outside screen region.
+                    _ = NativeMethods.SetCursorPos(int.MaxValue, 0);
+                    Logger.Info("Starting screensaver..");
+                    await ShowScreensavers();
+                    StartInputListener();
+                }
+                finally
+                {
+                    startAsyncExecuting = false;
+                    fadeInWindow?.Close();
+                }
             }));
         }
 
@@ -94,6 +135,7 @@ namespace Lively.Services
             _ = Application.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new ThreadStart(delegate
             {
                 Logger.Info("Stopping screensaver..");
+                StopInputListener();
                 CloseScreensavers();
                 // Lock screen.
                 if (userSettings.Settings.ScreensaverLockOnResume)
@@ -146,21 +188,13 @@ namespace Lively.Services
             switch (Mode)
             {
                 case ScreensaverApplyMode.wallpaper:
-                    {
-                        ShowRunningWallpaperAsScreensaver();
-                        StartInputListener();
-                    }
+                    ShowRunningWallpaperAsScreensaver();
                     break;
                 case ScreensaverApplyMode.process:
-                    {
-                        await ShowWindowAsScreensaver();
-                        StartInputListener();
-                    }
+                    await ShowWindowAsScreensaver();
                     break;
                 case ScreensaverApplyMode.dwmThumbnail:
-                    {
-                        ShowDwmThumbnailAsScreensaver();
-                    }
+                    ShowDwmThumbnailAsScreensaver();
                     break;
                 default:
                     throw new NotImplementedException();
@@ -175,19 +209,13 @@ namespace Lively.Services
                     {
                         CloseRunningWallpaperAsScreensaver();
                         CloseBlankWindowAsScreensaver();
-                        StopInputListener();
                     }
                     break;
                 case ScreensaverApplyMode.process:
-                    {
-                        CloseWindowAsScreensaver();
-                        StopInputListener();
-                    }
+                    CloseWindowAsScreensaver();
                     break;
                 case ScreensaverApplyMode.dwmThumbnail:
-                    {
-                        CloseDwmThumbnailAsScreensaver();
-                    }
+                    CloseDwmThumbnailAsScreensaver();
                     break;
                 default:
                     throw new NotImplementedException();
@@ -455,7 +483,6 @@ namespace Lively.Services
                 Topmost = true,
                 AutoSizeDwmWindow = true
             };
-            dwmThumbnailWindow.InputReceived += DwmThumbnailWindow_InputReceived;
             dwmThumbnailWindow.Show();
         }
 
@@ -464,12 +491,9 @@ namespace Lively.Services
             if (dwmThumbnailWindow is null)
                 return;
 
-            dwmThumbnailWindow.InputReceived -= DwmThumbnailWindow_InputReceived;
             dwmThumbnailWindow.Close();
             dwmThumbnailWindow = null;
         }
-
-        private void DwmThumbnailWindow_InputReceived(object sender, EventArgs e) => Stop();
 
         private async void IdleCheckTimer(object sender, ElapsedEventArgs e)
         {
@@ -477,7 +501,7 @@ namespace Lively.Services
             {
                 if (GetLastInputTime() >= idleWaitTime && !IsExclusiveFullScreenAppRunning())
                 {
-                    await StartAsync();
+                    await StartAsync(true);
                 }
             }
             catch (Exception ex)

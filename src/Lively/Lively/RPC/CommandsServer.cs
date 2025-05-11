@@ -70,7 +70,7 @@ namespace Lively.RPC
             switch (request.State)
             {
                 case ScreensaverState.Start:
-                    _ = screensaver.StartAsync();
+                    _ = screensaver.StartAsync(true);
                     break;
                 case ScreensaverState.Stop:
                     screensaver.Stop();
