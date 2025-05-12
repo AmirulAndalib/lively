@@ -130,7 +130,7 @@ namespace Lively.Player.WebView2
             // Defaults
             webView.CoreWebView2.IsMuted = startArgs.Volume == 0;
 
-            if (IsDebugging)
+            if (!IsDebugging)
             {
                 // Don't allow contextmenu and devtools.
                 webView.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
