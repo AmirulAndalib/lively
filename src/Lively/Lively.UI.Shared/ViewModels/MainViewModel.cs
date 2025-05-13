@@ -1,13 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Lively.Common;
+using Lively.Common.Exceptions;
 using Lively.Common.Helpers.Files;
 using Lively.Common.Services;
 using Lively.Gallery.Client;
 using Lively.Grpc.Client;
 using Lively.Models;
 using Lively.Models.Enums;
-using Lively.Models.Exceptions;
 using Lively.Models.Services;
 using Lively.Models.UserControls;
 using Lively.UI.WinUI.Factories;

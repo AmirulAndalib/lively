@@ -8,7 +8,6 @@
     xmlns:converters="using:CommunityToolkit.WinUI.Converters"
     xmlns:customconverters="using:Lively.UI.WinUI.Helpers.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:interactions="using:Microsoft.Xaml.Interactions.Core"
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:local="using:Lively.UI.WinUI.Views.Pages"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -81,12 +80,12 @@
                             </animations:AnimationSet>
                         </animations:Explicit.Animations>
                         <interactivity:Interaction.Behaviors>
-                            <interactions:EventTriggerBehavior EventName="PointerEntered">
+                            <interactivity:EventTriggerBehavior EventName="PointerEntered">
                                 <behaviors:StartAnimationAction Animation="{Binding ElementName=ScaleAnimationEnter}" />
-                            </interactions:EventTriggerBehavior>
-                            <interactions:EventTriggerBehavior EventName="PointerExited">
+                            </interactivity:EventTriggerBehavior>
+                            <interactivity:EventTriggerBehavior EventName="PointerExited">
                                 <behaviors:StartAnimationAction Animation="{Binding ElementName=ScaleAnimationExit}" />
-                            </interactions:EventTriggerBehavior>
+                            </interactivity:EventTriggerBehavior>
                         </interactivity:Interaction.Behaviors>
 
                         <Image
