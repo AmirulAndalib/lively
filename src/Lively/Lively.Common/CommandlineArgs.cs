@@ -134,6 +134,11 @@ namespace Lively.Common
             Required = false,
             HelpText = "Show the ss full-screen and avoid running wallpaper (if not running already.) To be used on app startup.")]
             public bool? ShowExclusive { get; set; }
+
+            [Option("fadeIn",
+            Required = false,
+            HelpText = "Show fade-in transition at the start.")]
+            public bool? IsFadeIn { get; set; }
         }
 
         [Verb("screenshot", HelpText = "Take wallpaper screenshot.")]
