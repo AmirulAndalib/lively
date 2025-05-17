@@ -44,5 +44,37 @@ namespace Lively.Player.WebView2.Extensions.WebView2
             script.Append(");");
             return await webView?.ExecuteScriptAsync(script.ToString());
         }
+
+        // No official API.
+        // Ref: https://github.com/MicrosoftEdge/WebView2Feedback/issues/3348
+        public static async Task<bool> TryPauseMedia(this WebView webView)
+        {
+            try
+            {
+                var script = @"document.querySelectorAll('video, audio').forEach(mediaElement => mediaElement.pause());";
+                await webView.ExecuteScriptAsync(script);
+            }
+            catch
+            {
+                return false;
+            }
+            return true;
+        }
+
+        // No official API.
+        // Ref: https://github.com/MicrosoftEdge/WebView2Feedback/issues/3348
+        public static async Task<bool> TryPlayMedia(this WebView webView)
+        {
+            try
+            {
+                var script = @"document.querySelectorAll('video, audio').forEach(mediaElement => mediaElement.play());";
+                await webView.ExecuteScriptAsync(script);
+            }
+            catch
+            {
+                return false;
+            }
+            return true;
+        }
     }
 }

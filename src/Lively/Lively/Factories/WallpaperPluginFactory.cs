@@ -45,7 +45,9 @@ namespace Lively.Factories
                             return new WebWebView2(model.FilePath,
                                 model,
                                 display,
-                                lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings));
+                                userSettings.Settings.WebDebugPort,
+                                lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
+                                userSettings.Settings.AudioVolumeGlobal);
                     }
                     break;
                 case WallpaperType.video:
@@ -151,13 +153,22 @@ namespace Lively.Factories
                     }
                     else
                     {
-                        return new WebCefSharpProcess(model.FilePath,
-                                model,
-                                display,
-                                lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
-                                userSettings.Settings.WebDebugPort,
-                                userSettings.Settings.CefDiskCache,
-                                userSettings.Settings.AudioVolumeGlobal);
+                        return userSettings.Settings.WebBrowser switch
+                        {
+                            LivelyWebBrowser.cef => new WebCefSharpProcess(model.FilePath,
+                                                        model,
+                                                        display,
+                                                        lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
+                                                        userSettings.Settings.WebDebugPort,
+                                                        userSettings.Settings.CefDiskCache,
+                                                        userSettings.Settings.AudioVolumeGlobal),
+                            _ => new WebWebView2(model.FilePath,
+                                                    model,
+                                                    display,
+                                                    userSettings.Settings.WebDebugPort,
+                                                    lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
+                                                    userSettings.Settings.AudioVolumeGlobal),
+                        };
                     }
             }
             throw new PluginNotFoundException("Wallpaper player not found.");

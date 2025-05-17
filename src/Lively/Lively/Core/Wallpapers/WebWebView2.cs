@@ -45,21 +45,23 @@ namespace Lively.Core.Wallpapers
         public WebWebView2(string path,
             LibraryModel model,
             DisplayMonitor display,
-            string livelyPropertyPath)
+            string debugPort,
+            string livelyPropertyPath,
+            int volume)
         {
             LivelyPropertyCopyPath = livelyPropertyPath;
 
-            StringBuilder cmdArgs = new StringBuilder();
+            var cmdArgs = new StringBuilder();
+            cmdArgs.Append(" --wallpaper-pause-media ");
             cmdArgs.Append(" --wallpaper-url " + "\"" + path + "\"");
             cmdArgs.Append(" --wallpaper-display " + "\"" + display.DeviceId + "\"");
             cmdArgs.Append(" --wallpaper-property " + "\"" + LivelyPropertyCopyPath + "\"");
-            cmdArgs.Append(" --wallpaper-volume " + 100);
+            cmdArgs.Append(" --wallpaper-volume " + volume);
             cmdArgs.Append(" --wallpaper-geometry " + display.Bounds.Width + "x" + display.Bounds.Height);
             //--audio false Issue: https://github.com/commandlineparser/commandline/issues/702
             cmdArgs.Append(model.LivelyInfo.Type == WallpaperType.webaudio ? " --wallpaper-audio true" : " ");
-            //cmdArgs.Append(!string.IsNullOrWhiteSpace(debugPort) ? " --debug " + debugPort : " ");
+            cmdArgs.Append(!string.IsNullOrWhiteSpace(debugPort) ? " --wallpaper-debug " + debugPort : " ");
             cmdArgs.Append(model.LivelyInfo.Type == WallpaperType.url || model.LivelyInfo.Type == WallpaperType.videostream ? " --wallpaper-type online" : " --wallpaper-type local");
-            //cmdArgs.Append(diskCache && model.LivelyInfo.Type == WallpaperType.url ? " --cache " + "\"" + Path.Combine(Constants.CommonPaths.TempCefDir, "cache", display.DeviceNumber) + "\"" : " ");
             if (TryParseUserCommandArgs(model.LivelyInfo.Arguments, out string parsedArgs))
                 cmdArgs.Append(" " + parsedArgs);
 #if DEBUG
@@ -141,7 +143,7 @@ namespace Lively.Core.Wallpapers
 
         public void SetVolume(int volume)
         {
-            //todo
+            SendMessage(new LivelyVolumeCmd() { Volume = volume });
         }
 
         public void SetMute(bool mute)

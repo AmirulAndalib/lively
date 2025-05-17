@@ -2,12 +2,10 @@
 using Lively.Common;
 using Lively.Common.Extensions;
 using Lively.Common.Helpers;
-using Lively.Common.Helpers.Storage;
 using Lively.Common.JsonConverters;
 using Lively.Common.Services;
 using Lively.Models.Message;
 using Lively.Player.WebView2.Extensions.WebView2;
-using Lively.Player.WebView2.Properties;
 using Microsoft.Web.WebView2.Core;
 using Newtonsoft.Json;
 using System;
@@ -29,6 +27,7 @@ namespace Lively.Player.WebView2
         private WebView webView;
         private StartArgs startArgs;
         private bool isPaused = false;
+        private bool isVideoStream = false;
 
         private bool initializedServices = false; //delay API init till loaded page
         private IAudioVisualizerService visualizerService;
@@ -158,7 +157,10 @@ namespace Lively.Player.WebView2
                         if (StreamUtil.TryParseShadertoy(startArgs.Url, ref tmp))
                             webView.CoreWebView2.NavigateToString(tmp);
                         else if (StreamUtil.TryParseYouTubeVideoIdFromUrl(startArgs.Url, ref tmp))
+                        {
+                            isVideoStream = true;
                             webView.CoreWebView2.Navigate($"https://www.youtube.com/embed/{tmp}?version=3&rel=0&autoplay=1&loop=1&controls=0&playlist={tmp}");
+                        }
                         else
                             webView.CoreWebView2.Navigate(startArgs.Url);
                     }
@@ -358,32 +360,31 @@ namespace Lively.Player.WebView2
                                             //}
                                             break;
                                         case MessageType.cmd_suspend:
-                                            if (startArgs.PauseEvent && !isPaused)
+                                            if (!isPaused)
                                             {
-                                                //TODO: CefSharp CanExecuteJavascriptInMainFrame equivalent in webview
-                                                await webView.ExecuteScriptFunctionAsync("livelyWallpaperPlaybackChanged",
-                                                    JsonConvert.SerializeObject(new WallpaperPlaybackState() { IsPaused = true }),
-                                                    Formatting.Indented);
+                                                if (startArgs.PauseWebMedia || isVideoStream)
+                                                    await webView.TryPauseMedia();
+
+                                                if (startArgs.PauseEvent)
+                                                    await webView.ExecuteScriptFunctionAsync("livelyWallpaperPlaybackChanged",
+                                                        JsonConvert.SerializeObject(new WallpaperPlaybackState() { IsPaused = true }),
+                                                        Formatting.Indented);
                                             }
                                             isPaused = true;
                                             break;
                                         case MessageType.cmd_resume:
                                             if (isPaused)
                                             {
+                                                if (startArgs.PauseWebMedia || isVideoStream)
+                                                    await webView.TryPlayMedia();
+
                                                 if (startArgs.PauseEvent)
-                                                {
-                                                    //TODO: CefSharp CanExecuteJavascriptInMainFrame equivalent in webview
                                                     await webView.ExecuteScriptFunctionAsync("livelyWallpaperPlaybackChanged",
-                                                        JsonConvert.SerializeObject(new WallpaperPlaybackState() { IsPaused = false }),
-                                                        Formatting.Indented);
-                                                }
+                                                           JsonConvert.SerializeObject(new WallpaperPlaybackState() { IsPaused = false }),
+                                                           Formatting.Indented);
 
                                                 if (startArgs.NowPlaying)
-                                                {
-
-                                                    //TODO: CefSharp CanExecuteJavascriptInMainFrame equivalent in webview
                                                     await webView.ExecuteScriptFunctionAsync("livelyCurrentTrack", JsonConvert.SerializeObject(nowPlayingService?.CurrentTrack, Formatting.Indented));
-                                                }
                                             }
                                             isPaused = false;
                                             break;

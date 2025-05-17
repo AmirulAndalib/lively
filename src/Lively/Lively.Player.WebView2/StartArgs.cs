@@ -67,6 +67,11 @@ namespace Lively.Player.WebView2
         HelpText = "Wallpaper playback changed notify")]
         public bool PauseEvent { get; set; }
 
+        [Option("wallpaper-pause-media",
+        Required = false,
+        HelpText = "Try to pause all webpage media when wallpaper pause")]
+        public bool PauseWebMedia { get; set; }
+
         [Option("wallpaper-verbose-log",
         Required = false,
         HelpText = "Verbose Logging")]
