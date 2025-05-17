@@ -89,6 +89,8 @@ namespace Lively.Services
                         {
                             WindowStartupLocation = WindowStartupLocation.CenterScreen,
                             BorderThickness = new Thickness(0),
+                            ShowInTaskbar = false,
+                            ShowActivated = false,
                             Topmost = true
                         };
                         fadeInWindow.Loaded += async (s, e) =>
