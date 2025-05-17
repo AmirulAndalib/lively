@@ -103,8 +103,8 @@ namespace Lively.UI.Shared.ViewModels
                     UpdateLayout();
                 }
                 SetProperty(ref _selectedScreensaverArrangementIndex, value);
-                SelectedScreensaverArrangement = userSettings.Settings.ScreensaverType != ScreensaverType.wallpaper ? 
-                    (WallpaperArrangement)value : SelectedScreensaverArrangement;
+                SelectedScreensaverArrangement = userSettings.Settings.ScreensaverType != ScreensaverType.wallpaper ?
+                    (WallpaperArrangement)value : userSettings.Settings.WallpaperArrangement;
             }
         }
 

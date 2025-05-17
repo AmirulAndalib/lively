@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Lively.Models.Enums;
 using System;
 
 namespace Lively.UI.Shared.ViewModels
@@ -19,6 +20,7 @@ namespace Lively.UI.Shared.ViewModels
 
             this.WallpaperVm.NavigatePage += WallpaperVm_NavigatePage;
             this.ScreensaverVm.PropertyChanged += ScreensaverVm_PropertyChanged;
+            this.WallpaperVm.PropertyChanged += WallpaperVm_PropertyChanged;
         }
 
         [ObservableProperty]
@@ -34,6 +36,13 @@ namespace Lively.UI.Shared.ViewModels
         {
             if (e.PropertyName == nameof(ScreensaverVm.IsHideDialog))
                 IsHideDialog = ScreensaverVm.IsHideDialog;
+        }
+
+        private void WallpaperVm_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if(e.PropertyName == nameof(WallpaperVm.SelectedWallpaperLayout))
+                ScreensaverVm.SelectedScreensaverArrangement = (ScreensaverType)ScreensaverVm.SelectedScreensaverTypeIndex != ScreensaverType.wallpaper ? 
+                    ScreensaverVm.SelectedScreensaverArrangement : WallpaperVm.SelectedWallpaperLayout;
         }
 
         public void OnWindowClosing(object sender, object e)
