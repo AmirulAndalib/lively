@@ -152,7 +152,7 @@
                         </animations:Implicit.HideAnimations>
                     </InfoBar>
 
-                    <controls:SettingsExpander x:Uid="WebBrowser" IsExpanded="True">
+                    <controls:SettingsExpander x:Uid="WebBrowser" IsExpanded="False">
                         <ComboBox MinWidth="{StaticResource SettingActionControlMinWidth}" SelectedIndex="{Binding SelectedWebBrowserIndex, Mode=TwoWay}">
                             <ComboBoxItem>CefSharp</ComboBoxItem>
                             <ComboBoxItem>WebView2</ComboBoxItem>

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Lively.Models.Enums;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -83,6 +84,14 @@ namespace Lively.Common
         {
             //todo: make compile-time flag.
             public static string OpenWeatherMapAPIKey = string.Empty;
+        }
+
+        public static class AppDefaults
+        {
+            public static LivelyWebBrowser WebBrowser { get; } = LivelyWebBrowser.webview2;
+            public static LivelyMediaPlayer VideoPlayer { get; } = LivelyMediaPlayer.mpv;
+            public static LivelyPicturePlayer PicturePlayer { get; } = LivelyPicturePlayer.mpv;
+            public static LivelyGifPlayer GifPlayer { get; } = LivelyGifPlayer.mpv;
         }
     }
 }

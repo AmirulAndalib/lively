@@ -1,6 +1,7 @@
 ﻿using Lively.Common;
 using Lively.Common.Helpers.Storage;
 using Lively.Common.Services;
+using Lively.Core;
 using Lively.Core.Display;
 using Lively.Helpers;
 using Lively.Models;
@@ -25,9 +26,14 @@ namespace Lively.Services
         public UserSettingsService(IDisplayManager displayManager, ITransparentTbService ttbService)
         {
             Load<SettingsModel>();
-            //Load<IWeatherModel>();
             Load<List<ApplicationRulesModel>>();
             Load<List<WallpaperLayoutModel>>();
+
+            // Fallback incase player plugin is changed/missing.
+            Settings.VideoPlayer = GetAvailableVideoPlayerOrDefault(Settings.VideoPlayer);
+            Settings.GifPlayer = GetAvailableGifPlayerOrDefault(Settings.GifPlayer);
+            Settings.WebBrowser = GetAvailableWebPlayerOrDefault(Settings.WebBrowser);
+            Settings.PicturePlayer = GetAvailablePicturePlayerOrDefault(Settings.PicturePlayer);
 
             Settings.SelectedDisplay = Settings.SelectedDisplay != null ?
                 displayManager.DisplayMonitors.FirstOrDefault(x => x.Equals(Settings.SelectedDisplay)) ?? displayManager.PrimaryDisplayMonitor :
@@ -73,7 +79,6 @@ namespace Lively.Services
         }
 
         public SettingsModel Settings { get; private set; }
-        //public IWeatherModel WeatherSettings { get; private set; }
         public List<ApplicationRulesModel> AppRules { get; private set; }
         public List<WallpaperLayoutModel> WallpaperLayout { get; private set; }
 
@@ -91,12 +96,6 @@ namespace Lively.Services
             {
                 JsonStorage<List<WallpaperLayoutModel>>.StoreData(wallpaperLayoutPath, WallpaperLayout);
             }
-            /*
-            else if (typeof(T) == typeof(IWeatherModel))
-            {
-                JsonStorage<IWeatherModel>.StoreData(weatherPath, WeatherSettings);
-            }
-            */
             else
             {
                 throw new InvalidCastException($"Type not found: {typeof(T)}");
@@ -107,67 +106,101 @@ namespace Lively.Services
         {
             if (typeof(T) == typeof(SettingsModel))
             {
-                try
-                {
-                    Settings = JsonStorage<SettingsModel>.LoadData(settingsPath);
-                }
-                catch (Exception e)
-                {
-                    Logger.Error(e);
-                    Settings = new SettingsModel();
-                    Save<SettingsModel>();
-                }
-
+                Settings = LoadOrInitialize(settingsPath, () => new SettingsModel(), Save<SettingsModel>);
             }
             else if (typeof(T) == typeof(List<ApplicationRulesModel>))
             {
-                try
-                {
-                    AppRules = new List<ApplicationRulesModel>(JsonStorage<List<ApplicationRulesModel>>.LoadData(appRulesPath));
-                }
-                catch (Exception e)
-                {
-                    Logger.Error(e.ToString());
-                    AppRules = new List<ApplicationRulesModel>
-                    {
-                        //defaults.
-                        new ApplicationRulesModel("Discord", Models.Enums.AppRules.ignore)
-                    };
-                    Save<List<ApplicationRulesModel>>();
-                }
+                AppRules = LoadOrInitialize(appRulesPath, () => 
+                    new List<ApplicationRulesModel> {
+                            new("Discord", Models.Enums.AppRules.ignore)
+                    },
+                    Save<List<ApplicationRulesModel>>
+                );
             }
             else if (typeof(T) == typeof(List<WallpaperLayoutModel>))
             {
-                try
-                {
-                    WallpaperLayout = new List<WallpaperLayoutModel>(JsonStorage<List<WallpaperLayoutModel>>.LoadData(wallpaperLayoutPath));
-                }
-                catch (Exception e)
-                {
-                    Logger.Error(e.ToString());
-                    WallpaperLayout = new List<WallpaperLayoutModel>();
-                    Save<List<WallpaperLayoutModel>>();
-                }
+                WallpaperLayout = LoadOrInitialize(wallpaperLayoutPath, () => new List<WallpaperLayoutModel>(), Save<List<WallpaperLayoutModel>>);
             }
-            /*
-            else if (typeof(T) == typeof(IWeatherModel))
-            {
-                try
-                {
-                    WeatherSettings = JsonStorage<WeatherModel>.LoadData(weatherPath);
-                }
-                catch (Exception e)
-                {
-                    WeatherSettings = new WeatherModel();
-                    Save<IWeatherModel>();
-                }
-
-            }
-            */
             else
             {
                 throw new InvalidCastException($"Type not found: {typeof(T)}");
             }
+        }
+
+        private static T LoadOrInitialize<T>(string path, Func<T> defaultFactory, Action saveAction)
+        {
+            if (File.Exists(path))
+            {
+                try
+                {
+                    return JsonStorage<T>.LoadData(path);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex);
+                }
+            }
+            else
+            {
+                Logger.Info($"File not found for {typeof(T).FullName}, creating default at {path}");
+            }
+
+            var defaultValue = defaultFactory();
+            saveAction?.Invoke();
+            return defaultValue;
+        }
+
+        private static LivelyMediaPlayer GetAvailableVideoPlayerOrDefault(LivelyMediaPlayer mp)
+        {
+            var isAvailable  = mp switch
+            {
+                LivelyMediaPlayer.libvlc => false, //depreciated
+                LivelyMediaPlayer.libmpv => false, //depreciated
+                LivelyMediaPlayer.wmf => File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.PlayerPartialPaths.WmfPath)),
+                LivelyMediaPlayer.libvlcExt => false,
+                LivelyMediaPlayer.libmpvExt => false,
+                LivelyMediaPlayer.mpv => File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.PlayerPartialPaths.MpvPath)),
+                LivelyMediaPlayer.vlc => File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.PlayerPartialPaths.VlcPath)),
+                _ => false,
+            };
+            // Assume default is always available.
+            return isAvailable ? mp : Constants.AppDefaults.VideoPlayer;
+        }
+
+        private static LivelyGifPlayer GetAvailableGifPlayerOrDefault(LivelyGifPlayer gp)
+        {
+            var isAvailable = gp switch
+            {
+                LivelyGifPlayer.win10Img => false, //xaml island
+                LivelyGifPlayer.libmpvExt => false,
+                LivelyGifPlayer.mpv => File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.PlayerPartialPaths.MpvPath)),
+                _ => false,
+            };
+            return isAvailable ? gp : Constants.AppDefaults.GifPlayer;
+        }
+
+        private static LivelyPicturePlayer GetAvailablePicturePlayerOrDefault(LivelyPicturePlayer pp)
+        {
+            var isAvailable = pp switch
+            {
+                LivelyPicturePlayer.picture => false,
+                LivelyPicturePlayer.winApi => false,
+                LivelyPicturePlayer.mpv => File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.PlayerPartialPaths.MpvPath)),
+                LivelyPicturePlayer.wmf => false,
+                _ => false,
+            };
+            return isAvailable ? pp : Constants.AppDefaults.PicturePlayer;
+        }
+
+        private static LivelyWebBrowser GetAvailableWebPlayerOrDefault(LivelyWebBrowser wp)
+        {
+            var isAvailable = wp switch
+            {
+                LivelyWebBrowser.cef => File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.PlayerPartialPaths.CefSharpPath)),
+                LivelyWebBrowser.webview2 => File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.PlayerPartialPaths.WebView2Path)),
+                _ => false,
+            };
+            return isAvailable ? wp : Constants.AppDefaults.WebBrowser;
         }
     }
 }

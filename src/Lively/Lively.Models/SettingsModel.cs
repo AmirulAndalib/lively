@@ -148,7 +148,7 @@ namespace Lively.Models
             BatteryPause = AppRules.ignore;
             VideoPlayer = LivelyMediaPlayer.mpv;
             VideoPlayerHwAccel = true;
-            WebBrowser = LivelyWebBrowser.cef;
+            WebBrowser = LivelyWebBrowser.webview2;
             GifPlayer = LivelyGifPlayer.mpv;
             PicturePlayer = LivelyPicturePlayer.mpv;
 
