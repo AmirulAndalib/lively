@@ -22,6 +22,7 @@ namespace Lively.Common.Factories
             {
                 LivelyInfo = metadata,
                 LivelyInfoFolderPath = folderPath,
+                LivelyInfoLocalizationPath = Path.Combine(folderPath, "LivelyInfo.loc.json"),
                 LivelyPropertyLocalizationPath = Path.Combine(folderPath, "LivelyProperties.loc.json"),
                 IsSubscribed = !string.IsNullOrEmpty(metadata.Id),
                 DataType = LibraryItemType.ready,

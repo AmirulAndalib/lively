@@ -89,6 +89,7 @@ namespace Lively.UI.Shared.ViewModels
 
             desktopCore.WallpaperChanged += DesktopCore_WallpaperChanged;
             desktopCore.WallpaperUpdated += DesktopCore_WallpaperUpdated;
+            i18n.CultureChanged += I18n_CultureChanged;
         }
 
         [ObservableProperty]
@@ -736,6 +737,7 @@ namespace Lively.UI.Shared.ViewModels
             try
             {
                 var item = wallpaperLibraryFactory.CreateFromDirectory(folderPath);
+                LocalizeModel(item, userSettings.Settings.Language);
                 item.ImagePath = userSettings.Settings.UIMode != LivelyGUIState.lite ? item.ImagePath : item.ThumbnailPath;
                 //var index = processing ? 0 : BinarySearch(LibraryItems, libItem.Title);
                 item.DataType = processing ? LibraryItemType.processing : LibraryItemType.ready;
@@ -779,6 +781,7 @@ namespace Lively.UI.Shared.ViewModels
                     try
                     {
                         item = wallpaperLibraryFactory.CreateFromDirectory(currDir);
+                        LocalizeModel(item, userSettings.Settings.Language);
                         item.ImagePath = userSettings.Settings.UIMode != LivelyGUIState.lite ? item.ImagePath : item.ThumbnailPath;
                         Logger.Info($"Loaded wallpaper: {item.FilePath}");
                     }
@@ -793,6 +796,24 @@ namespace Lively.UI.Shared.ViewModels
                     }
                 }
             }
+        }
+
+        private void I18n_CultureChanged(object sender, string e)
+        {
+            using (LibraryItemsFiltered.DeferRefresh())
+            {
+                foreach (var item in LibraryItems)
+                    LocalizeModel(item, userSettings.Settings.Language);
+            }
+        }
+
+        private static void LocalizeModel(LibraryModel model, string langCode)
+        {
+            var localized = LivelyInfoUtil.GetLocalized(model.LivelyInfoLocalizationPath, langCode);
+            // We are only changing the display data, keep the original LivelyInfo for restore.
+            model.Title = localized?.Title ?? model.LivelyInfo.Title;
+            model.Desc = localized?.Desc ?? model.LivelyInfo.Desc;
+            model.Author = localized?.Author ?? model.LivelyInfo.Author;
         }
 
         private int BinarySearch(ObservableCollection<LibraryModel> item, string x)

@@ -30,6 +30,9 @@ namespace Lively.Models
         private string livelyInfoFolderPath;
 
         [ObservableProperty]
+        private string livelyInfoLocalizationPath;
+
+        [ObservableProperty]
         private string livelyPropertyLocalizationPath;
 
         [ObservableProperty]
