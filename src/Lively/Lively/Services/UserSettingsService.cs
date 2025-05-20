@@ -106,20 +106,29 @@ namespace Lively.Services
         {
             if (typeof(T) == typeof(SettingsModel))
             {
-                Settings = LoadOrInitialize(settingsPath, () => new SettingsModel(), Save<SettingsModel>);
+                Settings = LoadOrInitialize(settingsPath, () => {
+                    Settings = new SettingsModel();
+                    Save<SettingsModel>();
+                    return Settings;
+                });
             }
             else if (typeof(T) == typeof(List<ApplicationRulesModel>))
             {
-                AppRules = LoadOrInitialize(appRulesPath, () => 
-                    new List<ApplicationRulesModel> {
-                            new("Discord", Models.Enums.AppRules.ignore)
-                    },
-                    Save<List<ApplicationRulesModel>>
-                );
+                AppRules = LoadOrInitialize(appRulesPath, () => {
+                    AppRules = [
+                        new("Discord", Models.Enums.AppRules.ignore)
+                    ];
+                    Save<List<ApplicationRulesModel>>();
+                    return AppRules;
+                });
             }
             else if (typeof(T) == typeof(List<WallpaperLayoutModel>))
             {
-                WallpaperLayout = LoadOrInitialize(wallpaperLayoutPath, () => new List<WallpaperLayoutModel>(), Save<List<WallpaperLayoutModel>>);
+                WallpaperLayout = LoadOrInitialize(wallpaperLayoutPath, () => {
+                    WallpaperLayout = [];
+                    Save<List<WallpaperLayoutModel>>();
+                    return WallpaperLayout;
+                });
             }
             else
             {
@@ -127,7 +136,7 @@ namespace Lively.Services
             }
         }
 
-        private static T LoadOrInitialize<T>(string path, Func<T> defaultFactory, Action saveAction)
+        private static T LoadOrInitialize<T>(string path, Func<T> defaultAction)
         {
             if (File.Exists(path))
             {
@@ -145,9 +154,7 @@ namespace Lively.Services
                 Logger.Info($"File not found for {typeof(T).FullName}, creating default at {path}");
             }
 
-            var defaultValue = defaultFactory();
-            saveAction?.Invoke();
-            return defaultValue;
+            return defaultAction();
         }
 
         private static LivelyMediaPlayer GetAvailableVideoPlayerOrDefault(LivelyMediaPlayer mp)
