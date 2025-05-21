@@ -148,7 +148,6 @@ namespace Lively.Services
 
             playbackMonitor.PlaybackStateChanged += Playback_PlaybackStateChanged;
             desktopCore.WallpaperChanged += DesktopCore_WallpaperChanged;
-            desktopCore.WallpaperError += DesktopCore_WallpaperError;
             appUpdater.UpdateChecked += (s, e) => { SetUpdateMenu(e.UpdateStatus); };
             i18n.CultureChanged += I18n_CultureChanged;
         }
@@ -250,12 +249,6 @@ namespace Lively.Services
             {
                 trayMenuItems[TrayMenuItem.customiseWallpaper].Enabled = desktopCore.Wallpapers.Any(x => x.LivelyPropertyCopyPath != null);
             }));
-        }
-
-        private void DesktopCore_WallpaperError(object sender, Exception e)
-        {
-            if (!runner.IsVisibleUI)
-                ShowBalloonNotification(4000, Properties.Resources.TextError, e.Message);
         }
 
         private void CustomiseWallpaper(object sender, EventArgs e)

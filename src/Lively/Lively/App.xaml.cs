@@ -237,6 +237,13 @@ namespace Lively
                 spl.Close();
             }
 
+            // System notification.
+            Services.GetRequiredService<IDesktopCore>().WallpaperError += (s, e) =>
+            {
+                if (!Services.GetRequiredService<IRunnerService>().IsVisibleUI)
+                    Services.GetRequiredService<ISystray>().ShowBalloonNotification(4000, Lively.Properties.Resources.TextError, e.Message);
+            };
+
             if (IsExclusiveScreensaverMode)
             {
                 Logger.Info("Starting in exclusive screensaver mode, skipping wallpaper restore..");
