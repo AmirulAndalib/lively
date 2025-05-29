@@ -97,7 +97,7 @@ namespace Lively.Utility.ConsoleDemo
                         {
                             Console.Write("Please wait..");
                             await Task.Delay(1000); //delay because "Enter" key triggering screensaver exit.
-                            await commandsClient.ScreensaverShow(true);
+                            await commandsClient.ShowScreensaver(false);
                         }
                         break;
                     case "8":
