@@ -55,6 +55,7 @@ namespace Lively.UI.Shared.ViewModels
             SelectedGifPlayerIndex = (int)userSettings.Settings.GifPlayer;
             SelectedWebBrowserIndex = (int)userSettings.Settings.WebBrowser;
             WebDebuggingPort = userSettings.Settings.WebDebugPort;
+            IsWebDebuggingEnabled = !string.IsNullOrEmpty(WebDebuggingPort);
             CefDiskCache = userSettings.Settings.CefDiskCache;
             SelectedWallpaperStreamQualityIndex = (int)userSettings.Settings.StreamQuality;
             DetectStreamWallpaper = userSettings.Settings.AutoDetectOnlineStreams;
@@ -259,6 +260,22 @@ namespace Lively.UI.Shared.ViewModels
             finally
             {
                 IsWebView2Installing = false;
+            }
+        }
+
+        private bool _isWebDebuggingEnabled;
+        public bool IsWebDebuggingEnabled
+        {
+            get => _isWebDebuggingEnabled;
+            set
+            {
+                if (SetProperty(ref _isWebDebuggingEnabled, value))
+                {
+                    if (value && string.IsNullOrWhiteSpace(WebDebuggingPort))
+                        WebDebuggingPort = "9223";
+                    else if (!value)
+                        WebDebuggingPort = string.Empty;
+                }
             }
         }
 

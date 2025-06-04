@@ -158,11 +158,17 @@
                             <ComboBoxItem>WebView2</ComboBoxItem>
                         </ComboBox>
                         <controls:SettingsExpander.Items>
-                            <controls:SettingsCard x:Uid="WebBrowserDiskCache">
+                            <controls:SettingsCard x:Uid="WebBrowserDiskCache" Visibility="Collapsed">
                                 <ToggleSwitch IsOn="{Binding CefDiskCache, Mode=TwoWay}" />
                             </controls:SettingsCard>
                             <controls:SettingsCard x:Uid="BrowserDebuggingPort">
-                                <NumberBox MinWidth="200" Text="{Binding WebDebuggingPort, Mode=TwoWay}" />
+                                <StackPanel>
+                                    <ToggleSwitch IsOn="{Binding IsWebDebuggingEnabled, Mode=TwoWay}" />
+                                    <NumberBox
+                                        MinWidth="200"
+                                        Text="{Binding WebDebuggingPort, Mode=TwoWay}"
+                                        Visibility="Collapsed" />
+                                </StackPanel>
                             </controls:SettingsCard>
                         </controls:SettingsExpander.Items>
                     </controls:SettingsExpander>
