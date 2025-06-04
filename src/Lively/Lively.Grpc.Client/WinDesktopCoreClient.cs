@@ -130,35 +130,32 @@ namespace Lively.Grpc.Client
             await client.PreviewWallpaperAsync(new PreviewWallpaperRequest() { LivelyInfoPath = livelyInfoPath });
         }
 
-        public async Task CloseAllWallpapers(bool terminate = false)
+        public async Task CloseAllWallpapers()
         {
-            await client.CloseAllWallpapersAsync(new CloseAllWallpapersRequest() { Terminate = terminate });
+            await client.CloseAllWallpapersAsync(new CloseAllWallpapersRequest() { });
         }
 
-        public async Task CloseWallpaper(WallpaperType type, bool terminate = false)
+        public async Task CloseWallpaper(WallpaperType type)
         {
             await client.CloseWallpaperCategoryAsync(new CloseWallpaperCategoryRequest()
             {
-                Category = (WallpaperCategory)((int)type),
-                Terminate = terminate
+                Category = (WallpaperCategory)((int)type)
             });
         }
 
-        public async Task CloseWallpaper(LibraryModel item, bool terminate = false)
+        public async Task CloseWallpaper(LibraryModel item)
         {
             await client.CloseWallpaperLibraryAsync(new CloseWallpaperLibraryRequest()
             {
-                LivelyInfoPath = item.LivelyInfoFolderPath,
-                Terminate = terminate
+                LivelyInfoPath = item.LivelyInfoFolderPath
             });
         }
 
-        public async Task CloseWallpaper(DisplayMonitor monitor, bool terminate = false)
+        public async Task CloseWallpaper(DisplayMonitor monitor)
         {
             await client.CloseWallpaperMonitorAsync(new CloseWallpaperMonitorRequest()
             {
-                MonitorId = monitor.DeviceId,
-                Terminate = terminate
+                MonitorId = monitor.DeviceId
             });
         }
 

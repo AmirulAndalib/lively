@@ -14,10 +14,10 @@ namespace Lively.Grpc.Client
         Version AssemblyVersion { get; }
         bool IsCoreInitialized { get; }
 
-        Task CloseAllWallpapers(bool terminate = false);
-        Task CloseWallpaper(DisplayMonitor monitor, bool terminate = false);
-        Task CloseWallpaper(LibraryModel item, bool terminate = false);
-        Task CloseWallpaper(WallpaperType type, bool terminate = false);
+        Task CloseAllWallpapers();
+        Task CloseWallpaper(DisplayMonitor monitor);
+        Task CloseWallpaper(LibraryModel item);
+        Task CloseWallpaper(WallpaperType type);
         Task SetWallpaper(LibraryModel item, DisplayMonitor display);
         Task SetWallpaper(string livelyInfoPath, string monitorId);
         void SendMessageWallpaper(LibraryModel obj, IpcMessage msg);

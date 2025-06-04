@@ -460,7 +460,7 @@ namespace Lively.UI.Shared.ViewModels
             {
                 foreach (var item in type)
                 {
-                    await desktopCore.CloseWallpaper(item, true);
+                    await desktopCore.CloseWallpaper(item);
                 }
 
                 foreach (var item in originalWallpapers)

@@ -117,27 +117,7 @@ namespace Lively.Views
 
             //Detach wallpaper window from this dialogue.
             WindowUtil.SetParentSafe(wallpaper.Handle, IntPtr.Zero);
-            try
-            {
-                var proc = wallpaper.Proc;
-                if (wallpaper.Category == WallpaperType.url && proc != null)
-                {
-                    wallpaper.SendMessage(new LivelyCloseCmd());
-                    proc.Refresh();
-                    if (!proc.WaitForExit(4000))
-                    {
-                        wallpaper.Terminate();
-                    }
-                }
-                else
-                {
-                    wallpaper.Terminate();
-                }
-            }
-            catch
-            {
-                wallpaper.Terminate();
-            }
+            wallpaper.Close();
         }
     }
 }

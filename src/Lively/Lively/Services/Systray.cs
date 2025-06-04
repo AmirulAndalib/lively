@@ -86,7 +86,7 @@ namespace Lively.Services
             trayMenuItems[TrayMenuItem.openApp] = openAppTrayMenu;
 
             var closeWallpaperTrayMenu = new ToolStripMenuItem(GetMenuItemString(TrayMenuItem.closeWallpaper), null);
-            closeWallpaperTrayMenu.Click += (s, e) => desktopCore.CloseAllWallpapers(true);
+            closeWallpaperTrayMenu.Click += (s, e) => desktopCore.CloseAllWallpapers();
             notifyIcon.ContextMenuStrip.Items.Add(CreateToolStripSeparator(toolStripColor));
             notifyIcon.ContextMenuStrip.Items.Add(closeWallpaperTrayMenu);
             trayMenuItems[TrayMenuItem.closeWallpaper] = closeWallpaperTrayMenu;

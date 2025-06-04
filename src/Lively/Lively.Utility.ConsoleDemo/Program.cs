@@ -73,7 +73,7 @@ namespace Lively.Utility.ConsoleDemo
                             switch (Console.ReadLine())
                             {
                                 case "1":
-                                    await coreClient.CloseAllWallpapers(true);
+                                    await coreClient.CloseAllWallpapers();
                                     break;
                                 case "5":
                                     break;

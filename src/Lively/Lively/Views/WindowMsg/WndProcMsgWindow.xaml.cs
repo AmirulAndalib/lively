@@ -61,7 +61,7 @@ namespace Lively.Views.WindowMsg
                         _ = Task.Run(() => MessageBox.Show(Properties.Resources.DescExplorerCrash,
                                 $"{Properties.Resources.TitleAppName} - {Properties.Resources.TextError}",
                                 MessageBoxButton.OK, MessageBoxImage.Error));
-                        desktopCore.CloseAllWallpapers(true);
+                        desktopCore.CloseAllWallpapers();
                         desktopCore.ResetWallpaperAsync();
                     }
                     prevCrashTime = DateTime.Now;

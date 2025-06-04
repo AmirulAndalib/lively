@@ -279,7 +279,7 @@ namespace Lively.UI.Shared.ViewModels
                 }
 
                 //close if running.
-                await desktopCore.CloseWallpaper(obj, true);
+                await desktopCore.CloseWallpaper(obj);
                 //delete wp folder.      
                 var success = await FileUtil.TryDeleteDirectoryAsync(obj.LivelyInfoFolderPath, 1000, 4000);
 

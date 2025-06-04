@@ -78,21 +78,21 @@ message Rectangle {
 }
 
 message CloseAllWallpapersRequest {
-	bool terminate = 1;
+	bool terminate = 1 [deprecated = true];
 }
 
 message CloseWallpaperMonitorRequest {
-	bool terminate = 1;
+	bool terminate = 1 [deprecated = true];
     string monitor_id = 2;
 }
 
 message CloseWallpaperLibraryRequest {
-	bool terminate = 1;
+	bool terminate = 1 [deprecated = true];
 	string lively_info_path = 2;
 }
 
 message CloseWallpaperCategoryRequest {
-	bool terminate = 1;
+	bool terminate = 1 [deprecated = true];
 	WallpaperCategory Category = 2;
 }
 

@@ -163,7 +163,7 @@ namespace Lively.Core
                                 if (!dialogOk)
                                     return;
 
-                                CloseWallpaper(instance.Screen, fireEvent: false, terminate: true);
+                                CloseWallpaper(instance.Screen, fireEvent: false);
                                 if (!TrySetWallpaperPerScreen(instance.Handle, instance.Screen))
                                     Logger.Error("Failed to set wallpaper as child of WorkerW");
 
@@ -187,7 +187,7 @@ namespace Lively.Core
                                 if (!dialogOk)
                                     return;
 
-                                CloseAllWallpapers(fireEvent: false, terminate: true);
+                                CloseAllWallpapers(fireEvent: false);
                                 if (!TrySetWallpaperSpanScreen(instance.Handle))
                                     Logger.Error("Failed to set wallpaper as child of WorkerW");
 
@@ -204,7 +204,7 @@ namespace Lively.Core
                             break;
                         case WallpaperArrangement.duplicate:
                             {
-                                CloseAllWallpapers(false, true);
+                                CloseAllWallpapers(false);
                                 foreach (var item in displayManager.DisplayMonitors)
                                 {
                                     IWallpaper instance = wallpaperFactory.CreateWallpaper(wallpaper, item, userSettings.Settings.WallpaperArrangement, userSettings);
@@ -325,7 +325,7 @@ namespace Lively.Core
                         var type = wallpaper.Model.DataType;
                         if (type == LibraryItemType.edit)
                         {
-                            CloseWallpaper(wallpaper.Model, terminate: true);
+                            CloseWallpaper(wallpaper.Model);
                         }
                         var tcs = new TaskCompletionSource<object>();
                         var thread = new Thread(() =>
@@ -557,7 +557,7 @@ namespace Lively.Core
                 Logger.Info("Restarting wallpaper service..");
                 // Copy existing wallpapers
                 var originalWallpapers = Wallpapers.ToList();
-                CloseAllWallpapers(true);
+                CloseAllWallpapers(false);
                 // Restart workerw
                 UpdateWorkerW();
                 if (workerw == IntPtr.Zero)
@@ -584,7 +584,7 @@ namespace Lively.Core
         {
             // Copy existing wallpapers
             var originalWallpapers = Wallpapers.ToList();
-            CloseAllWallpapers(true);
+            CloseAllWallpapers(false);
             foreach (var item in originalWallpapers)
             {
                 await SetWallpaperAsync(item.Model, item.Screen);
@@ -598,7 +598,7 @@ namespace Lively.Core
         {
             // Copy existing wallpapers
             var originalWallpapers = Wallpapers.Where(x => x.Screen.Equals(display)).ToList();
-            CloseWallpaper(display, true);
+            CloseWallpaper(display, false);
             foreach (var item in originalWallpapers)
             {
                 await SetWallpaperAsync(item.Model, item.Screen);
@@ -872,23 +872,16 @@ namespace Lively.Core
             }
         }
 
-        public void CloseAllWallpapers(bool terminate = false)
+        public void CloseAllWallpapers()
         {
-            CloseAllWallpapers(fireEvent: true, terminate: terminate);
+            CloseAllWallpapers(fireEvent: true);
         }
 
-        private void CloseAllWallpapers(bool fireEvent, bool terminate)
+        private void CloseAllWallpapers(bool fireEvent)
         {
             if (Wallpapers.Count > 0)
             {
-                if (terminate)
-                {
-                    wallpapers.ForEach(x => x.Terminate());
-                }
-                else
-                {
-                    wallpapers.ForEach(x => x.Close());
-                }
+                wallpapers.ForEach(x => x.Close());
                 wallpapers.Clear();
                 watchdog.Clear();
 
@@ -899,12 +892,12 @@ namespace Lively.Core
             }
         }
 
-        public void CloseWallpaper(DisplayMonitor display, bool terminate = false)
+        public void CloseWallpaper(DisplayMonitor display)
         {
-            CloseWallpaper(display: display, fireEvent: true, terminate: terminate);
+            CloseWallpaper(display: display, fireEvent: true);
         }
 
-        private void CloseWallpaper(DisplayMonitor display, bool fireEvent, bool terminate)
+        private void CloseWallpaper(DisplayMonitor display, bool fireEvent)
         {
             var tmp = wallpapers.FindAll(x => x.Screen.Equals(display));
             if (tmp.Count > 0)
@@ -916,14 +909,7 @@ namespace Lively.Core
                         watchdog.Remove(x.Proc.Id);
                     }
 
-                    if (terminate)
-                    {
-                        x.Terminate();
-                    }
-                    else
-                    {
-                        x.Close();
-                    }
+                    x.Close();
                 });
                 wallpapers.RemoveAll(x => tmp.Contains(x));
 
@@ -934,7 +920,7 @@ namespace Lively.Core
             }
         }
 
-        public void CloseWallpaper(WallpaperType type, bool terminate = false)
+        public void CloseWallpaper(WallpaperType type)
         {
             var tmp = wallpapers.FindAll(x => x.Category == type);
             if (tmp.Count > 0)
@@ -946,26 +932,19 @@ namespace Lively.Core
                         watchdog.Remove(x.Proc.Id);
                     }
 
-                    if (terminate)
-                    {
-                        x.Terminate();
-                    }
-                    else
-                    {
-                        x.Close();
-                    }
+                    x.Close();
                 });
                 wallpapers.RemoveAll(x => tmp.Contains(x));
                 WallpaperChanged?.Invoke(this, EventArgs.Empty);
             }
         }
 
-        public void CloseWallpaper(LibraryModel wp, bool terminate = false)
+        public void CloseWallpaper(LibraryModel wp)
         {
-            CloseWallpaper(wp: wp, fireEvent: true, terminate: terminate);
+            CloseWallpaper(wp: wp, fireEvent: true);
         }
 
-        private void CloseWallpaper(LibraryModel wp, bool fireEvent, bool terminate)
+        private void CloseWallpaper(LibraryModel wp, bool fireEvent)
         {
             //NOTE: To maintain compatibility with existing code ILibraryModel is still used.
             var tmp = wallpapers.FindAll(x => x.Model.LivelyInfoFolderPath == wp.LivelyInfoFolderPath);
@@ -978,14 +957,7 @@ namespace Lively.Core
                         watchdog.Remove(x.Proc.Id);
                     }
 
-                    if (terminate)
-                    {
-                        x.Terminate();
-                    }
-                    else
-                    {
-                        x.Close();
-                    }
+                    x.Close();
                 });
                 wallpapers.RemoveAll(x => tmp.Contains(x));
 
@@ -1044,7 +1016,7 @@ namespace Lively.Core
                 {
                     WallpaperChanged -= SetupDesktop_WallpaperChanged;
                     workerWHook?.Dispose();
-                    CloseAllWallpapers(false, true);
+                    CloseAllWallpapers(false);
                     DesktopUtil.RefreshDesktop();
 
                     //not required.. (need to restart if used.)

@@ -149,7 +149,7 @@ namespace Lively.RPC
 
         public override Task<Empty> CloseAllWallpapers(CloseAllWallpapersRequest request, ServerCallContext context)
         {
-            desktopCore.CloseAllWallpapers(request.Terminate);
+            desktopCore.CloseAllWallpapers();
             return Task.FromResult(new Empty());
         }
 
@@ -158,7 +158,7 @@ namespace Lively.RPC
             var display = displayManager.DisplayMonitors.FirstOrDefault(x => x.DeviceId == request.MonitorId);
             if (display != null)
             {
-                desktopCore.CloseWallpaper(display, request.Terminate);
+                desktopCore.CloseWallpaper(display);
             }
             return Task.FromResult(new Empty());
         }
@@ -168,7 +168,7 @@ namespace Lively.RPC
             try
             {
                 var lm = wallpaperLibraryFactory.CreateFromDirectory(request.LivelyInfoPath);
-                desktopCore.CloseWallpaper(lm, request.Terminate);
+                desktopCore.CloseWallpaper(lm);
             }
             catch (Exception e)
             {
@@ -182,7 +182,7 @@ namespace Lively.RPC
         {
             try
             {
-                desktopCore.CloseWallpaper((WallpaperType)((int)request.Category), request.Terminate);
+                desktopCore.CloseWallpaper((WallpaperType)((int)request.Category));
             }
             catch (Exception e)
             {

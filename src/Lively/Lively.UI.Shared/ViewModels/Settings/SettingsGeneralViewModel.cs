@@ -256,7 +256,7 @@ namespace Lively.UI.Shared.ViewModels
             }
 
             //exit all running wp's immediately
-            await desktopCore.CloseAllWallpapers(true);
+            await desktopCore.CloseAllWallpapers();
 
             var previousDirectory = userSettings.Settings.WallpaperDir;
             userSettings.Settings.WallpaperDir = newDir;
