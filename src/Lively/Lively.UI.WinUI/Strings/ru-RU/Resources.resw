@@ -1266,6 +1266,6 @@ Edge - встроенный в Windows 10 WebView.</value>
     <value>На резюме, экран входа в систему</value>
   </data>
   <data name="ScreensaverFadeIn.Header" xml:space="preserve">
-    <value>Fade to black before start</value>
+    <value>Затухание до черноты перед началом</value>
   </data>
 </root>

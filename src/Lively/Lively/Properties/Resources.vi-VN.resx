@@ -1254,10 +1254,10 @@ Nếu vẫn không thể hoạt động, đóng lại &amp; khởi động lại
     <value>Khởi động lại hình nền để xác nhận cài đặt</value>
   </data>
   <data name="LanguageSettingsItemSystemDefault.Content" xml:space="preserve">
-    <value>Same as System</value>
+    <value>Giống với Hệ thống</value>
   </data>
   <data name="InfoSettingsRestartRequest.Message" xml:space="preserve">
-    <value>Please restart application for settings to take effect.</value>
+    <value>Vui lòng khởi động lại app để cài đặt được áp dụng.</value>
   </data>
   <data name="ScreensaverLockOnResume.Header" xml:space="preserve">
     <value>Khi trở lại, hiển thị màn hình đăng nhập</value>

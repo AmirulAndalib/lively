@@ -1257,15 +1257,15 @@ Edge ialah Webview sedia ada bagi Windows 10.</value>
     <value>Hidupkan semula kertas dinding adalah diperlukan supaya tetapan berfungsi dengan baik</value>
   </data>
   <data name="LanguageSettingsItemSystemDefault.Content" xml:space="preserve">
-    <value>Same as System</value>
+    <value>Sama seperti Sistem</value>
   </data>
   <data name="InfoSettingsRestartRequest.Message" xml:space="preserve">
-    <value>Please restart application for settings to take effect.</value>
+    <value>Sila mulakan semula aplikasi untuk tetapan berkuat kuasa.</value>
   </data>
   <data name="ScreensaverLockOnResume.Header" xml:space="preserve">
     <value>Paparkan skrin log masuk ketika menyambung semula</value>
   </data>
   <data name="ScreensaverFadeIn.Header" xml:space="preserve">
-    <value>Fade to black before start</value>
+    <value>Pudar kepada hitam sebelum bermula</value>
   </data>
 </root>

@@ -1253,15 +1253,15 @@ https://github.com/rocksdanister/lively/wiki</value>
     <value>ဆက်တင်များအကျိုးသက်ရောက်စေရန် နောက်ခံပုံပြန်လည်စတင်ရန် လိုအပ်သည်</value>
   </data>
   <data name="LanguageSettingsItemSystemDefault.Content" xml:space="preserve">
-    <value>Same as System</value>
+    <value>System နဲ့အတူတူပါပဲ။</value>
   </data>
   <data name="InfoSettingsRestartRequest.Message" xml:space="preserve">
-    <value>Please restart application for settings to take effect.</value>
+    <value>ကျေးဇူးပြု၍ ဆက်တင်များအကျိုးသက်ရောက်စေရန် အပလီကေးရှင်းကို ပြန်လည်စတင်ပါ။.</value>
   </data>
   <data name="ScreensaverLockOnResume.Header" xml:space="preserve">
     <value>ကိုယ်ရေးမှတ်တမ်းတွင် အကောင့်ဝင်သည့်မျက်နှာပြင်ကိုပြသပါ</value>
   </data>
   <data name="ScreensaverFadeIn.Header" xml:space="preserve">
-    <value>Fade to black before start</value>
+    <value>မစတင်မီ အမည်းရောင်သို့ မှိန်သွားပါ။</value>
   </data>
 </root>

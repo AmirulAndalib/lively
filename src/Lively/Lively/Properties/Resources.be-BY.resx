@@ -1254,15 +1254,15 @@ https://github.com/rocksdanister/lively/wiki</value>
     <value>Патрабуецца перазапуск шпалер, каб налады пачалі дзейнічаць</value>
   </data>
   <data name="LanguageSettingsItemSystemDefault.Content" xml:space="preserve">
-    <value>Same as System</value>
+    <value>Так жа, як у сістэме</value>
   </data>
   <data name="InfoSettingsRestartRequest.Message" xml:space="preserve">
-    <value>Please restart application for settings to take effect.</value>
+    <value>Перазапусціце праграму, каб адбыліся змены.</value>
   </data>
   <data name="ScreensaverLockOnResume.Header" xml:space="preserve">
     <value>Паказваць экран уваходу пасля абуджэння</value>
   </data>
   <data name="ScreensaverFadeIn.Header" xml:space="preserve">
-    <value>Fade to black before start</value>
+    <value>Затухаць перад запускам</value>
   </data>
 </root>

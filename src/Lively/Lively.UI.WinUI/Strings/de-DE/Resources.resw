@@ -1262,6 +1262,6 @@ Wenn dies immer noch nicht funktioniert, schließen &amp; starten Sie Lively ode
     <value>Beim Fortsetzen den Anmeldebildschirm anzeigen</value>
   </data>
   <data name="ScreensaverFadeIn.Header" xml:space="preserve">
-    <value>Fade to black before start</value>
+    <value>Vor dem Start zu Schwarz verblassen</value>
   </data>
 </root>
