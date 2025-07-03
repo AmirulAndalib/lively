@@ -134,7 +134,7 @@ namespace Lively.UI.Shared.ViewModels
             foreach (var item in subsDto)
             {
                 var libItem = libraryVm.LibraryItems.FirstOrDefault(x => item.Id == x.LivelyInfo.Id);
-                Wallpapers.Add(new GalleryModel(item, libItem?.DataType == LibraryItemType.ready) { 
+                Wallpapers.Add(new GalleryModel(item, libItem?.IsReadyToSet ?? false) { 
                     IsDownloading = libItem?.IsDownloading ?? false 
                 });
             }

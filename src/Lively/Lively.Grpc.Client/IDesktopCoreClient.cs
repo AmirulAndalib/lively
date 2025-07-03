@@ -20,6 +20,8 @@ namespace Lively.Grpc.Client
         Task CloseWallpaper(WallpaperType type);
         Task SetWallpaper(LibraryModel item, DisplayMonitor display);
         Task SetWallpaper(string livelyInfoPath, string monitorId);
+        Task<bool> EditWallpaper(string livelyInfoPath);
+        Task<string> CreateWallpaper(string filePath, WallpaperType type, string arguments = null);
         void SendMessageWallpaper(LibraryModel obj, IpcMessage msg);
         void SendMessageWallpaper(DisplayMonitor display, LibraryModel obj, IpcMessage msg);
         Task PreviewWallpaper(string livelyInfoPath);
@@ -27,7 +29,6 @@ namespace Lively.Grpc.Client
 
         event EventHandler WallpaperChanged;
         event EventHandler<Exception> WallpaperError;
-        event EventHandler<WallpaperUpdatedData> WallpaperUpdated;
     }
 
     public class WallpaperData

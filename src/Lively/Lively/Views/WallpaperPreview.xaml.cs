@@ -2,11 +2,10 @@
 using Lively.Common.Helpers.Pinvoke;
 using Lively.Common.Services;
 using Lively.Core;
+using Lively.Extensions;
 using Lively.Factories;
-using Lively.Helpers;
 using Lively.Models;
 using Lively.Models.Enums;
-using Lively.Models.Message;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Threading.Tasks;
@@ -64,7 +63,7 @@ namespace Lively.Views
                 await wallpaper.ShowAsync();
 
                 //Attach wp hwnd to border ui element.
-                WpfUtil.SetProgramToFramework(this, wallpaper.Handle, PreviewBorder);
+                this.SetProgramToFramework(wallpaper.Handle, PreviewBorder);
                 //Fix for wallpaper overlapping window bordere in high dpi screens.
                 this.Width += 1;
             }
@@ -95,7 +94,7 @@ namespace Lively.Views
             if (wallpaper is null)
                 return;
 
-            var item = WpfUtil.GetAbsolutePlacement(PreviewBorder, true);
+            var item = PreviewBorder.GetAbsolutePlacement(true);
             NativeMethods.POINT pts = new NativeMethods.POINT() { X = (int)item.Left, Y = (int)item.Top };
             if (NativeMethods.ScreenToClient(new WindowInteropHelper(this).Handle, ref pts))
             {

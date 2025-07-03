@@ -9,14 +9,11 @@ using Lively.Common.Helpers.Shell;
 using Lively.Common.Services;
 using Lively.Core.Display;
 using Lively.Core.Watchdog;
-using Lively.Extensions;
 using Lively.Factories;
 using Lively.Helpers;
 using Lively.Models;
 using Lively.Models.Enums;
 using Lively.Models.Message;
-using Lively.ViewModels;
-using Lively.Views;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -27,7 +24,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Threading;
 using WinEventHook;
 
 namespace Lively.Core
@@ -43,7 +39,6 @@ namespace Lively.Core
         private bool disposedValue;
         private readonly List<WallpaperLayoutModel> wallpapersDisconnected = new();
 
-        public event EventHandler<WallpaperUpdateArgs> WallpaperUpdated;
         public event EventHandler<Exception> WallpaperError;
         public event EventHandler WallpaperChanged;
         public event EventHandler WallpaperReset;
@@ -138,8 +133,7 @@ namespace Lively.Core
                 Logger.Info($"Setting wallpaper: {wallpaper.Title} | {wallpaper.FilePath}");
 
                 // Verify file exists if outside wallpaper install folder
-                var fileExists = !wallpaper.LivelyInfo.IsAbsolutePath ? 
-                    File.Exists(wallpaper.FilePath) : wallpaper.LivelyInfo.Type.IsOnlineWallpaper() || File.Exists(wallpaper.FilePath);
+                var fileExists = !wallpaper.LivelyInfo.IsAbsolutePath || wallpaper.LivelyInfo.Type.IsOnlineWallpaper() || File.Exists(wallpaper.FilePath);
                 if (!fileExists)
                 {
                     Logger.Info($"Skipping wallpaper, file {wallpaper.LivelyInfo.FileName} not found.");
@@ -159,9 +153,6 @@ namespace Lively.Core
                             {
                                 IWallpaper instance = wallpaperFactory.CreateWallpaper(wallpaper, display, userSettings.Settings.WallpaperArrangement, userSettings);
                                 await instance.ShowAsync();
-                                var dialogOk = await ShowWallpaperDialog(instance);
-                                if (!dialogOk)
-                                    return;
 
                                 CloseWallpaper(instance.Screen, fireEvent: false);
                                 if (!TrySetWallpaperPerScreen(instance.Handle, instance.Screen))
@@ -183,9 +174,6 @@ namespace Lively.Core
                             {
                                 IWallpaper instance = wallpaperFactory.CreateWallpaper(wallpaper, display, userSettings.Settings.WallpaperArrangement, userSettings);
                                 await instance.ShowAsync();
-                                var dialogOk = await ShowWallpaperDialog(instance);
-                                if (!dialogOk)
-                                    return;
 
                                 CloseAllWallpapers(fireEvent: false);
                                 if (!TrySetWallpaperSpanScreen(instance.Handle))
@@ -209,9 +197,6 @@ namespace Lively.Core
                                 {
                                     IWallpaper instance = wallpaperFactory.CreateWallpaper(wallpaper, item, userSettings.Settings.WallpaperArrangement, userSettings);
                                     await instance.ShowAsync();
-                                    var dialogOk = await ShowWallpaperDialog(instance);
-                                    if (!dialogOk)
-                                        return;
 
                                     if (!TrySetWallpaperPerScreen(instance.Handle, instance.Screen))
                                         Logger.Error("Failed to set wallpaper as child of WorkerW");
@@ -247,13 +232,6 @@ namespace Lively.Core
                     Logger.Error(ex1);
                     WallpaperError?.Invoke(this, new WallpaperPluginNotFoundException(ex1.Message));
                     WallpaperChanged?.Invoke(this, EventArgs.Empty);
-
-                    if (wallpaper.DataType == LibraryItemType.processing)
-                    {
-                        WallpaperUpdated?.Invoke(this, new WallpaperUpdateArgs() { Category = UpdateWallpaperType.remove, Info = wallpaper.LivelyInfo, InfoPath = wallpaper.LivelyInfoFolderPath });
-                        //Deleting from core because incase UI client not running.
-                        await FileUtil.TryDeleteDirectoryAsync(wallpaper.LivelyInfoFolderPath, 0, 1000);
-                    }
                 }
                 catch (Win32Exception ex2)
                 {
@@ -307,108 +285,6 @@ namespace Lively.Core
                 Logger.Error("WorkerW destroyed.");
                 await ResetWallpaperAsync();
             }
-        }
-
-        private async Task<bool> ShowWallpaperDialog(IWallpaper wallpaper)
-        {
-            var cancelled = false;
-            switch (wallpaper.Model.DataType)
-            {
-                case LibraryItemType.edit:
-                case LibraryItemType.processing:
-                case LibraryItemType.multiImport:
-                case LibraryItemType.cmdImport:
-                    try
-                    {
-                        runner.SetBusyUI(true);
-                        //backup.. once processed is done, becomes ready.
-                        var type = wallpaper.Model.DataType;
-                        if (type == LibraryItemType.edit)
-                        {
-                            CloseWallpaper(wallpaper.Model);
-                        }
-                        var tcs = new TaskCompletionSource<object>();
-                        var thread = new Thread(() =>
-                        {
-                            try
-                            {
-                                _ = Application.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new ThreadStart(delegate
-                                {
-                                    var pWindow = new LibraryPreview(wallpaper)
-                                    {
-                                        Topmost = true,
-                                        ShowActivated = true,
-                                        WindowStartupLocation = WindowStartupLocation.CenterScreen
-                                    };
-                                    //pWindow.Closed += (s, a) => tcs.SetResult(null);
-                                    var vm = (LibraryPreviewViewModel)pWindow.DataContext;
-                                    vm.DetailsUpdated += (s, e) =>
-                                    {
-                                        cancelled = e.Category == UpdateWallpaperType.remove;
-                                        if (cancelled || e.Category == UpdateWallpaperType.done)
-                                        {
-                                            tcs.SetResult(null);
-                                        }
-                                        WallpaperUpdated?.Invoke(this, e);
-                                    };
-                                    pWindow.Show();
-                                    if (runner.IsVisibleUI)
-                                        pWindow.CenterToWindow(runner.HwndUI);
-                                }));
-                            }
-                            catch (Exception e)
-                            {
-                                tcs.SetException(e);
-                                Logger.Error(e);
-                            }
-                        });
-                        thread.SetApartmentState(ApartmentState.STA);
-                        thread.Start();
-                        await tcs.Task;
-
-                        if (type == LibraryItemType.edit)
-                        {
-                            wallpaper.Terminate();
-                            return false;
-                        }
-                        else if (type == LibraryItemType.multiImport)
-                        {
-                            wallpaper.Terminate();
-                            WallpaperChanged?.Invoke(this, EventArgs.Empty);
-                            return false;
-                        }
-                    }
-                    finally
-                    {
-                        runner.SetBusyUI(false);
-                    }
-                    break;
-                case LibraryItemType.ready:
-                    break;
-                default:
-                    break;
-            }
-
-            if (cancelled)
-            {
-                //User cancelled/fail!
-                wallpaper.Terminate();
-                DesktopUtil.RefreshDesktop();
-
-                try
-                {
-                    //Deleting here incase UI client is not running
-                    await FileUtil.TryDeleteDirectoryAsync(wallpaper.Model.LivelyInfoFolderPath, 0, 1000);
-                    if (wallpaper.LivelyPropertyCopyPath != null)
-                        await FileUtil.TryDeleteDirectoryAsync(Directory.GetParent(Path.GetDirectoryName(wallpaper.LivelyPropertyCopyPath)).FullName, 0, 1000);
-                }
-                catch (Exception ie)
-                {
-                    Logger.Error(ie);
-                }
-            }
-
-            return !cancelled;
         }
 
         private async Task SetDesktopPictureOrLockscreen(IWallpaper wallpaper)

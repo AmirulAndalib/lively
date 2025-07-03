@@ -21,7 +21,6 @@ namespace Lively.Grpc.Client
     {
         public event EventHandler WallpaperChanged;
         public event EventHandler<Exception> WallpaperError;
-        public event EventHandler<WallpaperUpdatedData> WallpaperUpdated;
 
         private readonly List<WallpaperData> wallpapers = new List<WallpaperData>(2);
         public ReadOnlyCollection<WallpaperData> Wallpapers => wallpapers.AsReadOnly();
@@ -31,8 +30,8 @@ namespace Lively.Grpc.Client
 
         private readonly DesktopService.DesktopServiceClient client;
         private readonly SemaphoreSlim wallpaperChangedLock = new SemaphoreSlim(1, 1);
-        private readonly CancellationTokenSource cancellationTokenWallpaperChanged, cancellationTokenWallpaperError, cancellationTokenWallpaperUpdated;
-        private readonly Task wallpaperChangedTask, wallpaperErrorTask, wallpaperUpdatedTask;
+        private readonly CancellationTokenSource cancellationTokenWallpaperChanged, cancellationTokenWallpaperError;
+        private readonly Task wallpaperChangedTask, wallpaperErrorTask;
         private bool disposedValue;
 
         public WinDesktopCoreClient()
@@ -52,8 +51,6 @@ namespace Lively.Grpc.Client
             wallpaperChangedTask = Task.Run(() => SubscribeWallpaperChangedStream(cancellationTokenWallpaperChanged.Token));
             cancellationTokenWallpaperError = new CancellationTokenSource();
             wallpaperErrorTask = Task.Run(() => SubscribeWallpaperErrorStream(cancellationTokenWallpaperError.Token));
-            cancellationTokenWallpaperUpdated = new CancellationTokenSource();
-            wallpaperUpdatedTask = Task.Run(() => SubscribeWallpaperUpdatedStream(cancellationTokenWallpaperUpdated.Token));
         }
 
         private async Task<GetCoreStatsResponse> GetCoreStats() => await client.GetCoreStatsAsync(new Empty());
@@ -75,9 +72,35 @@ namespace Lively.Grpc.Client
             {
                 LivelyInfoPath = item.LivelyInfoFolderPath,
                 MonitorId = display.DeviceId,
-                Type = (LibraryItemCategory)(int)item.DataType,
             };
             _ = await client.SetWallpaperAsync(request);
+        }
+
+        public async Task<bool> EditWallpaper(string livelyInfoPath)
+        {
+            var response = await client.EditWallpaperAsync(new EditWallpaperRequest() { 
+                LivelyInfoPath = livelyInfoPath
+            });
+
+            if (response.Error != null)
+                WallpaperError?.Invoke(this, GetException(response.Error));
+
+            return response.IsSuccess;
+        }
+
+        public async Task<string> CreateWallpaper(string filePath, WallpaperType type, string arguments = null)
+        {
+            var response = await client.CreateWallpaperAsync(new CreateWallpaperRequest()
+            {
+                FilePath = filePath,
+                Category = (WallpaperCategory)(int)type,
+                Arguments = string.IsNullOrWhiteSpace(arguments) ? string.Empty : arguments,
+            });
+
+            if (response.Error != null)
+                WallpaperError?.Invoke(this, GetException(response.Error));
+
+            return response.IsSuccess ? response.LivelyInfoPath : null;
         }
 
         private async Task<List<WallpaperData>> GetWallpapers()
@@ -225,19 +248,7 @@ namespace Lively.Grpc.Client
                 {
                     var response = call.ResponseStream.Current;
 
-                    var exp = response.Error switch
-                    {
-                        ErrorCategory.Workerw => new WorkerWException(response.ErrorMsg),
-                        ErrorCategory.WallpaperNotFound => new WallpaperNotFoundException(response.ErrorMsg),
-                        ErrorCategory.WallpaperNotAllowed => new WallpaperNotAllowedException(response.ErrorMsg),
-                        ErrorCategory.WallpaperPluginNotFound => new WallpaperPluginNotFoundException(response.ErrorMsg),
-                        ErrorCategory.WallpaperPluginFail => new WallpaperPluginException(response.ErrorMsg),
-                        ErrorCategory.WallpaperPluginMediaCodecMissing => new WallpaperPluginMediaCodecException(response.ErrorMsg),
-                        ErrorCategory.ScreenNotFound => new ScreenNotFoundException(response.ErrorMsg),
-                        ErrorCategory.WallpaperWebview2NotFound => new WallpaperWebView2NotFoundException(response.ErrorMsg),
-                        ErrorCategory.WallpaperFileError => new WallpaperFileException(response.ErrorMsg),
-                        _ => new Exception(response.ErrorMsg),
-                    };
+                    var exp = GetException(response);
                     WallpaperError?.Invoke(this, exp);
                 }
             }
@@ -247,36 +258,21 @@ namespace Lively.Grpc.Client
             }
         }
 
-        private async Task SubscribeWallpaperUpdatedStream(CancellationToken token)
+        private static Exception GetException(WallpaperErrorResponse error)
         {
-            try
+            return error.Error switch
             {
-                using var call = client.SubscribeUpdateWallpaper(new Empty());
-                while (await call.ResponseStream.MoveNext(token))
-                {
-                    var resp = call.ResponseStream.Current;
-                    var data = new WallpaperUpdatedData()
-                    {
-                        Info = new LivelyInfoModel()
-                        {
-                            Title = resp.Title,
-                            Desc = resp.Description,
-                            Author = resp.Author,
-                            Contact = resp.Website,
-                            Thumbnail = resp.ThumbnailPath,
-                            Preview = resp.PreviewPath,
-                            IsAbsolutePath = resp.IsAbsolutePath,
-                        },
-                        InfoPath = resp.LivelyInfoPath,
-                        Category = (UpdateWallpaperType)(int)resp.Type,
-                    };
-                    WallpaperUpdated?.Invoke(this, data);
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.ToString());
-            }
+                ErrorCategory.Workerw => new WorkerWException(error.ErrorMsg),
+                ErrorCategory.WallpaperNotFound => new WallpaperNotFoundException(error.ErrorMsg),
+                ErrorCategory.WallpaperNotAllowed => new WallpaperNotAllowedException(error.ErrorMsg),
+                ErrorCategory.WallpaperPluginNotFound => new WallpaperPluginNotFoundException(error.ErrorMsg),
+                ErrorCategory.WallpaperPluginFail => new WallpaperPluginException(error.ErrorMsg),
+                ErrorCategory.WallpaperPluginMediaCodecMissing => new WallpaperPluginMediaCodecException(error.ErrorMsg),
+                ErrorCategory.ScreenNotFound => new ScreenNotFoundException(error.ErrorMsg),
+                ErrorCategory.WallpaperWebview2NotFound => new WallpaperWebView2NotFoundException(error.ErrorMsg),
+                ErrorCategory.WallpaperFileError => new WallpaperFileException(error.ErrorMsg),
+                _ => new Exception(error.ErrorMsg),
+            };
         }
 
         #region dispose
@@ -290,8 +286,7 @@ namespace Lively.Grpc.Client
                     // TODO: dispose managed state (managed objects)
                     cancellationTokenWallpaperChanged?.Cancel();
                     cancellationTokenWallpaperError?.Cancel();
-                    cancellationTokenWallpaperUpdated?.Cancel();
-                    Task.WaitAll(wallpaperChangedTask, wallpaperErrorTask, wallpaperUpdatedTask);
+                    Task.WaitAll(wallpaperChangedTask, wallpaperErrorTask);
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override finalizer

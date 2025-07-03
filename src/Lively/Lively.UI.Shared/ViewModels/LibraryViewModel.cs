@@ -88,7 +88,6 @@ namespace Lively.UI.Shared.ViewModels
             UpdateSelectedWallpaper();
 
             desktopCore.WallpaperChanged += DesktopCore_WallpaperChanged;
-            desktopCore.WallpaperUpdated += DesktopCore_WallpaperUpdated;
             i18n.CultureChanged += I18n_CultureChanged;
         }
 
@@ -107,7 +106,7 @@ namespace Lively.UI.Shared.ViewModels
                 if (!userSettings.Settings.RememberSelectedScreen)
                     return;
 
-                if (value != null && value.DataType == LibraryItemType.ready)
+                if (value != null && value.IsReadyToSet)
                 {
                     var wallpapers = desktopCore.Wallpapers.Where(x => x.LivelyInfoFolderPath.Equals(value.LivelyInfoFolderPath, StringComparison.OrdinalIgnoreCase));
                     if (wallpapers.Any())
@@ -149,7 +148,7 @@ namespace Lively.UI.Shared.ViewModels
                 return;
             }
 
-            if (model is null || userSettings.Settings.RememberSelectedScreen || model.DataType != LibraryItemType.ready)
+            if (model is null || userSettings.Settings.RememberSelectedScreen || model.IsReadyToSet)
                 return;
 
             var monitor = displayManager.DisplayMonitors.Count == 1 || userSettings.Settings.WallpaperArrangement != WallpaperArrangement.per ?
@@ -217,33 +216,6 @@ namespace Lively.UI.Shared.ViewModels
             dispatcher.TryEnqueue(UpdateSelectedWallpaper);
         }
 
-        private void DesktopCore_WallpaperUpdated(object sender, WallpaperUpdatedData e)
-        {
-            dispatcher.TryEnqueue(() =>
-            {
-                var item = LibraryItems.FirstOrDefault(x => x.LivelyInfoFolderPath.Equals(e.InfoPath, StringComparison.OrdinalIgnoreCase));
-                if (item != null)
-                {
-                    if (e.Category == UpdateWallpaperType.changed)
-                    {
-                        //temporary for visual appearance only..
-                        item.Title = e.Info.Title;
-                        item.Desc = e.Info.Desc;
-                        item.ImagePath = e.Info.IsAbsolutePath ? e.Info.Thumbnail : Path.Combine(e.InfoPath, e.Info.Thumbnail);
-                    }
-                    else if (e.Category == UpdateWallpaperType.done)
-                    {
-                        LibraryItems.Remove(item);
-                        AddWallpaper(item.LivelyInfoFolderPath);
-                    }
-                    else if (e.Category == UpdateWallpaperType.remove)
-                    {
-                        LibraryItems.Remove(item);
-                    }
-                }
-            });
-        }
-
         /// <summary>
         /// Update library selected item based on selected display.
         /// </summary>
@@ -251,12 +223,12 @@ namespace Lively.UI.Shared.ViewModels
         {
             if (userSettings.Settings.WallpaperArrangement == WallpaperArrangement.span && desktopCore.Wallpapers.Count > 0)
             {
-                SelectedItem = LibraryItems.FirstOrDefault(x => x.DataType == LibraryItemType.ready && desktopCore.Wallpapers[0].LivelyInfoFolderPath.Equals(x.LivelyInfoFolderPath, StringComparison.OrdinalIgnoreCase));
+                SelectedItem = LibraryItems.FirstOrDefault(x => x.IsReadyToSet && desktopCore.Wallpapers[0].LivelyInfoFolderPath.Equals(x.LivelyInfoFolderPath, StringComparison.OrdinalIgnoreCase));
             }
             else
             {
                 var wallpaper = desktopCore.Wallpapers.FirstOrDefault(x => userSettings.Settings.SelectedDisplay.Equals(x.Display));
-                SelectedItem = LibraryItems.FirstOrDefault(x => x.DataType == LibraryItemType.ready && x.LivelyInfoFolderPath.Equals(wallpaper?.LivelyInfoFolderPath, StringComparison.OrdinalIgnoreCase));
+                SelectedItem = LibraryItems.FirstOrDefault(x => x.IsReadyToSet && x.LivelyInfoFolderPath.Equals(wallpaper?.LivelyInfoFolderPath, StringComparison.OrdinalIgnoreCase));
             }
         }
 
@@ -272,7 +244,7 @@ namespace Lively.UI.Shared.ViewModels
         {
             try
             {
-                if (obj.DataType == LibraryItemType.gallery)
+                if (unsubscribe)
                 {
                     CancelDownload(obj.LivelyInfo.Id);
                     return;
@@ -543,7 +515,7 @@ namespace Lively.UI.Shared.ViewModels
 
         private async Task<LibraryModel> AddWallpaperFileGallery(string filePath, string id)
         {
-            if (ZipExtract.IsLivelyZip(filePath))
+            if (FileTypes.IsWallpaperPackage(filePath))
             {
                 await semaphoreSlimInstallLock.WaitAsync();
                 string installDir = null;
@@ -576,118 +548,98 @@ namespace Lively.UI.Shared.ViewModels
             }
         }
 
-        public async Task<LibraryModel> AddWallpaperFile(string filePath)
+        public async Task<LibraryModel> AddWallpaperFile(string filePath, bool autoSetWallpaper)
         {
-            WallpaperType type;
-            if ((type = FileTypes.GetFileType(filePath)) != (WallpaperType)(-1))
+            if (FileTypes.IsWallpaperPackageExtension(filePath))
             {
-                if (type == (WallpaperType)100)
+                if (FileTypes.IsWallpaperPackage(filePath))
                 {
-                    //lively .zip is not a wallpaper type.
-                    if (ZipExtract.IsLivelyZip(filePath))
+                    await semaphoreSlimInstallLock.WaitAsync();
+                    string installDir = null;
+                    try
                     {
-                        await semaphoreSlimInstallLock.WaitAsync();
-                        string installDir = null;
+                        installDir = Path.Combine(userSettings.Settings.WallpaperDir, Constants.CommonPartialPaths.WallpaperInstallDir, Path.GetRandomFileName());
+                        await Task.Run(() => ZipExtract.ZipExtractFile(filePath, installDir, false));
+                        // We do not autoSetWallpaper for .zip
+                        return AddWallpaper(installDir);
+                    }
+                    catch (Exception)
+                    {
                         try
                         {
-                            installDir = Path.Combine(userSettings.Settings.WallpaperDir, Constants.CommonPartialPaths.WallpaperInstallDir, Path.GetRandomFileName());
-                            await Task.Run(() => ZipExtract.ZipExtractFile(filePath, installDir, false));
-                            return AddWallpaper(installDir);
+                            Directory.Delete(installDir, true);
                         }
-                        catch (Exception)
-                        {
-                            try
-                            {
-                                Directory.Delete(installDir, true);
-                            }
-                            catch { }
-                        }
-                        finally
-                        {
-                            semaphoreSlimInstallLock.Release();
-                        }
+                        catch { /* Nothing to do */ }
                     }
-                    else
+                    finally
                     {
-                        throw new InvalidOperationException(i18n.GetString("LivelyExceptionNotLivelyZip"));
+                        semaphoreSlimInstallLock.Release();
                     }
                 }
                 else
                 {
-                    var arguments = string.Empty;
-                    if (type.IsApplicationWallpaper())
-                        arguments = await dialogService.ShowTextInputDialogAsync(i18n.GetString("TextWallpaperCommandlineArgs"), "Examples: --myarguments1 -myargument2");
-
-                    var dir = Path.Combine(userSettings.Settings.WallpaperDir, Constants.CommonPartialPaths.WallpaperInstallTempDir, Path.GetRandomFileName());
-                    Directory.CreateDirectory(dir);
-                    var data = new LivelyInfoModel()
-                    {
-                        Title = Path.GetFileNameWithoutExtension(filePath),
-                        Type = type,
-                        IsAbsolutePath = true,
-                        FileName = filePath,
-                        Contact = string.Empty,
-                        Preview = string.Empty,
-                        Thumbnail = string.Empty,
-                        Arguments =  string.IsNullOrWhiteSpace(arguments) ? string.Empty : arguments,
-                    };
-
-                    JsonStorage<LivelyInfoModel>.StoreData(Path.Combine(dir, "LivelyInfo.json"), data);
-                    return AddWallpaper(dir, true);
+                    throw new InvalidOperationException(i18n.GetString("LivelyExceptionNotLivelyZip"));
                 }
+            }
+            else if (FileTypes.GetFileType(filePath) is not (WallpaperType)(-1) and var fileType)
+            {
+                var arguments = string.Empty;
+                if (fileType.IsApplicationWallpaper())
+                    arguments = await dialogService.ShowTextInputDialogAsync(i18n.GetString("TextWallpaperCommandlineArgs"), "Examples: --myarguments1 -myargument2");
+                var result = await desktopCore.CreateWallpaper(filePath, fileType, arguments);
+                var model = result != null ? AddWallpaper(result) : null;
+
+                if (autoSetWallpaper && model != null)
+                    await desktopCore.SetWallpaper(model, userSettings.Settings.SelectedDisplay);
+
+                return model;
             }
             throw new InvalidOperationException($"{i18n.GetString("TextUnsupportedFile")} ({Path.GetExtension(filePath)})");
         }
 
-        public LibraryModel AddWallpaperLink(string url)
-        {
-            var dir = Path.Combine(userSettings.Settings.WallpaperDir, Constants.CommonPartialPaths.WallpaperInstallTempDir, Path.GetRandomFileName());
-            Directory.CreateDirectory(dir);
-            var data = new LivelyInfoModel()
-            {
-                Title = LinkUtil.GetLastSegmentUrl(url),
-                Type = (userSettings.Settings.AutoDetectOnlineStreams && StreamUtil.IsSupportedStream(url)) ? WallpaperType.videostream : WallpaperType.url,
-                IsAbsolutePath = true,
-                FileName = url,
-                Contact = url,
-                Preview = string.Empty,
-                Thumbnail = string.Empty,
-                Arguments = string.Empty,
-            };
+        public async Task<LibraryModel> AddWallpaperLink(Uri uri, bool autoSetWallpaper) => await AddWallpaperLink(uri.OriginalString, autoSetWallpaper);
 
-            JsonStorage<LivelyInfoModel>.StoreData(Path.Combine(dir, "LivelyInfo.json"), data);
-            return AddWallpaper(dir, true);
+        public async Task<LibraryModel> AddWallpaperLink(string url, bool autoSetWallpaper)
+        {
+            var type = (userSettings.Settings.AutoDetectOnlineStreams && StreamUtil.IsSupportedStream(url)) ? WallpaperType.videostream : WallpaperType.url;
+            var result = await desktopCore.CreateWallpaper(url, type);
+            var model = result != null ? AddWallpaper(result) : null;
+
+            if (autoSetWallpaper && model != null)
+                await desktopCore.SetWallpaper(model, userSettings.Settings.SelectedDisplay);
+
+            return model;
         }
 
-        public LibraryModel AddWallpaperLink(Uri uri) => AddWallpaperLink(uri.OriginalString);
-
+        /// <summary>
+        /// Bulk import wallpapers; Only supports local media files and wallpaper package format.
+        /// </summary>
         public async Task AddWallpapers(List<string> files, CancellationToken cancellationToken, IProgress<int> progress)
         {
-            //display all Lively zip files first since its the first items to get processed.
-            files = files.OrderByDescending(x => Path.GetExtension(x).Equals(".zip", StringComparison.OrdinalIgnoreCase)).ToList();
-            var tcs = new TaskCompletionSource<bool>();
-            desktopCore.WallpaperChanged += WallpaperChanged;
-            void WallpaperChanged(object sender, EventArgs e)
-            {
-                tcs.SetResult(true);
-            }
-
+            // Bulk import only supports wallpaper package and media files.
+            files.RemoveAll(x => !FileTypes.IsWallpaperPackageExtension(x) && !FileTypes.GetFileType(x).IsMediaWallpaper());
             for (int i = 0; i < files.Count; i++)
             {
                 try
                 {
-                    var wallpaper = await AddWallpaperFile(files[i]);
-                    //Skipping .zip files already processed..
-                    if (wallpaper.DataType == LibraryItemType.processing)
-                    {
-                        wallpaper.DataType = LibraryItemType.multiImport;
-                        await desktopCore.SetWallpaper(wallpaper, userSettings.Settings.SelectedDisplay);
-                        await tcs.Task;
-                        tcs = new TaskCompletionSource<bool>();
-                    }
-
                     if (cancellationToken.IsCancellationRequested)
                         break;
+
+                    var file = files[i];
+                    if (FileTypes.IsWallpaperPackageExtension(file))
+                    {
+                        await AddWallpaperFile(file, false);
+                    }
+                    else
+                    {
+                        var wallpaperDirectory = Path.Combine(userSettings.Settings.WallpaperDir,
+                            Constants.CommonPartialPaths.WallpaperInstallTempDir,
+                            Path.GetRandomFileName());
+
+                        var metadata = await wallpaperLibraryFactory.CreateMediaWallpaperPackageAsync(file, wallpaperDirectory, true);
+                        if (metadata != null)
+                            AddWallpaperFolder(wallpaperDirectory);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -695,13 +647,11 @@ namespace Lively.UI.Shared.ViewModels
                 }
                 progress.Report(100 * (i + 1) / files.Count);
             }
-
-            desktopCore.WallpaperChanged -= WallpaperChanged;
         }
 
         public LibraryModel AddWallpaperFolder(string folder)
         {
-            return AddWallpaper(folder, false);
+            return AddWallpaper(folder);
         }
 
         /// <summary>
@@ -732,16 +682,13 @@ namespace Lively.UI.Shared.ViewModels
 
         #region helpers
 
-        private LibraryModel AddWallpaper(string folderPath, bool processing = false)
+        private LibraryModel AddWallpaper(string folderPath)
         {
             try
             {
                 var item = wallpaperLibraryFactory.CreateFromDirectory(folderPath);
                 LocalizeModel(item, userSettings.Settings.Language);
                 item.ImagePath = userSettings.Settings.UIMode != LivelyGUIState.lite ? item.ImagePath : item.ThumbnailPath;
-                //var index = processing ? 0 : BinarySearch(LibraryItems, libItem.Title);
-                item.DataType = processing ? LibraryItemType.processing : LibraryItemType.ready;
-                //LibraryItems.Insert(index, libItem);
                 LibraryItems.Add(item);
                 return item;
             }
@@ -750,6 +697,11 @@ namespace Lively.UI.Shared.ViewModels
                 Logger.Error(e);
             }
             return null;
+        }
+
+        public void RemoveWallpaper(LibraryModel model)
+        {
+            LibraryItems.Remove(model);
         }
 
         /// <summary>

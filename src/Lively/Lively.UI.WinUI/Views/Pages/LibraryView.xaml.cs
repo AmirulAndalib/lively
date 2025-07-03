@@ -80,9 +80,12 @@ namespace Lively.UI.WinUI.Views.Pages
                     await dialogService.ShowCustomiseWallpaperDialogAsync(obj);
                     break;
                 case "editWallpaper":
-                    obj.DataType = LibraryItemType.edit;
-                    libraryVm.LibraryItems.Move(libraryVm.LibraryItems.IndexOf(obj), 0);
-                    await desktopCore.SetWallpaper(obj, userSettings.Settings.SelectedDisplay);
+                    var success = await desktopCore.EditWallpaper(obj.LivelyInfoFolderPath);
+                    if (success)
+                    {
+                        libraryVm.RemoveWallpaper(obj);
+                        libraryVm.AddWallpaperFolder(obj.LivelyInfoFolderPath);
+                    }
                     break;
                 case "moreInformation":
                     await dialogService.ShowAboutWallpaperDialogAsync(obj);
@@ -99,7 +102,7 @@ namespace Lively.UI.WinUI.Views.Pages
             {
                 var a = ((FrameworkElement)e.OriginalSource).DataContext;
                 selectedTile = (LibraryModel)a;
-                if (selectedTile.DataType == LibraryItemType.ready)
+                if (selectedTile.IsReadyToSet)
                 {
                     var item = sender as GridView;
                     contextMenu.ShowAt(item, e.GetPosition(item));
@@ -119,7 +122,7 @@ namespace Lively.UI.WinUI.Views.Pages
             {
                 var a = ((FrameworkElement)e.OriginalSource).DataContext;
                 selectedTile = (LibraryModel)a;
-                if (selectedTile.DataType == LibraryItemType.ready)
+                if (selectedTile.IsReadyToSet)
                 {
                     customiseWallpaper.IsEnabled = selectedTile.LivelyPropertyPath != null;
                     contextMenu.ShowAt((UIElement)e.OriginalSource, new Point(0, 0));
@@ -146,19 +149,7 @@ namespace Lively.UI.WinUI.Views.Pages
                 Logger.Info($"Dropped string {uri}");
                 try
                 {
-                    var libItem = libraryVm.AddWallpaperLink(uri);
-                    if (libItem.LivelyInfo.IsAbsolutePath)
-                    {
-                        libItem.DataType = LibraryItemType.processing;
-                        await desktopCore.SetWallpaper(libItem, userSettings.Settings.SelectedDisplay);
-
-                        //var inputVm = App.Services.GetRequiredService<AddWallpaperDataViewModel>();
-                        //inputVm.Model = libItem;
-                        //await dialogService.ShowDialogAsync(new AddWallpaperDataView(inputVm),
-                        //    i18n.GetString("AddWallpaper/Label"),
-                        //    i18n.GetString("TextOk"),
-                        //    i18n.GetString("Cancel/Content"));
-                    }
+                    await libraryVm.AddWallpaperLink(uri, true);
                 }
                 catch (Exception ie)
                 {
@@ -195,9 +186,7 @@ namespace Lively.UI.WinUI.Views.Pages
                         {
                             case WallpaperCreateType.none:
                                 {
-                                    var result = await libraryVm.AddWallpaperFile(item);
-                                    if (result.DataType == LibraryItemType.processing)
-                                        await desktopCore.SetWallpaper(result, userSettings.Settings.SelectedDisplay);
+                                    await libraryVm.AddWallpaperFile(item, true);
                                 }
                                 break;
                             case WallpaperCreateType.depthmap:

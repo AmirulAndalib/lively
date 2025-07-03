@@ -23,6 +23,7 @@ using Lively.Models;
 using Lively.Models.Services;
 using Lively.RPC;
 using Lively.Services;
+using Lively.ViewModels;
 using Lively.Views;
 using Lively.Views.WindowMsg;
 using Microsoft.Extensions.DependencyInjection;
@@ -301,7 +302,7 @@ namespace Lively
         {
             //TODO: Logger abstraction.
             var provider = new ServiceCollection()
-                //singleton
+                // Singleton
                 .AddSingleton<IUserSettingsService, UserSettingsService>()
                 .AddSingleton<IDesktopCore, WinDesktopCore>()
                 .AddSingleton<IWatchdogService, WatchdogProcess>()
@@ -321,8 +322,8 @@ namespace Lively
                 .AddSingleton<AppUpdateServer>()
                 .AddSingleton<WallpaperPlaylistServer>()
                 .AddSingleton<IResourceService, ResourceService>()
-                //transient
-                //.AddTransient<IApplicationsRulesFactory, ApplicationsRulesFactory>()
+                // Transient
+                .AddTransient<LibraryPreviewViewModel>()
                 .AddTransient<IWallpaperLibraryFactory, WallpaperLibraryFactory>()
                 .AddTransient<IWallpaperPluginFactory, WallpaperPluginFactory>()
                 .AddTransient<ILivelyPropertyFactory, LivelyPropertyFactory>()

@@ -1,7 +1,12 @@
 ﻿using Lively.Common.Extensions;
+using Lively.Common.Helpers.Files;
+using Lively.Common.Helpers.Shell;
 using Lively.Common.Helpers.Storage;
 using Lively.Models;
+using Lively.Models.Enums;
+using System.Drawing.Imaging;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace Lively.Common.Factories
 {
@@ -25,7 +30,6 @@ namespace Lively.Common.Factories
                 LivelyInfoLocalizationPath = Path.Combine(folderPath, "LivelyInfo.loc.json"),
                 LivelyPropertyLocalizationPath = Path.Combine(folderPath, "LivelyProperties.loc.json"),
                 IsSubscribed = !string.IsNullOrEmpty(metadata.Id),
-                DataType = LibraryItemType.ready,
                 Title = metadata.Title,
                 Desc = metadata.Desc,
                 Author = metadata.Author
@@ -97,6 +101,111 @@ namespace Lively.Common.Factories
                 Author = metadata.Author,
                 ImagePath = metadata.Preview ?? metadata.Thumbnail,
             };
+        }
+
+        public LivelyInfoModel CreateWallpaperPackage(string filePath, string destDirectory, WallpaperType type, string arguments = null)
+        {
+            var contact = type.IsOnlineWallpaper() ? filePath : string.Empty;
+            var title = type.IsOnlineWallpaper() ? LinkUtil.GetLastSegmentUrl(filePath) : Path.GetFileNameWithoutExtension(filePath);
+            var metadata = new LivelyInfoModel()
+            {
+                Title = title,
+                Type = type,
+                IsAbsolutePath = true,
+                FileName = filePath,
+                Contact = contact,
+                Preview = string.Empty,
+                Thumbnail = string.Empty,
+                Arguments = arguments,
+            };
+
+            Directory.CreateDirectory(destDirectory);
+            JsonStorage<LivelyInfoModel>.StoreData(Path.Combine(destDirectory, "LivelyInfo.json"), metadata);
+            return metadata;
+        }
+
+        public async Task<LivelyInfoModel> CreateMediaWallpaperPackageAsync(string filePath, string destDirectory, bool copyFileToDest)
+        {
+            var fileType = FileTypes.GetFileType(filePath);
+            if (!fileType.IsMediaWallpaper() || fileType.IsOnlineWallpaper())
+                return null;
+
+            var title = Path.GetFileNameWithoutExtension(filePath);
+            var thumbnailPath = Path.Combine(destDirectory, Path.GetRandomFileName() + ".jpg");
+            var metadata = new LivelyInfoModel()
+            {
+                Title = title,
+                Type = fileType,
+                IsAbsolutePath = true,
+                FileName = filePath,
+                Contact = string.Empty,
+                Preview = string.Empty,
+                Thumbnail = thumbnailPath,
+                Arguments = string.Empty,
+            };
+
+            Directory.CreateDirectory(destDirectory);
+            // Create thumbnail, 512x512 quality is not guaranteed depending on file format and system codecs.
+            using var thumbnail = ThumbnailUtil.GetThumbnail(filePath, 512, 512, ThumbnailUtil.ThumbnailOptions.None);
+            thumbnail.Save(thumbnailPath, ImageFormat.Jpeg);
+            // Update metadata file.
+            JsonStorage<LivelyInfoModel>.StoreData(Path.Combine(destDirectory, "LivelyInfo.json"), metadata);
+
+            if (copyFileToDest)
+                await ConvertAbsoluteToRelativePathAsync(metadata, destDirectory);
+
+            return metadata;
+        }
+
+        public async Task ConvertAbsoluteToRelativePathAsync(LivelyInfoModel metadata, string folderPath)
+        {
+            if (!metadata.IsAbsolutePath)
+                return;
+
+            switch (metadata.Type)
+            {
+                case WallpaperType.video:
+                case WallpaperType.gif:
+                case WallpaperType.picture:
+                    {
+                        // Copy media file to destination.
+                        var sourcePath = metadata.FileName;
+                        var destinationPath = Path.Combine(folderPath, Path.GetFileName(sourcePath));
+                        await Task.Run(() => File.Copy(sourcePath, destinationPath, false));
+                        // Change fullpath to relative.
+                        metadata.FileName = Path.GetFileName(sourcePath);
+                    }
+                    break;
+                case WallpaperType.unityaudio:
+                case WallpaperType.app:
+                case WallpaperType.web:
+                case WallpaperType.webaudio:
+                case WallpaperType.bizhawk:
+                case WallpaperType.unity:
+                case WallpaperType.godot:
+                    {
+                        // Copy the entire directory containing the file.
+                        var sourceDir = Path.GetDirectoryName(metadata.FileName);
+                        await Task.Run(() => FileUtil.DirectoryCopy(sourceDir, folderPath, true));
+                        // Change fullpath to relative.
+                        metadata.FileName = Path.GetFileName(metadata.FileName);
+                    }
+                    break;
+                case WallpaperType.url:
+                case WallpaperType.videostream:
+                    {
+                        // Nothing to do
+                    }
+                    break;
+            }
+
+            // Change fullpath to relative.
+            metadata.Thumbnail = Path.GetFileName(metadata.Thumbnail);
+            metadata.Preview = Path.GetFileName(metadata.Preview);
+            metadata.IsAbsolutePath = false;
+
+            // Update wallpaper metadata file.
+            JsonStorage<LivelyInfoModel>.StoreData(Path.Combine(folderPath, "LivelyInfo.json"), metadata);
         }
     }
 }

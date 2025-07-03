@@ -7,17 +7,16 @@
     xmlns:ext="clr-namespace:Lively.Extensions"
     xmlns:local="clr-namespace:Lively.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:p="clr-namespace:Lively.Properties"
     Title="{ext:LocalizedString TitleLibrary}"
     Width="410"
     Height="630"
     Closing="Window_Closing"
     Loaded="Window_Loaded"
+    PreviewKeyDown="Window_PreviewKeyDown"
     ResizeMode="NoResize"
     Style="{DynamicResource WindowUI}"
     WindowStyle="None"
     mc:Ignorable="d">
-
     <Window.Resources>
         <converters:TaskbarProgressConverter x:Key="TaskbarProgressConverter" />
     </Window.Resources>
@@ -25,7 +24,7 @@
     <Window.TaskbarItemInfo>
         <TaskbarItemInfo
             x:Name="taskbarItemInfo"
-            ProgressState="None"
+            ProgressState="Normal"
             ProgressValue="{Binding CurrentProgress, Mode=OneWay, Converter={StaticResource TaskbarProgressConverter}}" />
     </Window.TaskbarItemInfo>
 
@@ -47,7 +46,6 @@
             <StackPanel>
                 <Label Margin="0,10,0,0" Content="{ext:LocalizedString Title_Text}" />
                 <TextBox
-                    Name="textboxTitle"
                     Height="20"
                     MinHeight="25"
                     MaxHeight="20"
@@ -56,11 +54,11 @@
                     VerticalContentAlignment="Center"
                     BorderThickness="0,0,0,1"
                     IsEnabled="{Binding IsUserEditable}"
+                    MaxLength="100"
                     Text="{Binding Title, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                 <Label Content="{ext:LocalizedString Description_Text}" />
                 <TextBox
-                    Name="textboxDesc"
                     Height="81"
                     MaxHeight="81"
                     Margin="10,5,25,10"
@@ -68,13 +66,13 @@
                     AcceptsReturn="True"
                     BorderThickness="0,0,0,1"
                     IsEnabled="{Binding IsUserEditable}"
-                    Text="{Binding Desc, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    MaxLength="5000"
+                    Text="{Binding Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     TextWrapping="Wrap"
                     VerticalScrollBarVisibility="Auto" />
 
                 <Label Content="{ext:LocalizedString Author_Text}" />
                 <TextBox
-                    Name="textboxAuthor"
                     Height="20"
                     MinHeight="25"
                     MaxHeight="20"
@@ -83,11 +81,11 @@
                     VerticalContentAlignment="Center"
                     BorderThickness="0,0,0,1"
                     IsEnabled="{Binding IsUserEditable}"
+                    MaxLength="100"
                     Text="{Binding Author, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                 <Label Content="{ext:LocalizedString Website_Header}" />
                 <TextBox
-                    Name="textboxContact"
                     Height="20"
                     MinHeight="25"
                     MaxHeight="20"
@@ -104,22 +102,19 @@
                         HorizontalAlignment="Right"
                         Orientation="Horizontal">
                         <Button
-                            x:Name="CancelBtn"
                             MinWidth="100"
                             MinHeight="30"
                             Margin="0,0,10,0"
                             Command="{Binding CancelCommand}"
                             Content="{ext:LocalizedString Cancel_Content}" />
                         <Button
-                            x:Name="OkBtn"
                             MinWidth="100"
-                            Command="{Binding CaptureCommand}"
+                            Command="{Binding StartCommand}"
                             Content="{ext:LocalizedString TextOK}"
                             IsDefault="True"
                             IsEnabled="{Binding IsUserEditable}" />
                     </StackPanel>
                     <ProgressBar
-                        Name="gifProgressBar"
                         MinHeight="2.5"
                         VerticalAlignment="Bottom"
                         Value="{Binding CurrentProgress, Mode=OneWay}" />

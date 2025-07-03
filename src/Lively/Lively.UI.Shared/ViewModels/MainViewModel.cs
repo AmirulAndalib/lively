@@ -12,6 +12,7 @@ using Lively.Models.Services;
 using Lively.Models.UserControls;
 using Lively.UI.Shared.Helpers;
 using Lively.UI.WinUI.Factories;
+using OperationResult;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -19,6 +20,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
 
 namespace Lively.UI.Shared.ViewModels
 {
@@ -309,9 +311,9 @@ namespace Lively.UI.Shared.ViewModels
             {
                 case WallpaperAddType.url:
                     {
-                        var libItem = libraryVm.AddWallpaperLink(result.wallpapers.FirstOrDefault());
-                        navigator.NavigateTo(ContentPageType.library);
-                        await desktopCore.SetWallpaper(libItem, userSettings.Settings.SelectedDisplay);
+                        var model = await libraryVm.AddWallpaperLink(result.wallpapers.FirstOrDefault(), true);
+                        if (model != null)
+                            navigator.NavigateTo(ContentPageType.library);
                     }
                     break;
                 case WallpaperAddType.files:
@@ -349,9 +351,7 @@ namespace Lively.UI.Shared.ViewModels
             {
                 case WallpaperCreateType.none:
                     {
-                        var item = await AddWallpaper(filePath);
-                        if (item is not null && item.DataType == LibraryItemType.processing)
-                            await desktopCore.SetWallpaper(item, userSettings.Settings.SelectedDisplay);
+                        await AddWallpaper(filePath);
                     }
                     break;
                 case WallpaperCreateType.depthmap:
@@ -379,7 +379,7 @@ namespace Lively.UI.Shared.ViewModels
                     ImportNotification.Message = Path.GetFileName(filePath);
                     ImportNotification.IsProgressIndeterminate = true;
                 }
-                result = await libraryVm.AddWallpaperFile(filePath);
+                result = await libraryVm.AddWallpaperFile(filePath, true);
             }
             catch (Exception ex)
             {

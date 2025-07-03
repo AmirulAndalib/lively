@@ -12,16 +12,39 @@ service DesktopService {
   rpc CloseWallpaperCategory(CloseWallpaperCategoryRequest) returns (google.protobuf.Empty);
   rpc SubscribeWallpaperChanged (google.protobuf.Empty) returns (stream google.protobuf.Empty);
   rpc SubscribeWallpaperError (google.protobuf.Empty) returns (stream WallpaperErrorResponse);
-  rpc SubscribeUpdateWallpaper (google.protobuf.Empty) returns (stream UpdateWallpaperResponse);
+  rpc SubscribeUpdateWallpaper (google.protobuf.Empty) returns (stream UpdateWallpaperResponse) { option deprecated = true; }
   rpc SendMessageWallpaper(WallpaperMessageRequest) returns (google.protobuf.Empty);
   rpc GetCoreStats (google.protobuf.Empty) returns (GetCoreStatsResponse);
   rpc TakeScreenshot(WallpaperScreenshotRequest) returns (google.protobuf.Empty);
+  rpc EditWallpaper(EditWallpaperRequest) returns (EditWallpaperResponse);
+  rpc CreateWallpaper(CreateWallpaperRequest) returns (CreateWallpaperResponse);
+}
+
+message EditWallpaperRequest {
+	string lively_info_path = 1;
+}
+
+message EditWallpaperResponse {
+	bool is_success = 1;
+	WallpaperErrorResponse error = 2;
+}
+
+message CreateWallpaperRequest {
+	string file_path = 1;
+	WallpaperCategory Category = 2;
+	string arguments = 3;
+}
+
+message CreateWallpaperResponse {
+	bool is_success = 1;
+	string lively_info_path = 2;
+	WallpaperErrorResponse error = 3;
 }
 
 message SetWallpaperRequest {
   string lively_info_path = 1;
   string monitor_id = 2;
-  LibraryItemCategory type = 3;
+  LibraryItemCategory type = 3 [deprecated = true];
 }
 
 message GetWallpapersResponse {

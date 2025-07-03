@@ -1,6 +1,5 @@
 ﻿using CommandLine;
 using Lively.Common;
-using Lively.Common.Extensions;
 using Lively.Common.Factories;
 using Lively.Common.Helpers.Shell;
 using Lively.Common.Helpers.Storage;
@@ -18,6 +17,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using static Lively.Common.CommandlineArgs;
@@ -64,19 +64,18 @@ namespace Lively.Commandline
             if (App.IsExclusiveScreensaverMode)
                 return;
 
-            _ = Parser.Default.ParseArguments<AppOptions, SetWallpaperOptions, CustomiseWallpaperOptions, CloseWallpaperOptions, ScreenSaverOptions, SeekWallpaperOptions, ScreenshotOptions>(args)
-                .MapResult(
-                    (AppOptions opts) => RunAppOptions(opts),
-                    (SetWallpaperOptions opts) => RunSetWallpaperOptions(opts),
-                    (CloseWallpaperOptions opts) => RunCloseWallpaperOptions(opts),
-                    (SeekWallpaperOptions opts) => RunSeekWallpaperOptions(opts),
-                    (CustomiseWallpaperOptions opts) => RunCustomiseWallpaperOptions(opts),
-                    (ScreenSaverOptions opts) => RunScreenSaverOptions(opts),
-                    (ScreenshotOptions opts) => RunScreenshotOptions(opts),
-                    errs => HandleParseError(errs));
+            Parser.Default.ParseArguments<AppOptions, SetWallpaperOptions, CustomiseWallpaperOptions, CloseWallpaperOptions, ScreenSaverOptions, SeekWallpaperOptions, ScreenshotOptions>(args)
+                .WithParsed<AppOptions>(async opts => await RunAppOptions(opts))
+                .WithParsed<SetWallpaperOptions>(async opts => await RunSetWallpaperOptions(opts))
+                .WithParsed<CloseWallpaperOptions>(opts => RunCloseWallpaperOptions(opts))
+                .WithParsed<SeekWallpaperOptions>(opts => RunSeekWallpaperOptions(opts))
+                .WithParsed<CustomiseWallpaperOptions>(opts => RunCustomiseWallpaperOptions(opts))
+                .WithParsed<ScreenSaverOptions>(opts => RunScreenSaverOptions(opts))
+                .WithParsed<ScreenshotOptions>(async opts => await RunScreenshotOptions(opts))
+                .WithNotParsed(errs => HandleParseError(errs));
         }
 
-        private int RunAppOptions(AppOptions opts)
+        private async Task RunAppOptions(AppOptions opts)
         {
             if (opts.ShowApp != null)
             {
@@ -114,7 +113,7 @@ namespace Lively.Commandline
             {
                 try
                 {
-                    _ = WindowsStartup.SetStartup((bool)opts.Startup);
+                    await WindowsStartup.SetStartup((bool)opts.Startup);
                 }
                 catch (Exception e)
                 {
@@ -149,11 +148,9 @@ namespace Lively.Commandline
                 };
                 userSettings.Save<SettingsModel>();
             }
-
-            return 0;
         }
 
-        private int RunSetWallpaperOptions(SetWallpaperOptions opts)
+        private async Task RunSetWallpaperOptions(SetWallpaperOptions opts)
         {
             if (opts.File != null)
             {
@@ -161,9 +158,9 @@ namespace Lively.Commandline
                 {
                     var screen = opts.Monitor != null ? displayManager.DisplayMonitors.FirstOrDefault(x => x.Index == (int)opts.Monitor) : null;
                     if (screen != null)
-                        _ = desktopCore.RestartWallpaper(screen);
+                        await desktopCore.RestartWallpaper(screen);
                     else
-                        _ = desktopCore.RestartWallpaper();
+                        await desktopCore.RestartWallpaper();
                 }
                 else if (opts.IsRandom)
                 {
@@ -178,7 +175,7 @@ namespace Lively.Commandline
                                     using var enumerator = wallpapers.GetEnumerator();
                                     var firstWallpaper = enumerator.MoveNext() ? enumerator.Current : null;
                                     if (firstWallpaper is null)
-                                        return 0;
+                                        return;
 
                                     var secondWallpaper = enumerator.MoveNext() ? enumerator.Current : null;
                                     var currentWallpaper = desktopCore.Wallpapers.FirstOrDefault(x => x.Screen.Equals(screen));
@@ -187,7 +184,7 @@ namespace Lively.Commandline
                                     var newWallpaper = secondWallpaper != null && currentWallpaper?.Model.LivelyInfoFolderPath == firstWallpaper.LivelyInfoFolderPath ?
                                         secondWallpaper : firstWallpaper;
 
-                                    _ = desktopCore.SetWallpaperAsync(newWallpaper, screen);
+                                    await desktopCore.SetWallpaperAsync(newWallpaper, screen);
                                 }
                                 else
                                 {
@@ -196,7 +193,7 @@ namespace Lively.Commandline
                                     // Fetch additional wallpaper for more randomness.
                                     var wallpapers = GetRandomWallpaper().Take(screenCount * 2);
                                     if (!wallpapers.Any())
-                                        return 0;
+                                        return;
 
                                     var usedWallpapers = new List<LibraryModel>();
                                     for (int i = 0; i < screenCount; i++)
@@ -214,7 +211,7 @@ namespace Lively.Commandline
 
                                         usedWallpapers.Add(newWallpaper);
 
-                                        _ = desktopCore.SetWallpaperAsync(newWallpaper, currentScreen);
+                                        await desktopCore.SetWallpaperAsync(newWallpaper, currentScreen);
                                     }
                                 }
                             }
@@ -226,7 +223,7 @@ namespace Lively.Commandline
                                 using var enumerator = wallpapers.GetEnumerator();
                                 var firstWallpaper = enumerator.MoveNext() ? enumerator.Current : null;
                                 if (firstWallpaper is null)
-                                    return 0;
+                                    return;
 
                                 var secondWallpaper = enumerator.MoveNext() ? enumerator.Current : null;
                                 var currentWallpaper = desktopCore.Wallpapers.FirstOrDefault();
@@ -235,7 +232,7 @@ namespace Lively.Commandline
                                 var newWallpaper = secondWallpaper != null && currentWallpaper?.Model.LivelyInfoFolderPath == firstWallpaper.LivelyInfoFolderPath ?
                                     secondWallpaper : firstWallpaper;
 
-                                _ = desktopCore.SetWallpaperAsync(newWallpaper, displayManager.PrimaryDisplayMonitor);
+                                await desktopCore.SetWallpaperAsync(newWallpaper, displayManager.PrimaryDisplayMonitor);
                             }
                             break;
                     }
@@ -252,7 +249,7 @@ namespace Lively.Commandline
                         {
                             var libraryItem = wallpaperLibraryFactory.CreateFromDirectory(opts.File);
                             if (screen != null)
-                                _ = desktopCore.SetWallpaperAsync(libraryItem, screen);
+                                await desktopCore.SetWallpaperAsync(libraryItem, screen);
                         }
                     }
                     catch { /* TODO */ }
@@ -264,41 +261,28 @@ namespace Lively.Commandline
                     LibraryModel libraryItem = GetWallpapers().FirstOrDefault(x => x.FilePath != null && x.FilePath.Equals(opts.File, StringComparison.OrdinalIgnoreCase));
 
                     if (screen is null)
-                        return 1;
+                        return;
 
                     if (libraryItem != null)
                     {
-                        _ = desktopCore.SetWallpaperAsync(libraryItem, screen);
+                        await desktopCore.SetWallpaperAsync(libraryItem, screen);
                     }
                     else
                     {
                         try
                         {
                             Logger.Info("Wallpaper not found in library, importing as new file..");
-                            var type = FileTypes.GetFileType(opts.File);
-                            if (type.IsMediaWallpaper())
+                            var dir = Path.Combine(userSettings.Settings.WallpaperDir, Constants.CommonPartialPaths.WallpaperInstallTempDir, Path.GetRandomFileName());
+                            var metadata = await wallpaperLibraryFactory.CreateMediaWallpaperPackageAsync(opts.File, dir, true);
+                            if (metadata != null)
                             {
-                                var dir = Path.Combine(userSettings.Settings.WallpaperDir, Constants.CommonPartialPaths.WallpaperInstallTempDir, Path.GetRandomFileName());
-                                Directory.CreateDirectory(dir);
-                                var data = new LivelyInfoModel()
-                                {
-                                    Title = Path.GetFileNameWithoutExtension(opts.File),
-                                    Type = type,
-                                    IsAbsolutePath = true,
-                                    FileName = opts.File,
-                                    Contact = string.Empty,
-                                    Preview = string.Empty,
-                                    Thumbnail = string.Empty,
-                                    Arguments = string.Empty,
-                                };
-                                JsonStorage<LivelyInfoModel>.StoreData(Path.Combine(dir, "LivelyInfo.json"), data);
-
                                 var model = wallpaperLibraryFactory.CreateFromDirectory(dir);
-                                model.DataType = LibraryItemType.cmdImport;
-                                _ = desktopCore.SetWallpaperAsync(model, screen);
+                                await desktopCore.SetWallpaperAsync(model, screen);
                             }
                             else
-                                Logger.Info($"Unsupported command import file:{type}");
+                            {
+                                Logger.Info($"Unsupported command import file:{opts.File}");
+                            }
                         }
                         catch (Exception e)
                         {
@@ -307,10 +291,9 @@ namespace Lively.Commandline
                     }
                 }
             }
-            return 0;
         }
 
-        private int RunCloseWallpaperOptions(CloseWallpaperOptions opts)
+        private void RunCloseWallpaperOptions(CloseWallpaperOptions opts)
         {
             if (opts.Monitor != null)
             {
@@ -330,10 +313,9 @@ namespace Lively.Commandline
                     }
                 }
             }
-            return 0;
         }
 
-        private int RunSeekWallpaperOptions(SeekWallpaperOptions opts)
+        private void RunSeekWallpaperOptions(SeekWallpaperOptions opts)
         {
             var screen = opts.Monitor != null ?
                 displayManager.DisplayMonitors.FirstOrDefault(x => x.Index == (int)opts.Monitor) : displayManager.PrimaryDisplayMonitor;
@@ -361,7 +343,6 @@ namespace Lively.Commandline
                     }
                 }
             }
-            return 0;
         }
 
         private void SeekWallpaper(float seek, PlaybackPosType type, DisplayMonitor screen, LibraryModel wp)
@@ -378,7 +359,7 @@ namespace Lively.Commandline
             }
         }
 
-        private int RunCustomiseWallpaperOptions(CustomiseWallpaperOptions opts)
+        private void RunCustomiseWallpaperOptions(CustomiseWallpaperOptions opts)
         {
             if (opts.Param != null)
             {
@@ -393,7 +374,7 @@ namespace Lively.Commandline
                         var wp = desktopCore.Wallpapers.FirstOrDefault(x => x.Screen.Equals(screen));
                         //only for running wallpaper instance unlike gui property..
                         if (wp == null)
-                            return 0;
+                            return;
 
                         //delimiter
                         var tmp = opts.Param.Split("=");
@@ -501,10 +482,9 @@ namespace Lively.Commandline
                     }
                 }
             }
-            return 0;
         }
 
-        private int RunScreenSaverOptions(ScreenSaverOptions opts)
+        private void RunScreenSaverOptions(ScreenSaverOptions opts)
         {
             if (opts.Show != null || opts.ShowExclusive != null)
             {
@@ -524,10 +504,9 @@ namespace Lively.Commandline
                     screenSaver.CreatePreview(new nint((int)opts.Preview));
                 }
             }));
-            return 0;
         }
 
-        private int RunScreenshotOptions(ScreenshotOptions opts)
+        private async Task RunScreenshotOptions(ScreenshotOptions opts)
         {
             if (opts.File is not null)
             {
@@ -542,19 +521,18 @@ namespace Lively.Commandline
                 if (screen is not null)
                 {
                     var wallpaper = desktopCore.Wallpapers.FirstOrDefault(x => x.Screen.Equals(screen));
-                    _ = wallpaper?.ScreenCapture(opts.File);
+                    if (wallpaper != null)
+                        await wallpaper.ScreenCapture(opts.File);
                 }
             }
-            return 0;
         }
 
-        private int HandleParseError(IEnumerable<Error> errs)
+        private void HandleParseError(IEnumerable<Error> errs)
         {
             foreach (var item in errs)
             {
                 Logger.Error(item.ToString());
             }
-            return 0;
         }
 
         #region helpers
