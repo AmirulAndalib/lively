@@ -12,6 +12,7 @@ using Lively.Models;
 using Lively.Models.Enums;
 using Lively.Views;
 using Lively.Views.WindowMsg;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -41,7 +42,7 @@ namespace Lively.Services
         private DwmThumbnailWindow dwmThumbnailWindow;
         private Window inputWindow;
         private uint idleWaitTime = 300000;
-        private bool startAsyncExecuting;
+        private bool startAsyncExecuting, stopAsyncExecuting;
 
         private readonly IUserSettingsService userSettings;
         private readonly IDesktopCore desktopCore;
@@ -70,11 +71,11 @@ namespace Lively.Services
 
         public async Task StartAsync(bool isFadeIn)
         {
-            if (IsRunning || startAsyncExecuting)
+            if (IsRunning || startAsyncExecuting || stopAsyncExecuting)
                 return;
 
             startAsyncExecuting = true;
-            await Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new ThreadStart(async () =>
+            await Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, async () =>
             {
                 // Fade-in
                 // Ref: https://github.com/rocksdanister/lively/issues/2736
@@ -125,36 +126,61 @@ namespace Lively.Services
                     startAsyncExecuting = false;
                     fadeInWindow?.Close();
                 }
-            }));
+            });
         }
 
-        public void Stop()
+        public async Task StopAsync()
         {
-            if (!IsRunning || startAsyncExecuting)
+            if (!IsRunning || startAsyncExecuting || stopAsyncExecuting)
                 return;
 
-            IsRunning = false;
-            _ = Application.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new ThreadStart(delegate
+            stopAsyncExecuting = true;
+            await Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, async () =>
             {
-                Logger.Info("Stopping screensaver..");
-                StopInputListener();
-                CloseScreensavers();
-                // Lock screen.
-                if (userSettings.Settings.ScreensaverLockOnResume)
+                try
                 {
-                    try
-                    {
-                        //async..
-                        LockWorkStationSafe();
-                    }
-                    catch (Win32Exception e)
-                    {
-                        Logger.Error("Failed to lock pc: " + e.Message);
-                    }
-                }
+                    Logger.Info("Stopping screensaver..");
+                    StopInputListener();
 
-                Stopped?.Invoke(this, EventArgs.Empty);
-            }));
+                    // Lock screen.
+                    if (userSettings.Settings.ScreensaverLockOnResume)
+                    {
+                        var lockTcs = new TaskCompletionSource<bool>();
+                        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                        using var _ = cts.Token.Register(() => lockTcs.TrySetResult(false));
+
+                        void SessionSwitchHandler(object s, SessionSwitchEventArgs e)
+                        {
+                            if (e.Reason == SessionSwitchReason.SessionLock)
+                                lockTcs.TrySetResult(true);
+                        }
+                        SystemEvents.SessionSwitch += SessionSwitchHandler;
+
+                        try
+                        {
+                            // This method behaves async
+                            LockWorkStationSafe();
+                            await lockTcs.Task;
+                        }
+                        catch (Win32Exception ex)
+                        {
+                            Logger.Error(ex);
+                        }
+                        finally
+                        {
+                            SystemEvents.SessionSwitch -= SessionSwitchHandler;
+                        }
+                    }
+
+                    IsRunning = false;
+                    CloseScreensavers();
+                    Stopped?.Invoke(this, EventArgs.Empty);
+                }
+                finally
+                { 
+                    stopAsyncExecuting = false; 
+                }
+            });
         }
 
         public void StartIdleTimer(uint idleTime)
@@ -180,9 +206,9 @@ namespace Lively.Services
             }
         }
 
-        private void DisplayManager_DisplayUpdated(object sender, EventArgs e)
+        private async void DisplayManager_DisplayUpdated(object sender, EventArgs e)
         {
-            Stop();
+            await StopAsync();
         }
 
         private async Task ShowScreensavers()
@@ -612,11 +638,11 @@ namespace Lively.Services
         //    inputWindow = null;
         //}
 
-        private void RawInputHook_KeyboardClickRaw(object sender, KeyboardClickRawArgs e) => Stop();
+        private async void RawInputHook_KeyboardClickRaw(object sender, KeyboardClickRawArgs e) => await StopAsync();
 
-        private void RawInputHook_MouseDownRaw(object sender, MouseClickRawArgs e) => Stop();
+        private async void RawInputHook_MouseDownRaw(object sender, MouseClickRawArgs e) => await StopAsync();
 
-        private void RawInputHook_MouseMoveRaw(object sender, MouseRawArgs e) => Stop();
+        private async void RawInputHook_MouseMoveRaw(object sender, MouseRawArgs e) => await StopAsync();
 
         private static void LockWorkStationSafe()
         {

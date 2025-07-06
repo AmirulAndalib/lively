@@ -70,7 +70,7 @@ namespace Lively.Commandline
                 .WithParsed<CloseWallpaperOptions>(opts => RunCloseWallpaperOptions(opts))
                 .WithParsed<SeekWallpaperOptions>(opts => RunSeekWallpaperOptions(opts))
                 .WithParsed<CustomiseWallpaperOptions>(opts => RunCustomiseWallpaperOptions(opts))
-                .WithParsed<ScreenSaverOptions>(opts => RunScreenSaverOptions(opts))
+                .WithParsed<ScreenSaverOptions>(async opts => await RunScreenSaverOptions(opts))
                 .WithParsed<ScreenshotOptions>(async opts => await RunScreenshotOptions(opts))
                 .WithNotParsed(errs => HandleParseError(errs));
         }
@@ -484,14 +484,14 @@ namespace Lively.Commandline
             }
         }
 
-        private void RunScreenSaverOptions(ScreenSaverOptions opts)
+        private async Task RunScreenSaverOptions(ScreenSaverOptions opts)
         {
             if (opts.Show != null || opts.ShowExclusive != null)
             {
                 if (opts.Show == true || opts.ShowExclusive == true)
-                    _ = screenSaver.StartAsync(opts.IsFadeIn ?? userSettings.Settings.ScreensaverFadeIn);
+                    await screenSaver.StartAsync(opts.IsFadeIn ?? userSettings.Settings.ScreensaverFadeIn);
                 else
-                    screenSaver.Stop();
+                    await screenSaver.StopAsync();
             }
 
             if (opts.Configure != null && opts.Configure == true)

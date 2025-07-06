@@ -70,15 +70,15 @@ namespace Lively.RPC
             return Task.FromResult(new Empty());
         }
 
-        public override Task<Empty> Screensaver(ScreensaverRequest request, ServerCallContext context)
+        public override async Task<Empty> Screensaver(ScreensaverRequest request, ServerCallContext context)
         {
             switch (request.State)
             {
                 case ScreensaverState.Start:
-                    _ = screensaver.StartAsync(request.FadeIn);
+                    await screensaver.StartAsync(request.FadeIn);
                     break;
                 case ScreensaverState.Stop:
-                    screensaver.Stop();
+                    await screensaver.StopAsync();
                     break;
                 case ScreensaverState.Preview:
                     _ = Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new ThreadStart(delegate
@@ -91,7 +91,7 @@ namespace Lively.RPC
                     runner.ShowUI();
                     break;
             }
-            return Task.FromResult(new Empty());
+            return await Task.FromResult(new Empty());
         }
 
         public override Task<Empty> ShutDown(Empty _, ServerCallContext context)
