@@ -55,6 +55,21 @@
                     </controls:SettingsCard>
                 </StackPanel>
 
+                <StackPanel>
+                    <TextBlock
+                        x:Uid="System"
+                        Margin="0,0,0,10"
+                        FontWeight="SemiBold" />
+                    <controls:SettingsCard
+                        Command="{Binding OpenWindowsSettingsCommand}"
+                        Header="Windows Settings"
+                        IsClickEnabled="True">
+                        <controls:SettingsCard.HeaderIcon>
+                            <FontIcon Glyph="&#xE770;" />
+                        </controls:SettingsCard.HeaderIcon>
+                    </controls:SettingsCard>
+                </StackPanel>
+
             </StackPanel>
         </ScrollViewer>
     </Grid>
