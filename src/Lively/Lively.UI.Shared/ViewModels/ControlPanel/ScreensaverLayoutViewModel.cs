@@ -5,10 +5,9 @@ using Lively.Common.Factories;
 using Lively.Common.Helpers.Storage;
 using Lively.Common.Services;
 using Lively.Grpc.Client;
-using Lively.Helpers;
 using Lively.Models;
 using Lively.Models.Enums;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -382,7 +381,12 @@ namespace Lively.UI.Shared.ViewModels
         {
             try
             {
-                return File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Lively.scr"));
+                using RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", false);
+                if (key?.GetValue("SCRNSAVE.EXE") is string path)
+                {
+                    var name = Path.GetFileNameWithoutExtension(path);
+                    return string.Equals(name, "Lively", StringComparison.OrdinalIgnoreCase);
+                }
             }
             catch (Exception ex)
             {
