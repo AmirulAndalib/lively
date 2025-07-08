@@ -147,11 +147,14 @@
                         </controls:SegmentedItem>
                     </controls:Segmented>
                 </controls:SettingsCard>
-                <!--<controls:SettingsCard Header="Settings" IsClickEnabled="True">
+                <controls:SettingsCard
+                    Command="{Binding OpenSettingsCommand}"
+                    Header="Settings"
+                    IsClickEnabled="True">
                     <controls:SettingsCard.HeaderIcon>
                         <FontIcon Glyph="&#xE713;" />
                     </controls:SettingsCard.HeaderIcon>
-                </controls:SettingsCard>-->
+                </controls:SettingsCard>
             </controls:SettingsExpander.Items>
         </controls:SettingsExpander>
     </Grid>

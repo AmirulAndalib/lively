@@ -28,7 +28,7 @@ namespace Lively.UI.WinUI
         private readonly AppUpdateViewModel appUpdateVm;
         private readonly IDialogService dialogService;
         private readonly ICommandsClient commands;
-        private readonly INavigator navigator;
+        private readonly IMainNavigator navigator;
         private readonly IResourceService i18n;
 
         public MainWindow(IDesktopCoreClient desktopCore,
@@ -39,7 +39,7 @@ namespace Lively.UI.WinUI
             LibraryViewModel libraryVm,
             AppUpdateViewModel appUpdateVm,
             IResourceService i18n,
-            INavigator navigator)
+            IMainNavigator navigator)
         {
             this.desktopCore = desktopCore;
             this.libraryVm = libraryVm;

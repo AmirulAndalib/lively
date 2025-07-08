@@ -57,6 +57,15 @@ namespace Lively.UI.Shared.ViewModels
         [ObservableProperty]
         private bool isHideDialog;
 
+        [ObservableProperty]
+        private bool isShowSettings;
+
+        [RelayCommand]
+        private void OpenSettings()
+        {
+            IsShowSettings = true;
+        }
+
         /// <summary>
         /// We are only saving the selection temporarily during the runtime of the transient class.
         /// </summary>

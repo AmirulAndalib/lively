@@ -9,19 +9,17 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using static Lively.UI.Shared.ViewModels.ControlPanelViewModel;
 
 namespace Lively.UI.Shared.ViewModels
 {
     public partial class WallpaperLayoutViewModel : ObservableObject
     {
-        public event EventHandler<NavigatePageEventArgs> NavigatePage;
-
         private readonly IUserSettingsClient userSettings;
         private readonly IDesktopCoreClient desktopCore;
         private readonly IDisplayManagerClient displayManager;
         private readonly IDispatcherService dispatcher;
         private readonly IServiceProvider serviceProvider;
+        private readonly IDialogNavigator dialogNavigator;
         private readonly LibraryViewModel libraryVm;
 
         private CustomiseWallpaperViewModel customiseWallpaperViewModel;
@@ -31,6 +29,7 @@ namespace Lively.UI.Shared.ViewModels
             IDisplayManagerClient displayManager,
             IDispatcherService dispatcher,
             IServiceProvider serviceProvider,
+            IDialogNavigator dialogNavigator,
             LibraryViewModel libraryVm)
         {
             this.displayManager = displayManager;
@@ -39,6 +38,7 @@ namespace Lively.UI.Shared.ViewModels
             this.libraryVm = libraryVm;
             this.dispatcher = dispatcher;
             this.serviceProvider = serviceProvider;
+            this.dialogNavigator = dialogNavigator;
 
             SelectedWallpaperLayoutIndex = (int)userSettings.Settings.WallpaperArrangement;
             IsRememberSelectedScreen = userSettings.Settings.RememberSelectedScreen;
@@ -196,7 +196,7 @@ namespace Lively.UI.Shared.ViewModels
                 {
                     customiseWallpaperViewModel = serviceProvider.GetRequiredService<CustomiseWallpaperViewModel>();
                     customiseWallpaperViewModel.Load(obj);
-                    NavigatePage?.Invoke(this, new NavigatePageEventArgs() { Tag = "customiseWallpaper", Arg = customiseWallpaperViewModel });
+                    dialogNavigator.NavigateTo(DialogPageType.controlPanelCustomise, customiseWallpaperViewModel);
                 }
             }
         }

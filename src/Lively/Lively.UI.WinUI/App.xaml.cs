@@ -15,14 +15,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using System;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
-using Windows.ApplicationModel.Resources.Core;
-using Windows.Globalization;
 using WinUIEx;
 using static Lively.Common.Constants;
 
@@ -120,7 +116,7 @@ namespace Lively.UI.WinUI
                 {
                     var m_window = Services.GetRequiredService<MainWindow>();
                     m_window.Activate();
-                    Services.GetRequiredService<INavigator>().NavigateTo(ContentPageType.appupdate);
+                    Services.GetRequiredService<IMainNavigator>().NavigateTo(ContentPageType.appupdate);
                 }
                 else
                 {
@@ -137,7 +133,7 @@ namespace Lively.UI.WinUI
         private IServiceProvider ConfigureServices()
         {
             var provider = new ServiceCollection()
-                //singleton
+                // Singleton
                 .AddSingleton<IDesktopCoreClient, WinDesktopCoreClient>()
                 .AddSingleton<IUserSettingsClient, UserSettingsClient>()
                 .AddSingleton<IDisplayManagerClient, DisplayManagerClient>()
@@ -146,7 +142,7 @@ namespace Lively.UI.WinUI
                 .AddSingleton<IDialogService, DialogService>()
                 .AddSingleton<IDispatcherService, DispatcherService>()
                 .AddSingleton<IResourceService, ResourceService>()
-                .AddSingleton<INavigator, Navigator>()
+                .AddSingleton<IMainNavigator, MainNavigator>()
                 .AddSingleton<MainWindow>()
                 .AddSingleton<MainViewModel>()
                 .AddSingleton<GalleryClient>((e) => new GalleryClient(e.GetRequiredService<IHttpClientFactory>(), "http://api.livelywallpaper.net/api/",
@@ -159,8 +155,9 @@ namespace Lively.UI.WinUI
                 .AddSingleton<AppUpdateViewModel>()
                 .AddSingleton<ICacheService, DiskCacheService>((e) => new DiskCacheService(e.GetRequiredService<IHttpClientFactory>(), Path.Combine(Path.GetTempPath(), "Lively Wallpaper", "gallery")))
                 .AddSingleton<IDepthEstimate, MiDaS>()
-                //transient
-                //.AddTransient<HelpViewModel>()
+                // Scoped
+                .AddScoped<IDialogNavigator, DialogNavigator>()
+                // Transient
                 .AddTransient<AboutViewModel>()
                 .AddTransient<CustomiseWallpaperViewModel>()
                 .AddTransient<PatreonSupportersViewModel>()

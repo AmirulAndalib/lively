@@ -37,7 +37,7 @@ namespace Lively.UI.Shared.ViewModels
         private readonly LibraryViewModel libraryVm;
         private readonly IFileService fileService;
         private readonly IResourceService i18n;
-        private readonly INavigator navigator;
+        private readonly IMainNavigator navigator;
         private readonly IDownloadService downloader;
         private readonly ICommandsClient commandsClient;
 
@@ -56,7 +56,7 @@ namespace Lively.UI.Shared.ViewModels
                              IFileService fileService,
                              LibraryViewModel libraryVm,
                              IResourceService i18n,
-                             INavigator navigator)
+                             IMainNavigator navigator)
         {
             this.commandsClient = commandsClient;
             this.userSettings = userSettings;
@@ -95,10 +95,10 @@ namespace Lively.UI.Shared.ViewModels
         }
 
         [ObservableProperty]
-        private ObservableCollection<NavigationItem> menuItems;
+        private ObservableCollection<MainNavigationItem> menuItems;
 
-        private NavigationItem selectedMenuItem;
-        public NavigationItem SelectedMenuItem
+        private MainNavigationItem selectedMenuItem;
+        public MainNavigationItem SelectedMenuItem
         {
             get => selectedMenuItem;
             set
@@ -570,7 +570,7 @@ namespace Lively.UI.Shared.ViewModels
             await dialogService.ShowGalleryEditProfileDialogAsync();
         }
 
-        private NavigationItem[] GetPages()
+        private MainNavigationItem[] GetPages()
         {
             return [
                 new() { Name = GetPageName(ContentPageType.library), Glyph = "\uE8A9", PageType = ContentPageType.library},

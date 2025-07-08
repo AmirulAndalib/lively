@@ -25,10 +25,14 @@ namespace Lively.UI.WinUI.Services
         public bool IsWorking { get; private set; }
 
         private readonly IResourceService i18n;
+        private readonly IMainNavigator navigator;
+        private readonly IServiceScopeFactory scopeFactory;
 
-        public DialogService(IResourceService i18n)
+        public DialogService(IResourceService i18n, IMainNavigator navigator, IServiceScopeFactory scopeFactory)
         {
             this.i18n = i18n;
+            this.navigator = navigator;
+            this.scopeFactory = scopeFactory;
         }
 
         public async Task<DisplayMonitor> ShowDisplayChooseDialogAsync()
@@ -305,24 +309,27 @@ namespace Lively.UI.WinUI.Services
         public async Task ShowControlPanelDialogAsync()
         {
             var isDialogVisible = true;
-            var vm = App.Services.GetRequiredService<ControlPanelViewModel>();
+            using var scope = scopeFactory.CreateScope();
+            var viewModel = scope.ServiceProvider.GetRequiredService<ControlPanelViewModel>();
+            var dialogNavigator = scope.ServiceProvider.GetRequiredService<IDialogNavigator>();
+
             var dialog = new ContentDialog()
             {
                 Title = i18n.GetString("DescriptionScreenLayout"),
-                Content = new ControlPanelView(vm),
+                Content = new ControlPanelView(viewModel, dialogNavigator),
                 PrimaryButtonText = i18n.GetString("TextOK"),
                 DefaultButton = ContentDialogButton.Primary,
                 XamlRoot = App.Services.GetRequiredService<MainWindow>().Content.XamlRoot,
             };
             dialog.Closed += OnDialogClose;
-            vm.PropertyChanged += PropertyChanged;
+            viewModel.PropertyChanged += PropertyChanged;
             await dialog.ShowAsyncQueue();
 
             async void PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
             {
-                if (e.PropertyName == nameof(vm.IsHideDialog))
+                if (e.PropertyName == nameof(viewModel.IsHideDialog))
                 {
-                    if (vm.IsHideDialog)
+                    if (viewModel.IsHideDialog)
                     {
                         isDialogVisible = false;
                         dialog.Hide();
@@ -334,6 +341,11 @@ namespace Lively.UI.WinUI.Services
                         await dialog.ShowAsyncQueue();
                     }
                 }
+                else if (e.PropertyName == nameof(viewModel.IsShowScreensaverSettings))
+                {
+                    dialog.Hide();
+                    navigator.NavigateTo(ContentPageType.settingsScreensaver);
+                }
             }
 
             void OnDialogClose(object sender, ContentDialogClosedEventArgs args)
@@ -344,8 +356,8 @@ namespace Lively.UI.WinUI.Services
 
             void OnWindowClose()
             {
-                vm.OnWindowClosing(this, EventArgs.Empty);
-                vm.PropertyChanged -= PropertyChanged;
+                viewModel.OnWindowClosing(this, EventArgs.Empty);
+                viewModel.PropertyChanged -= PropertyChanged;
                 dialog.Closed -= OnDialogClose;
             }
         }

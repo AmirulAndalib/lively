@@ -3,7 +3,7 @@ using Lively.Models.Enums;
 
 namespace Lively.Models.UserControls
 {
-    public partial class NavigationItem : ObservableObject
+    public partial class MainNavigationItem : ObservableObject
     {
         [ObservableProperty]
         private string name;

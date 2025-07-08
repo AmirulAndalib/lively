@@ -9,7 +9,7 @@ using System;
 
 namespace Lively.UI.WinUI.Services
 {
-    public class Navigator : INavigator
+    public class MainNavigator : IMainNavigator
     {
         /// <inheritdoc/>
         public event EventHandler<ContentPageType>? ContentPageChanged;

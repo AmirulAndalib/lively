@@ -11,7 +11,7 @@ namespace Lively.UI.WinUI.Helpers
 
         protected override DataTemplate SelectTemplateCore(object item)
         {
-            return item is NavigationItem navItem && !string.IsNullOrEmpty(navItem.Glyph) ? 
+            return item is MainNavigationItem navItem && !string.IsNullOrEmpty(navItem.Glyph) ? 
                 MainTemplate : SettingsTemplate;
         }
     }
