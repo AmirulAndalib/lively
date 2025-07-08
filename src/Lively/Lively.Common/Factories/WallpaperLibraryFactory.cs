@@ -67,8 +67,11 @@ namespace Lively.Common.Factories
                 result.ThumbnailPath = TryPathCombine(folderPath, metadata.Thumbnail);
             }
 
+            //Verify
+            result.ThumbnailPath = File.Exists(result.ThumbnailPath) ? result.ThumbnailPath : null;
+            result.PreviewClipPath = File.Exists(result.PreviewClipPath) ? result.PreviewClipPath : null;
             //Use preview if available
-            result.ImagePath = File.Exists(result.PreviewClipPath) ? result.PreviewClipPath : result.ThumbnailPath;
+            result.ImagePath = result.PreviewClipPath ?? result.ThumbnailPath;
             //Default video player property, otherwise verify if wallpaper is customisable
             if (metadata.Type.IsMediaWallpaper())
                 result.LivelyPropertyPath = File.Exists(result.LivelyPropertyPath) ? 
@@ -99,7 +102,7 @@ namespace Lively.Common.Factories
                 Title = metadata.Title,
                 Desc = metadata.Desc,
                 Author = metadata.Author,
-                ImagePath = metadata.Preview ?? metadata.Thumbnail,
+                ImagePath = File.Exists(metadata.Preview) ? metadata.Preview : metadata.Thumbnail,
             };
         }
 
@@ -200,8 +203,8 @@ namespace Lively.Common.Factories
             }
 
             // Change fullpath to relative.
-            metadata.Thumbnail = Path.GetFileName(metadata.Thumbnail);
-            metadata.Preview = Path.GetFileName(metadata.Preview);
+            metadata.Thumbnail = File.Exists(metadata.Thumbnail) ? Path.GetFileName(metadata.Thumbnail) : null;
+            metadata.Preview = File.Exists(metadata.Preview) ? Path.GetFileName(metadata.Preview) : null;
             metadata.IsAbsolutePath = false;
 
             // Update wallpaper metadata file.

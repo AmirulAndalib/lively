@@ -33,14 +33,12 @@ namespace Lively.UI.Shared.ViewModels
         private readonly IDownloadService downloader;
         private readonly LibraryViewModel libraryVm;
         private readonly IUserSettingsClient userSettings;
-        private readonly IDispatcherService dispatcher;
         private readonly IDesktopCoreClient desktopCore;
 
         public DepthEstimateWallpaperViewModel(IDepthEstimate depthEstimate,
             IDownloadService downloader,
             LibraryViewModel libraryVm,
             IUserSettingsClient userSettings,
-            IDispatcherService dispatcher,
             IResourceService i18n,
             IDesktopCoreClient desktopCore)
         {
@@ -49,7 +47,6 @@ namespace Lively.UI.Shared.ViewModels
             this.libraryVm = libraryVm;
             this.userSettings = userSettings;
             this.desktopCore = desktopCore;
-            this.dispatcher = dispatcher;
 
             this.i18n = i18n;
 
