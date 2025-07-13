@@ -1,5 +1,6 @@
 ﻿using Lively.Common.Helpers.Pinvoke;
 using Lively.Models;
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
@@ -11,6 +12,20 @@ namespace Lively.Common.Factories
     public class ApplicationsFactory : IApplicationsFactory
     {
         private readonly string cacheDir = Path.Combine(Constants.CommonPaths.TempDir, "icons");
+
+        public ApplicationModel CreateApp(IntPtr hwnd)
+        {
+            try
+            {
+                NativeMethods.GetWindowThreadProcessId(hwnd, out int pid);
+                var process = Process.GetProcessById(pid);
+                return CreateApp(process);
+            }
+            catch
+            {
+                return null;
+            }
+        }
 
         public ApplicationModel CreateApp(Process process)
         {

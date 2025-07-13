@@ -38,7 +38,7 @@
                         </Grid>
                     </controls:SettingsCard>
 
-                    <controls:SettingsCard x:Uid="AppFocus">
+                    <controls:SettingsCard x:Uid="AppFocus" IsEnabled="{Binding IsSelectedAppFocus, Mode=OneWay}">
                         <controls:SettingsCard.HeaderIcon>
                             <FontIcon Glyph="&#xE90C;" />
                         </controls:SettingsCard.HeaderIcon>
@@ -148,8 +148,9 @@
                         </controls:SettingsCard.HeaderIcon>
                         <ComboBox MinWidth="{StaticResource SettingActionControlMinWidth}" SelectedIndex="{Binding SelectedPauseAlgorithmIndex, Mode=TwoWay}">
                             <ComboBoxItem x:Uid="PauseAlgorithmTypeForegroundProcess" />
-                            <ComboBoxItem x:Uid="PauseAlgorithmTypeAllProcess" Visibility="Collapsed" />
+                            <ComboBoxItem x:Uid="PauseAlgorithmTypeAllProcess" />
                             <ComboBoxItem x:Uid="PauseAlgorithmTypeExclusiveMode" />
+                            <ComboBoxItem>Grid</ComboBoxItem>
                         </ComboBox>
                     </controls:SettingsCard>
                     <InfoBar

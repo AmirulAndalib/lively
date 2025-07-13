@@ -94,6 +94,14 @@ namespace Lively.Views.WindowMsg
                     folderView = NativeMethods.FindWindowEx(workerWOrig, IntPtr.Zero, "SHELLDLL_DefView", null);
                 } while (folderView == IntPtr.Zero && workerWOrig != IntPtr.Zero);
             }
+
+            if (workerWOrig == IntPtr.Zero)
+            {
+                workerWOrig = NativeMethods.FindWindowEx(progman,
+                                                IntPtr.Zero,
+                                                "WorkerW",
+                                                IntPtr.Zero);
+            }
             Logger.Info("Desktop handles updated.");
         }
 

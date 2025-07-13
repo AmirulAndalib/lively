@@ -16,10 +16,10 @@ using Lively.Factories;
 using Lively.Grpc.Common.Proto.Commands;
 using Lively.Grpc.Common.Proto.Desktop;
 using Lively.Grpc.Common.Proto.Display;
-using Lively.Grpc.Common.Proto.Settings;
 using Lively.Grpc.Common.Proto.Update;
 using Lively.Helpers;
 using Lively.Models;
+using Lively.Models.Enums;
 using Lively.Models.Services;
 using Lively.RPC;
 using Lively.Services;
@@ -123,121 +123,20 @@ namespace Lively
 
             try
             {
-                //clear temp files from previous run if any..
-                FileUtil.EmptyDirectory(Constants.CommonPaths.TempDir);
-                FileUtil.EmptyDirectory(Constants.CommonPaths.ThemeCacheDir);
-                FileUtil.EmptyDirectory(Constants.CommonPaths.CefRootCacheDir);
-            }
-            catch { /* TODO */ }
-
-            try
-            {
-                //create directories if not exist, eg: C:\Users\<User>\AppData\Local
-                Directory.CreateDirectory(Constants.CommonPaths.AppDataDir);
-                Directory.CreateDirectory(Constants.CommonPaths.LogDir);
-                Directory.CreateDirectory(Constants.CommonPaths.ThemeDir);
-                Directory.CreateDirectory(Constants.CommonPaths.TempDir);
-                Directory.CreateDirectory(Constants.CommonPaths.TempCefDir);
-                Directory.CreateDirectory(Constants.CommonPaths.TempVideoDir);
-                Directory.CreateDirectory(Constants.CommonPaths.ThemeCacheDir);
+                // Run startup tasks.
+                Services.GetRequiredService<AppInitializer>().Run();
+                Services.GetRequiredService<WndProcMsgWindow>().Show();
+                Services.GetRequiredService<RawInputMsgWindow>().Show();
+                Services.GetRequiredService<IPlayback>().Start();
+                Services.GetRequiredService<ISystray>();
             }
             catch (Exception ex)
             {
-                //nothing much can be done here..
-                MessageBox.Show(ex.Message, "AppData directory creation failed, exiting Lively..", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(ex.ToString(), ex.Message, MessageBoxButton.OK, MessageBoxImage.Error);
                 QuitApp();
                 return;
             }
-
-            try
-            {
-                //default livelyproperty for media files..
-                var mediaProperty = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "mpv", "api", "LivelyProperties.json");
-                if (File.Exists(mediaProperty))
-                {
-                    File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "mpv", "api", "LivelyProperties.json"),
-                        Path.Combine(Constants.CommonPaths.TempVideoDir, "LivelyProperties.json"), true);
-                }
-            }
-            catch { /* TODO */ }
-
-            try
-            {
-                CreateWallpaperDir(userSettings.Settings.WallpaperDir);
-            }
-            catch (Exception ex)
-            {
-                Logger.Error($"Wallpaper directory setup failed: {ex.Message}, falling back to default.");
-                userSettings.Settings.WallpaperDir = Path.Combine(Constants.CommonPaths.AppDataDir, "Library");
-                CreateWallpaperDir(userSettings.Settings.WallpaperDir);
-                userSettings.Save<SettingsModel>();
-            }
-
-            Services.GetRequiredService<WndProcMsgWindow>().Show();
-            Services.GetRequiredService<RawInputMsgWindow>().Show();
-            Services.GetRequiredService<IPlayback>().Start();
-            Services.GetRequiredService<ISystray>();
             
-            //Install any new asset collection if present, do this before restoring wallpaper incase wallpaper is updated.
-            if (userSettings.Settings.IsUpdated || userSettings.Settings.IsFirstRun)
-            {
-                SplashWindow spl = new(0, 500); 
-                spl.Show();
-
-                // Install default wallpapers or updates.
-                var maxWallpaper = ZipExtract.ExtractAssetBundle(userSettings.Settings.WallpaperBundleVersion,
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bundle", "wallpapers"),
-                    Path.Combine(userSettings.Settings.WallpaperDir, Constants.CommonPartialPaths.WallpaperInstallDir));
-                var maxTheme = ZipExtract.ExtractAssetBundle(userSettings.Settings.ThemeBundleVersion,
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bundle", "themes"),
-                    Path.Combine(Constants.CommonPaths.ThemeDir));
-                if (maxTheme != userSettings.Settings.ThemeBundleVersion || maxWallpaper != userSettings.Settings.WallpaperBundleVersion)
-                {
-                    userSettings.Settings.WallpaperBundleVersion = maxWallpaper;
-                    userSettings.Settings.ThemeBundleVersion = maxTheme;
-                    userSettings.Save<SettingsModel>();
-                }
-
-                // Mpv property file changed in v2.1, delete user data.
-                if (userSettings.Settings.IsUpdated
-                    && !string.IsNullOrWhiteSpace(userSettings.Settings.AppPreviousVersion)
-                    && new Version(userSettings.Settings.AppPreviousVersion) < new Version(2, 1, 0, 0))
-                {
-                    var wallpaperLibraryFactory = Services.GetRequiredService<IWallpaperLibraryFactory>();
-                    var dir = new List<string>();
-                    string[] folderPaths = {
-                        Path.Combine(userSettings.Settings.WallpaperDir, Constants.CommonPartialPaths.WallpaperInstallDir),
-                        Path.Combine(userSettings.Settings.WallpaperDir, Constants.CommonPartialPaths.WallpaperInstallTempDir)
-                    };
-                    for (int i = 0; i < folderPaths.Count(); i++)
-                    {
-                        try
-                        {
-                            dir.AddRange(Directory.GetDirectories(folderPaths[i], "*", SearchOption.TopDirectoryOnly));
-                        }
-                        catch { /* TODO */ }
-                    }
-
-                    for (int i = 0; i < dir.Count; i++)
-                    {
-                        try
-                        {
-                            var metadata = wallpaperLibraryFactory.GetMetadata(dir[i]);
-                            if (metadata.Type.IsMediaWallpaper())
-                            {
-                                var dataFolder = Path.Combine(userSettings.Settings.WallpaperDir, Constants.CommonPartialPaths.WallpaperSettingsDir);
-                                var wallpaperDataFolder = Path.Combine(dataFolder, new DirectoryInfo(dir[i]).Name);
-                                if (Directory.Exists(wallpaperDataFolder))
-                                    Directory.Delete(wallpaperDataFolder, true);
-                            }
-                        }
-                        catch { }
-                    }
-                }
-
-                spl.Close();
-            }
-
             // System notification.
             Services.GetRequiredService<IDesktopCore>().WallpaperError += (s, e) =>
             {
@@ -264,6 +163,11 @@ namespace Lively
             // First run setup wizard show.
             if (userSettings.Settings.IsFirstRun)
                 Services.GetRequiredService<IRunnerService>().ShowUI();
+
+            if (userSettings.Settings.SystemTaskbarTheme != TaskbarTheme.none)
+                Services.GetRequiredService<ITransparentTbService>().Start(userSettings.Settings.SystemTaskbarTheme);
+
+            _ = WindowsStartup.TrySetStartup(userSettings.Settings.Startup);
 
             // Need to load theme later stage of startup to update.
             this.Startup += (s, e) => {
@@ -323,6 +227,7 @@ namespace Lively
                 .AddSingleton<WallpaperPlaylistServer>()
                 .AddSingleton<IResourceService, ResourceService>()
                 // Transient
+                .AddTransient<AppInitializer>()
                 .AddTransient<LibraryPreviewViewModel>()
                 .AddTransient<IWallpaperLibraryFactory, WallpaperLibraryFactory>()
                 .AddTransient<IWallpaperPluginFactory, WallpaperPluginFactory>()
@@ -352,7 +257,7 @@ namespace Lively
         {
             var server = new NamedPipeServer(Constants.SingleInstance.GrpcPipeServerName);
             DesktopService.BindService(server.ServiceBinder, Services.GetRequiredService<WinDesktopCoreServer>());
-            SettingsService.BindService(server.ServiceBinder, Services.GetRequiredService<UserSettingsServer>());
+            Grpc.Common.Proto.Settings.SettingsService.BindService(server.ServiceBinder, Services.GetRequiredService<UserSettingsServer>());
             DisplayService.BindService(server.ServiceBinder, Services.GetRequiredService<DisplayManagerServer>());
             CommandsService.BindService(server.ServiceBinder, Services.GetRequiredService<CommandsServer>());
             UpdateService.BindService(server.ServiceBinder, Services.GetRequiredService<AppUpdateServer>());
@@ -413,13 +318,6 @@ namespace Lively
                         Lively.Properties.Resources.TextUpdateAvailable);
                 }
             }));
-        }
-
-        private void CreateWallpaperDir(string baseDirectory)
-        {
-            Directory.CreateDirectory(Path.Combine(baseDirectory, Constants.CommonPartialPaths.WallpaperInstallDir));
-            Directory.CreateDirectory(Path.Combine(baseDirectory, Constants.CommonPartialPaths.WallpaperInstallTempDir));
-            Directory.CreateDirectory(Path.Combine(baseDirectory, Constants.CommonPartialPaths.WallpaperSettingsDir));
         }
 
         private void SetupUnhandledExceptionLogging()

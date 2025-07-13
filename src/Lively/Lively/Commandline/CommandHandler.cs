@@ -111,14 +111,7 @@ namespace Lively.Commandline
 
             if (opts.Startup != null)
             {
-                try
-                {
-                    await WindowsStartup.SetStartup((bool)opts.Startup);
-                }
-                catch (Exception e)
-                {
-                    Logger.Error(e);
-                }
+                _ = await WindowsStartup.TrySetStartup((bool)opts.Startup);
             }
 
             if (opts.ShowIcons != null)

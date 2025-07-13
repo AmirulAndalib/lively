@@ -1,6 +1,5 @@
 ﻿using Lively.Models.Enums;
 using System;
-using System.Globalization;
 using System.IO;
 
 namespace Lively.Models
@@ -140,7 +139,7 @@ namespace Lively.Models
         public SettingsModel()
         {
             SavedURL = "https://www.youtube.com/watch?v=aqz-KE-bpKQ";
-            ProcessMonitorAlgorithm = ProcessMonitorAlgorithm.foreground;
+            ProcessMonitorAlgorithm = ProcessMonitorAlgorithm.grid;
             WallpaperArrangement = WallpaperArrangement.per;
             ScreensaverArragement = WallpaperArrangement.per;
             ScreensaverType = ScreensaverType.wallpaper;

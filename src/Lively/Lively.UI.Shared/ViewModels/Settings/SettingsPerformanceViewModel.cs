@@ -42,6 +42,9 @@ namespace Lively.UI.Shared.ViewModels
             AppRules = new ObservableCollection<ApplicationRulesModel>(userSettings.AppRules.Where(x => x.Rule == Models.Enums.AppRules.pause));
         }
 
+        [ObservableProperty]
+        private bool isSelectedAppFocus;
+
         private int _selectedAppFullScreenIndex;
         public int SelectedAppFullScreenIndex
         {
@@ -53,6 +56,7 @@ namespace Lively.UI.Shared.ViewModels
                     userSettings.Settings.AppFullscreenPause = (AppRules)value;
                     UpdateSettingsConfigFile();
                 }
+                IsSelectedAppFocus = userSettings.Settings.AppFullscreenPause != Models.Enums.AppRules.ignore;
                 SetProperty(ref _selectedAppFullScreenIndex, value);
             }
         }

@@ -25,6 +25,8 @@ namespace Lively.Services
     public class Systray : ISystray
     {
         private readonly Dictionary<TrayMenuItem, ToolStripMenuItem> trayMenuItems = [];
+        private readonly static Icon appIcon = Properties.Icons.appicon;
+        private readonly static Icon appIconGrey = Properties.Icons.appicon_grey;
         private readonly NotifyIcon notifyIcon = new();
         private readonly Random rng = new();
         private bool disposedValue;
@@ -66,7 +68,7 @@ namespace Lively.Services
             // Properties
             notifyIcon.DoubleClick += (s, args) => runner.ShowUI();
             notifyIcon.ContextMenuStrip = new ContextMenuStrip();
-            notifyIcon.Icon = Properties.Icons.appicon;
+            notifyIcon.Icon = appIcon;
             notifyIcon.Text = "Lively Wallpaper";
             notifyIcon.Visible = userSettings.Settings.SysTrayIcon;
             var toolStripColor = Color.FromArgb(55, 55, 55);
@@ -239,7 +241,9 @@ namespace Lively.Services
         {
             _ = System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new ThreadStart(delegate
             {
-                trayMenuItems[TrayMenuItem.pauseWallpaper].Checked = e == PlaybackState.paused;
+                var isPaused = e == PlaybackState.paused;
+                notifyIcon.Icon = isPaused ? appIconGrey : appIcon;
+                trayMenuItems[TrayMenuItem.pauseWallpaper].Checked = isPaused;
             }));
         }
 

@@ -2,18 +2,14 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.WinUI.Collections;
 using Lively.Common.Factories;
-using Lively.Common.Helpers.Pinvoke;
+using Lively.Common.Helpers;
 using Lively.Common.Services;
 using Lively.Models;
-using Lively.UI.WinUI.Extensions;
-using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Windows.Storage.Pickers;
 
 namespace Lively.UI.Shared.ViewModels
 {
@@ -21,14 +17,6 @@ namespace Lively.UI.Shared.ViewModels
     {
         private readonly IApplicationsFactory appFactory;
         private readonly IFileService fileService;
-
-        private readonly string[] excludedClasses =
-        [
-            //uwp apps
-            "ApplicationFrameWindow",
-            //startmeu, taskview (win10), action center etc
-            "Windows.UI.Core.CoreWindow",
-        ];
 
         [ObservableProperty]
         private ObservableCollection<ApplicationModel> applications = [];
@@ -49,11 +37,15 @@ namespace Lively.UI.Shared.ViewModels
 
             using (ApplicationsFiltered.DeferRefresh())
             {
-                foreach (var item in Process.GetProcesses()
-                    .Where(x => x.MainWindowHandle != IntPtr.Zero && !string.IsNullOrEmpty(x.MainWindowTitle) && !IsExcluded(x.MainWindowHandle)))
+                // Remove duplicates since we are fetching based on open app window.
+                var addedAppPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var hwnd in WindowUtil.GetVisibleTopLevelWindows())
                 {
-                    var app = appFactory.CreateApp(item);
-                    if (app is not null)
+                    if (WindowUtil.IsUWPApp(hwnd))
+                        continue;
+
+                    var app = appFactory.CreateApp(hwnd);
+                    if (app is not null && addedAppPaths.Add(app.AppPath))
                         Applications.Add(app);
                 }
             }
@@ -75,13 +67,6 @@ namespace Lively.UI.Shared.ViewModels
                     SelectedItem = app;
                 }
             }
-        }
-
-        private bool IsExcluded(IntPtr hwnd)
-        {
-            const int maxChars = 256;
-            StringBuilder className = new StringBuilder(maxChars);
-            return NativeMethods.GetClassName((int)hwnd, className, maxChars) > 0 && excludedClasses.Any(x => x.Equals(className.ToString(), StringComparison.Ordinal));
         }
     }
 }

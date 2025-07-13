@@ -85,14 +85,7 @@ namespace Lively.RPC
             if (req.Startup != userSettings.Settings.Startup)
             {
                 userSettings.Settings.Startup = req.Startup;
-                try
-                {
-                    _ = WindowsStartup.SetStartup(userSettings.Settings.Startup);
-                }
-                catch (Exception e)
-                {
-                    Logger.Error(e);
-                }
+                _ = WindowsStartup.TrySetStartup(userSettings.Settings.Startup);
             }
 
             if (req.Language != userSettings.Settings.Language)

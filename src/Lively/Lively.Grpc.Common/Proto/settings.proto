@@ -127,6 +127,7 @@ enum ProcessMonitorRule {
 	foreground = 0;
 	all = 1;
 	gamemode = 2;
+    grid = 3;
 }
 
 enum WallpaperScalerRule {

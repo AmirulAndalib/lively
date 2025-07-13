@@ -4,5 +4,6 @@ public enum ProcessMonitorAlgorithm
 {
     foreground,
     all,
-    gamemode
+    gamemode,
+    grid
 }

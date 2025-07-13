@@ -1,9 +1,7 @@
 ﻿using Lively.Common;
 using Lively.Common.Helpers.Storage;
 using Lively.Common.Services;
-using Lively.Core;
 using Lively.Core.Display;
-using Lively.Helpers;
 using Lively.Models;
 using Lively.Models.Enums;
 using System;
@@ -21,9 +19,8 @@ namespace Lively.Services
         private readonly string settingsPath = Constants.CommonPaths.UserSettingsPath;
         private readonly string appRulesPath = Constants.CommonPaths.AppRulesPath;
         private readonly string wallpaperLayoutPath = Constants.CommonPaths.WallpaperLayoutPath;
-        //private readonly string weatherPath = Constants.CommonPaths.WeatherSettingsPath;
 
-        public UserSettingsService(IDisplayManager displayManager, ITransparentTbService ttbService)
+        public UserSettingsService(IDisplayManager displayManager)
         {
             Load<SettingsModel>();
             Load<List<ApplicationRulesModel>>();
@@ -59,23 +56,6 @@ namespace Lively.Services
 
             // Reject unsupported language.
             Settings.Language = Languages.SupportedLanguages.FirstOrDefault(x => x.Code == Settings.Language)?.Code ?? string.Empty;
-
-            //Restrictions on msix..
-            //Settings.DesktopAutoWallpaper = Settings.DesktopAutoWallpaper && !Common.Constants.ApplicationType.IsMSIX;
-
-            try
-            {
-                _ = WindowsStartup.SetStartup(Settings.Startup);
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e);
-            }
-
-            if (Settings.SystemTaskbarTheme != TaskbarTheme.none)
-            {
-                ttbService.Start(Settings.SystemTaskbarTheme);
-            }
         }
 
         public SettingsModel Settings { get; private set; }
@@ -115,9 +95,7 @@ namespace Lively.Services
             else if (typeof(T) == typeof(List<ApplicationRulesModel>))
             {
                 AppRules = LoadOrInitialize(appRulesPath, () => {
-                    AppRules = [
-                        new("Discord", Models.Enums.AppRules.ignore)
-                    ];
+                    AppRules = [];
                     Save<List<ApplicationRulesModel>>();
                     return AppRules;
                 });
