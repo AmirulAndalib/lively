@@ -165,6 +165,8 @@ namespace Lively
 
             if (fromVersion < new Version(2, 2, 0, 0))
             {
+                // Default, same as system.
+                userSettings.Settings.Language = string.Empty;
                 // New pause algorithm, lets reset.
                 userSettings.Settings.ProcessMonitorAlgorithm = ProcessMonitorAlgorithm.grid;
                 userSettings.Settings.AppFocusPause = AppRules.ignore;

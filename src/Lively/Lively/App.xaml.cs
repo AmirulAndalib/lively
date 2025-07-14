@@ -117,14 +117,14 @@ namespace Lively
             //App() -> OnStartup() -> App.Startup event.
             _serviceProvider = ConfigureServices();
             var userSettings = Services.GetRequiredService<IUserSettingsService>();
-            // Set application language.
-            Services.GetRequiredService<IResourceService>().SetCulture(userSettings.Settings.Language);
             grpcServer = ConfigureGrpcServer();
 
             try
             {
                 // Run startup tasks.
                 Services.GetRequiredService<AppInitializer>().Run();
+                // Set application language.
+                Services.GetRequiredService<IResourceService>().SetCulture(userSettings.Settings.Language);
                 Services.GetRequiredService<WndProcMsgWindow>().Show();
                 Services.GetRequiredService<RawInputMsgWindow>().Show();
                 Services.GetRequiredService<IPlayback>().Start();
