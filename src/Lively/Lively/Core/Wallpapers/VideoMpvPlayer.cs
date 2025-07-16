@@ -17,6 +17,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -122,8 +123,6 @@ namespace Lively.Core.Wallpapers
             cmdArgs.Append($"--d3d11-output-csp={GetMpvD3D11ColorSpace(colorSpace)} ");
             // Avoid global config file %APPDATA%\mpv\mpv.conf
             cmdArgs.Append(configDir is not null ? "--config-dir=" + "\"" + configDir + "\" " : "--no-config ");
-            // Screenshot location, important read: https://mpv.io/manual/master/#pseudo-gui-mode
-            cmdArgs.Append("--screenshot-template=" + "\"" + Path.Combine(Constants.CommonPaths.TempDir, ipcServerName) + "\" --screenshot-format=jpg ");
             // File or online video stream path
             cmdArgs.Append(model.LivelyInfo.Type == WallpaperType.videostream ? GetYtDlMpvArg(streamQuality, path) : "\"" + path + "\"");
 
@@ -255,11 +254,11 @@ namespace Lively.Core.Wallpapers
             {
                 await Task.Run(() =>
                 {
-                    //read first frame of gif image
+                    // Read first frame of gif image
                     using var image = new MagickImage(Model.FilePath);
                     if (image.Width < 1920)
                     {
-                        //if the image is too small then resize to min: 1080p using integer scaling for sharpness.
+                        // If the image is too small then resize to min: 1080p using integer scaling for sharpness.
                         image.FilterType = FilterType.Point;
                         image.Thumbnail(new Percentage(100 * 1920 / image.Width));
                     }
@@ -269,35 +268,37 @@ namespace Lively.Core.Wallpapers
             else
             {
                 var tcs = new TaskCompletionSource<bool>();
-                var imgPath = Path.Combine(Constants.CommonPaths.TempDir, ipcServerName + ".jpg");
-                //monitor directory for screenshot, mpv only outputs message before capturing screenshot..
-                using var watcher = new FileSystemWatcher();
-                watcher.Path = Constants.CommonPaths.TempDir;
-                watcher.NotifyFilter = NotifyFilters.LastWrite;
-                watcher.Filter = "*.jpg";
-                watcher.Changed += (s, e) =>
+                void LocalOutputDataReceived(object sender, DataReceivedEventArgs e)
                 {
-                    if (Path.GetFileName(e.FullPath) == Path.GetFileName(imgPath) && e.ChangeType == WatcherChangeTypes.Changed)
+                    if (e.Data is null) 
+                        return;
+
+                    if (e.Data.Contains("Screenshot:"))
                     {
-                        //I was unable to set screenshot template via ipc :/
-                        File.Move(imgPath, Path.GetExtension(filePath) != ".jpg" ? filePath + ".jpg" : filePath, true);
-                        tcs.SetResult(true);
+                        // Screenshot: 'path'
+                        var match = Regex.Match(e.Data, @"Screenshot: '([^']+)'");
+                        if (match.Success && match.Groups[1].Value.Equals(filePath, StringComparison.OrdinalIgnoreCase))
+                        {
+                            Proc.OutputDataReceived -= LocalOutputDataReceived;
+                            tcs.TrySetResult(true);
+                        }
                     }
-                };
-                watcher.EnableRaisingEvents = true;
-                //timeout, cancel after interval..
-                using var timer = new System.Windows.Forms.Timer()
+                }
+                Proc.OutputDataReceived += LocalOutputDataReceived;
+
+                // Save screenshot
+                SendMessage(GetMpvCommand("screenshot-to-file", filePath));
+
+                // Timeout
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                using (cts.Token.Register(() => 
                 {
-                    Enabled = true,
-                    Interval = 10000, //10sec
-                };
-                timer.Tick += (s, e) =>
-                {
-                    //time elapsed..
-                    tcs.SetResult(false);
-                };
-                //request mpv to take screenshot (default is jpg)..
-                SendMessage("{\"command\":[\"screenshot\",\"video\"]}\n");
+                    if (!IsExited)
+                        Proc.OutputDataReceived -= LocalOutputDataReceived;
+
+                    tcs.TrySetResult(false);
+                }))
+
                 await tcs.Task;
             }
         }
