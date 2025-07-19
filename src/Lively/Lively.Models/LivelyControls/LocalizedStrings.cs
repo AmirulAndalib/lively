@@ -12,4 +12,7 @@ public class LocalizedStrings
 
     [JsonProperty("help")]
     public string Help { get; set; }
+
+    [JsonProperty("items")]
+    public string[] Items { get; set; }
 }

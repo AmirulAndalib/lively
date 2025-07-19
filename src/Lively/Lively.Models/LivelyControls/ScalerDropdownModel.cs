@@ -2,7 +2,7 @@
 
 namespace Lively.Models.LivelyControls
 {
-    public class ScalerDropdownModel : ControlModel
+    public class ScalerDropdownModel : ControlModel, IDropdownItem
     {
         [JsonProperty("value")]
         public int Value { get; set; }

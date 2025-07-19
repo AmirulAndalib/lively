@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Lively.Common.Helpers
@@ -99,6 +100,17 @@ namespace Lively.Common.Helpers
                 var value = localized.Value;
                 switch (control.Type)
                 {
+                    case "dropdown":
+                    case "scalerDropdown":
+                        {
+                            if (control is IDropdownItem dropdown && value.Items != null)
+                            {
+                                var count = Math.Min(dropdown.Items.Length, value.Items.Length);
+                                for (int i = 0; i < count; i++)
+                                    dropdown.Items[i] = value.Items[i];
+                            }
+                        }
+                        break;
                     case "label":
                         {
                             if (!string.IsNullOrWhiteSpace(value.Value))
