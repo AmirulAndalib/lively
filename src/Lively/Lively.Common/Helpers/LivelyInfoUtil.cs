@@ -22,6 +22,9 @@ namespace Lively.Common.Helpers
                 return null;
             }
 
+            if (loc?.Languages is null)
+                return null;
+
             // ApplicationLanguages.PrimaryLanguageOverride is empty when not set / use system default.
             languageCode = string.IsNullOrEmpty(languageCode) ? CultureInfo.CurrentUICulture.Name : languageCode;
             // Try exact match first, eg: zh-CN
