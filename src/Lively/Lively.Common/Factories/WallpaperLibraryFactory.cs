@@ -74,8 +74,13 @@ namespace Lively.Common.Factories
             result.ImagePath = result.PreviewClipPath ?? result.ThumbnailPath;
             //Default video player property, otherwise verify if wallpaper is customisable
             if (metadata.Type.IsMediaWallpaper())
-                result.LivelyPropertyPath = File.Exists(result.LivelyPropertyPath) ? 
+            {
+                result.LivelyPropertyPath = File.Exists(result.LivelyPropertyPath) ?
                     result.LivelyPropertyPath : Path.Combine(Constants.CommonPaths.TempVideoDir, "LivelyProperties.json");
+
+                result.LivelyPropertyLocalizationPath = File.Exists(result.LivelyPropertyLocalizationPath) ?
+                    result.LivelyPropertyLocalizationPath : Path.Combine(Constants.CommonPaths.TempVideoDir, "LivelyProperties.loc.json");
+            }
             else
                 result.LivelyPropertyPath = File.Exists(result.LivelyPropertyPath) ? result.LivelyPropertyPath : null;
 

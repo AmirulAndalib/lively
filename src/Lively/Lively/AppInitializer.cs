@@ -30,7 +30,6 @@ namespace Lively
         {
             CleanTempFiles();
             CreateRequiredDirectories();
-            SetupWallpaperDefaults();
             SetupWallpaperDirectories();
             HandleFirstRunOrUpdate(true);
         }
@@ -57,21 +56,6 @@ namespace Lively
             Directory.CreateDirectory(Constants.CommonPaths.TempCefDir);
             Directory.CreateDirectory(Constants.CommonPaths.TempVideoDir);
             Directory.CreateDirectory(Constants.CommonPaths.ThemeCacheDir);
-        }
-
-        private void SetupWallpaperDefaults()
-        {
-            try
-            {
-                // Default livelyproperty for media files.
-                var mediaProperty = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "mpv", "api", "LivelyProperties.json");
-                if (File.Exists(mediaProperty))
-                {
-                    File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "mpv", "api", "LivelyProperties.json"),
-                        Path.Combine(Constants.CommonPaths.TempVideoDir, "LivelyProperties.json"), true);
-                }
-            }
-            catch { /* Nothing to do */ }
         }
 
         private void SetupWallpaperDirectories()
@@ -101,25 +85,50 @@ namespace Lively
                     spl.Show();
                 }
 
-
-                // Install default wallpapers or updates.
-                var maxWallpaper = ZipExtract.ExtractAssetBundle(userSettings.Settings.WallpaperBundleVersion,
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bundle", "wallpapers"),
-                    Path.Combine(userSettings.Settings.WallpaperDir, Constants.CommonPartialPaths.WallpaperInstallDir));
-                var maxTheme = ZipExtract.ExtractAssetBundle(userSettings.Settings.ThemeBundleVersion,
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bundle", "themes"),
-                    Path.Combine(Constants.CommonPaths.ThemeDir));
-                if (maxTheme != userSettings.Settings.ThemeBundleVersion || maxWallpaper != userSettings.Settings.WallpaperBundleVersion)
-                {
-                    userSettings.Settings.WallpaperBundleVersion = maxWallpaper;
-                    userSettings.Settings.ThemeBundleVersion = maxTheme;
-                    userSettings.Save<SettingsModel>();
-                }
-
+                InstallWallpaperBundles();
+                SetupWallpaperDefaults();
                 MigrateFromOlderVersions();
 
                 spl?.Close();
             }
+        }
+
+        private void InstallWallpaperBundles()
+        {
+            // Install default wallpapers or updates.
+            var maxWallpaper = ZipExtract.ExtractAssetBundle(userSettings.Settings.WallpaperBundleVersion,
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bundle", "wallpapers"),
+                Path.Combine(userSettings.Settings.WallpaperDir, Constants.CommonPartialPaths.WallpaperInstallDir));
+            var maxTheme = ZipExtract.ExtractAssetBundle(userSettings.Settings.ThemeBundleVersion,
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bundle", "themes"),
+                Path.Combine(Constants.CommonPaths.ThemeDir));
+            if (maxTheme != userSettings.Settings.ThemeBundleVersion || maxWallpaper != userSettings.Settings.WallpaperBundleVersion)
+            {
+                userSettings.Settings.WallpaperBundleVersion = maxWallpaper;
+                userSettings.Settings.ThemeBundleVersion = maxTheme;
+                userSettings.Save<SettingsModel>();
+            }
+        }
+
+        private void SetupWallpaperDefaults()
+        {
+            try
+            {
+                // Default livelyproperty for media files.
+                var mediaProperty = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "mpv", "api", "LivelyProperties.json");
+                var mediaLocProperty = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "mpv", "api", "LivelyProperties.loc.json");
+                if (File.Exists(mediaProperty))
+                {
+                    File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "mpv", "api", "LivelyProperties.json"),
+                        Path.Combine(Constants.CommonPaths.TempVideoDir, "LivelyProperties.json"), true);
+                }
+                if (File.Exists(mediaLocProperty))
+                {
+                    File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "mpv", "api", "LivelyProperties.loc.json"),
+                        Path.Combine(Constants.CommonPaths.TempVideoDir, "LivelyProperties.loc.json"), true);
+                }
+            }
+            catch { /* Nothing to do */ }
         }
 
         private void MigrateFromOlderVersions()
