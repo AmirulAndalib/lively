@@ -176,7 +176,7 @@ namespace Lively
             {
                 // Default, same as system.
                 userSettings.Settings.Language = string.Empty;
-                userSettings.Settings.WebBrowser = LivelyWebBrowser.webview2;
+                userSettings.Settings.WebBrowser = Constants.AppDefaults.WebBrowser;
                 // New pause algorithm, lets reset.
                 userSettings.Settings.ProcessMonitorAlgorithm = ProcessMonitorAlgorithm.grid;
                 userSettings.Settings.AppFocusPause = AppRules.ignore;
