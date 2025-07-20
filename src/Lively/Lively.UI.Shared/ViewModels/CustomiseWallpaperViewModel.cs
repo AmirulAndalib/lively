@@ -42,6 +42,7 @@ namespace Lively.UI.Shared.ViewModels
 
         public void Load(LibraryModel model)
         {
+            IsLoaded = false;
             ErrorText = InfoText = null;
 
             try
@@ -59,6 +60,8 @@ namespace Lively.UI.Shared.ViewModels
 
                 if (livelyControls.Count == 0)
                     InfoText = "No control(s) defined.";
+
+                IsLoaded = true;
             }
             catch (Exception ex)
             {
@@ -72,6 +75,9 @@ namespace Lively.UI.Shared.ViewModels
 
         [ObservableProperty]
         private ObservableCollection<ControlModel> controls;
+
+        [ObservableProperty]
+        private bool isLoaded;
 
         [ObservableProperty]
         private string errorText;
@@ -209,6 +215,9 @@ namespace Lively.UI.Shared.ViewModels
 
         public void OnClose()
         {
+            if (!IsLoaded)
+                return;
+
             UpdatePropertyFile();
         }
 
