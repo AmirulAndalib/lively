@@ -148,14 +148,14 @@
                                         MinWidth="450"
                                         MinHeight="35"
                                         HorizontalContentAlignment="Left"
-                                        Command="{Binding WallpaperDirectoryChangeCommand}"
+                                        Command="{Binding OpenWallpaperDirectoryCommand}"
                                         Content="{Binding WallpaperDirectory}" />
                                     <Button
                                         MinWidth="45"
                                         MinHeight="35"
                                         Margin="5,0,0,0"
-                                        Command="{Binding OpenWallpaperDirectoryCommand}">
-                                        <SymbolIcon Symbol="OpenLocal" />
+                                        Command="{Binding WallpaperDirectoryChangeCommand}">
+                                        <SymbolIcon Symbol="NewFolder" />
                                     </Button>
                                 </StackPanel>
                             </controls:SettingsCard>
