@@ -133,8 +133,9 @@ namespace Lively.Models
         /// Time in seconds between taskbar restart (hinting system instability) to stop Lively.
         /// </summary>
         public int TaskbarCrashTimeOutDelay { get; set; }
-
         public VideoColorSpace VideoD3D11OutputColorSpace { get; set; }
+        public double ProcessMonitorGridTileCoverageThreshold { get; set; }
+        public int ProcessMonitorGridTileSize { get; set; }
 
         public SettingsModel()
         {
@@ -158,6 +159,8 @@ namespace Lively.Models
             WebBrowser = LivelyWebBrowser.webview2;
             GifPlayer = LivelyGifPlayer.mpv;
             PicturePlayer = LivelyPicturePlayer.mpv;
+            ProcessMonitorGridTileCoverageThreshold = 0.05;
+            ProcessMonitorGridTileSize = 50;
 
             WallpaperWaitTime = 20000; // 20sec
             ProcessTimerInterval = 500; //reduce to 250 for quicker response.

@@ -1,5 +1,6 @@
 ﻿using Lively.Common.Helpers;
 using Lively.Common.Helpers.Pinvoke;
+using Lively.Common.Services;
 using Lively.Core.Display;
 using Lively.Models;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,22 +17,23 @@ namespace Lively.Views
 {
     public partial class WindowCoverageDebugOverlay : Window
     {
-        private readonly IDisplayManager displayManager;
         private readonly DispatcherTimer dispatcherTimer;
         private readonly DisplayMonitor targetDisplay;
-        private const int tileSize = 50;
+        private readonly int tileSize;
         private float scaleFactor = 1f;
 
         public WindowCoverageDebugOverlay()
         {
             InitializeComponent();
-            displayManager = App.Services.GetRequiredService<IDisplayManager>();
+            var displayManager = App.Services.GetRequiredService<IDisplayManager>();
+            var userSettings = App.Services.GetRequiredService<IUserSettingsService>();
 
             dispatcherTimer = new();
             dispatcherTimer.Tick += (s, e) => UpdateGrid();
             dispatcherTimer.Interval = new TimeSpan(0, 0, 0, 0, 50);
 
             targetDisplay = displayManager.PrimaryDisplayMonitor;
+            tileSize = userSettings.Settings.ProcessMonitorGridTileSize;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -102,7 +104,7 @@ namespace Lively.Views
                     {
                         Width = tileSize,
                         Height = tileSize,
-                        Stroke = Brushes.Gray,
+                        Stroke = new SolidColorBrush(Color.FromArgb(100, 128, 128, 128)),
                         StrokeThickness = 1,
                         Fill = covered[y, x] ? 
                             new SolidColorBrush(Color.FromArgb(50, 255, 0, 0)) : Brushes.Transparent

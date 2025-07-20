@@ -131,7 +131,10 @@ namespace Lively.Core.Suspend
                         EvaluatePlaybackByVisibleWindow((display, windows) => WindowUtil.IsDisplayCoveredByAnyWindow(windows, display.WorkingArea));
                         break;
                     case ProcessMonitorAlgorithm.grid:
-                        EvaluatePlaybackByVisibleWindow((display, windows) => WindowUtil.IsDisplayCoveredByWindowGrid(windows, display.WorkingArea));
+                        EvaluatePlaybackByVisibleWindow((display, windows) => WindowUtil.IsDisplayCoveredByWindowGrid(windows,
+                            display.WorkingArea,
+                            userSettings.Settings.ProcessMonitorGridTileSize,
+                            userSettings.Settings.ProcessMonitorGridTileCoverageThreshold));
                         break;
                     case ProcessMonitorAlgorithm.gamemode:
                         EvaluatePlaybackByGameMode();
