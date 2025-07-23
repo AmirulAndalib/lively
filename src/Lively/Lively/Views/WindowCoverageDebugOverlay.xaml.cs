@@ -1,55 +1,51 @@
 ﻿using Lively.Common.Helpers;
 using Lively.Common.Helpers.Pinvoke;
 using Lively.Common.Services;
-using Lively.Core.Display;
 using Lively.Models;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Drawing;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
-
+using Media = System.Windows.Media;
 using Shapes = System.Windows.Shapes;
 
 namespace Lively.Views
 {
     public partial class WindowCoverageDebugOverlay : Window
     {
-        private readonly DispatcherTimer dispatcherTimer;
         private readonly DisplayMonitor targetDisplay;
+        private readonly DispatcherTimer dispatcherTimer;
         private readonly int tileSize;
         private float scaleFactor = 1f;
 
-        public WindowCoverageDebugOverlay()
+        public WindowCoverageDebugOverlay(DisplayMonitor targetDisplay)
         {
             InitializeComponent();
-            var displayManager = App.Services.GetRequiredService<IDisplayManager>();
             var userSettings = App.Services.GetRequiredService<IUserSettingsService>();
 
             dispatcherTimer = new();
             dispatcherTimer.Tick += (s, e) => UpdateGrid();
-            dispatcherTimer.Interval = new TimeSpan(0, 0, 0, 0, 50);
+            dispatcherTimer.Interval = new TimeSpan(0, 0, 0, 0, userSettings.Settings.ProcessTimerInterval);
 
-            targetDisplay = displayManager.PrimaryDisplayMonitor;
-            tileSize = userSettings.Settings.ProcessMonitorGridTileSize;
+            this.targetDisplay = targetDisplay;
+            this.tileSize = userSettings.Settings.ProcessMonitorGridTileSize;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             var hwnd = new WindowInteropHelper(this).Handle;
-            var dpi = NativeMethods.GetDpiForWindow(hwnd);
-            scaleFactor = (float)dpi / 96;
 
-            // To simplify display scaling we use native here.
-            NativeMethods.SetWindowPos(hwnd,
-                -1,
-                targetDisplay.WorkingArea.Left,
-                targetDisplay.WorkingArea.Top,
-                targetDisplay.WorkingArea.Width,
-                targetDisplay.WorkingArea.Height,
-                (int)NativeMethods.SetWindowPosFlags.SWP_NOZORDER);
+            this.Left = targetDisplay.WorkingArea.Left;
+            this.Top = targetDisplay.WorkingArea.Top;
+            this.Width = targetDisplay.WorkingArea.Width;
+            this.Height = targetDisplay.WorkingArea.Height;
+
+            var dpi = NativeMethods.GetDpiForWindow(hwnd);
+            scaleFactor = 1f / (dpi / 96f);
 
             // Make window click through.
             WindowUtil.SetWindowExStyle(hwnd, NativeMethods.WindowStyles.WS_EX_TRANSPARENT | NativeMethods.WindowStyles.WS_EX_TOOLWINDOW);
@@ -66,9 +62,9 @@ namespace Lively.Views
         {
             TileCanvas.Children.Clear();
 
-            var screenBounds = targetDisplay.WorkingArea;
-            int cols = (int)Math.Ceiling(screenBounds.Width / (double)tileSize);
-            int rows = (int)Math.Ceiling(screenBounds.Height / (double)tileSize);
+            var screenBounds = targetDisplay.Bounds;
+            int cols = (int)(screenBounds.Width * scaleFactor/ (double)tileSize);
+            int rows = (int)(screenBounds.Height * scaleFactor/ (double)tileSize);
 
             bool[,] covered = new bool[rows, cols];
 
@@ -77,12 +73,15 @@ namespace Lively.Views
                 if (NativeMethods.GetWindowRect(hwnd, out var rect) == 0)
                     continue;
 
+                if (!RectsIntersect(rect, screenBounds))
+                    continue;
+
                 rect = new NativeMethods.RECT
                 {
-                    Left = (int)(rect.Left / scaleFactor),
-                    Right = (int)(rect.Right / scaleFactor),
-                    Top = (int)(rect.Top / scaleFactor),
-                    Bottom = (int)(rect.Bottom / scaleFactor)
+                    Left = (int)(rect.Left * scaleFactor),
+                    Right = (int)(rect.Right * scaleFactor),
+                    Top = (int)(rect.Top * scaleFactor),
+                    Bottom = (int)(rect.Bottom * scaleFactor)
                 };
 
                 // Find overlapping tile indices
@@ -104,10 +103,10 @@ namespace Lively.Views
                     {
                         Width = tileSize,
                         Height = tileSize,
-                        Stroke = new SolidColorBrush(Color.FromArgb(100, 128, 128, 128)),
+                        Stroke = new SolidColorBrush(Media.Color.FromArgb(100, 128, 128, 128)),
                         StrokeThickness = 1,
                         Fill = covered[y, x] ? 
-                            new SolidColorBrush(Color.FromArgb(50, 255, 0, 0)) : Brushes.Transparent
+                            new SolidColorBrush(Media.Color.FromArgb(50, 255, 0, 0)) : Media.Brushes.Transparent
                     };
 
                     Canvas.SetLeft(tile, x * tileSize);
@@ -115,6 +114,12 @@ namespace Lively.Views
                     TileCanvas.Children.Add(tile);
                 }
             }
+        }
+
+        private static bool RectsIntersect(NativeMethods.RECT a, Rectangle b)
+        {
+            return a.Right > b.Left && a.Left < b.Right &&
+                   a.Bottom > b.Top && a.Top < b.Bottom;
         }
     }
 }
