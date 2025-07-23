@@ -21,5 +21,14 @@ namespace Lively.Common.Extensions
         /// </summary>
         public static bool IsMediaWallpaper(this WallpaperType type) => 
             IsVideoWallpaper(type) || type == WallpaperType.gif || type == WallpaperType.picture;
+
+        public static bool IsLocalWebWallpaper(this WallpaperType type) =>
+             IsWebWallpaper(type) && !IsOnlineWallpaper(type);
+
+        /// <summary>
+        /// Determines if the wallpaper type uses a directory-based structure, meaning it may include multiple files and subdirectories.
+        /// </summary>
+        public static bool IsDirectoryProject(this WallpaperType type) =>
+            IsApplicationWallpaper(type) || IsLocalWebWallpaper(type);
     }
 }

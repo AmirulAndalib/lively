@@ -34,6 +34,7 @@ namespace Lively.Common.Services
         Task<(WallpaperAddType wallpaperType, List<string> wallpapers)> ShowAddWallpaperDialogAsync();
         Task<WallpaperCreateType?> ShowWallpaperCreateDialogAsync(string filePath);
         Task<WallpaperCreateType?> ShowWallpaperCreateDialogAsync();
+        Task<bool> ShowWallpaperProjectDirectoryDialogAsync(string folderPath);
         Task<IEnumerable<GalleryModel>> ShowGalleryRestoreWallpaperDialogAsync(IEnumerable<WallpaperDto> wallpapers);
         Task ShowGalleryEditProfileDialogAsync();
     }

@@ -583,9 +583,14 @@ namespace Lively.UI.Shared.ViewModels
             }
             else if (FileTypes.GetFileType(filePath) is not (WallpaperType)(-1) and var fileType)
             {
-                var arguments = string.Empty;
-                if (fileType.IsApplicationWallpaper())
-                    arguments = await dialogService.ShowTextInputDialogAsync(i18n.GetString("TextWallpaperCommandlineArgs"), "Examples: --myarguments1 -myargument2");
+                var arguments = fileType.IsApplicationWallpaper() ? 
+                    await dialogService.ShowTextInputDialogAsync(i18n.GetString("TextWallpaperCommandlineArgs"), "Examples: --myarguments1 -myargument2") : 
+                    string.Empty;
+
+                // Show and confirm project files.
+                if (fileType.IsDirectoryProject() && !await dialogService.ShowWallpaperProjectDirectoryDialogAsync(Path.GetDirectoryName(filePath)))
+                    return null;
+
                 var result = await desktopCore.CreateWallpaper(filePath, fileType, arguments);
                 var model = result != null ? AddWallpaper(result) : null;
 

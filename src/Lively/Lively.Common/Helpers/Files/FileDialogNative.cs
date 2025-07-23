@@ -20,9 +20,8 @@ namespace Lively.Common.Helpers.Files
             return ShowOpenFileDialog(filter, true);
         }
 
-        public static string SaveFile(string filter, string suggestedFileName, string defaultExtension)
+        public static string PickSaveFile(string filter, string suggestedFileName, string defaultExtension)
         {
-
             const int MAX_PATH = 260;
             // Allocate unmanaged memory for the file path (Unicode, 2 bytes per char)
             IntPtr fileBuffer = Marshal.AllocHGlobal(MAX_PATH * 2);

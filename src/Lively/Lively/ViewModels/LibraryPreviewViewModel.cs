@@ -89,19 +89,15 @@ namespace Lively.ViewModels
                     previewTotalFrames,
                     userSettings.Settings.GifCapture && Wallpaper.Category != WallpaperType.picture,
                     new Progress<int>(percent => CurrentProgress = percent - 1));
-                if (fileType.IsMediaWallpaper() || fileType.IsOnlineWallpaper())
-                {
-                    // Copy files to destination, ie Absolute path -> Relative path.
-                    // If editing existing wallpaper, convertion also takes place.
-                    var absoluteToRelativePathConvertionTask = 
-                        wallpaperLibraryFactory.ConvertAbsoluteToRelativePathAsync(Wallpaper.Model.LivelyInfo, destPath);
-                    await Task.WhenAll(createPreviewTask, absoluteToRelativePathConvertionTask);
-                }
-                else
-                {
-                    // We are not converting here because cannot verify if the html or exe file is in its own project folder or not.
-                    await createPreviewTask;
-                }
+
+                // Copy files to destination, ie Absolute path -> Relative path.
+                // If editing existing wallpaper, convertion also takes place.
+                // Important: Ensure project directory is confirmed by the user before this step,
+                // especially to avoid converting critical system/root paths like "C:\index.html".
+                var absoluteToRelativePathConvertionTask =
+                    wallpaperLibraryFactory.ConvertAbsoluteToRelativePathAsync(Wallpaper.Model.LivelyInfo, destPath);
+
+                await Task.WhenAll(createPreviewTask, absoluteToRelativePathConvertionTask);
             }
             finally 
             {

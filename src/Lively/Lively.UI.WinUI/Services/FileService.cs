@@ -69,7 +69,7 @@ namespace Lively.UI.WinUI.Services
                 string filter = GetFilterNative(fileTypeChoices);
                 string defaultExt = fileTypeChoices.FirstOrDefault().extensions?.FirstOrDefault();
 
-                return FileDialogNative.SaveFile(filter, suggestedFileName, defaultExt);
+                return FileDialogNative.PickSaveFile(filter, suggestedFileName, defaultExt);
             }
             else
             {

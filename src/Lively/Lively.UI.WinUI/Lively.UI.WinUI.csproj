@@ -49,6 +49,7 @@
     <None Remove="Assets\banner-lively-1080.jpg" />
     <None Remove="Assets\changelog-page-preview.jpg" />
     <None Remove="Assets\CustomIcons.ttf" />
+    <None Remove="Assets\folder.png" />
     <None Remove="Assets\icon-lively-48.png" />
     <None Remove="Assets\icons8-application-window-96.png" />
     <None Remove="Assets\icons8-artificial-intelligence-100.png" />
@@ -73,6 +74,7 @@
     <None Remove="UserControls\ColorPickerButton.xaml" />
     <None Remove="UserControls\DisplaySelector.xaml" />
     <None Remove="UserControls\FolderDropdown.xaml" />
+    <None Remove="UserControls\FolderView.xaml" />
     <None Remove="Views\LivelyProperty\EyeDropper.xaml" />
     <None Remove="Views\LivelyProperty\LivelyPropertiesTray.xaml" />
     <None Remove="Views\LivelyProperty\LivelyPropertiesView.xaml" />
@@ -172,6 +174,9 @@
     <Content Update="Assets\changelog-page-preview.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Update="Assets\folder.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Update="Assets\icon-lively-48.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -219,6 +224,9 @@
     <None Update="appicon.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <Page Update="UserControls\FolderView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Views\Pages\Settings\SettingsScreensaverView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>

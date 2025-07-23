@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
+using Lively.Common.Extensions;
 
 namespace Lively.UI.WinUI.Views.Pages
 {
@@ -80,6 +81,12 @@ namespace Lively.UI.WinUI.Views.Pages
                     await dialogService.ShowCustomiseWallpaperDialogAsync(obj);
                     break;
                 case "editWallpaper":
+                    // Show and confirm project structure for wallpapers that can be outside wallpaper directory and contain multiple files.
+                    if (obj.LivelyInfo.IsAbsolutePath
+                        && obj.LivelyInfo.Type.IsDirectoryProject()
+                        && !await dialogService.ShowWallpaperProjectDirectoryDialogAsync(Path.GetDirectoryName(obj.FilePath)))
+                        return;
+
                     var success = await desktopCore.EditWallpaper(obj.LivelyInfoFolderPath);
                     if (success)
                     {
