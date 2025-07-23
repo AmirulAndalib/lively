@@ -1263,6 +1263,6 @@ Pokud stále nefunguje, zavřete a spusťte Lively znova/restartujte okna.
     <value>Při obnovení, zobrazit přihlašovací obrazovku</value>
   </data>
   <data name="ScreensaverFadeIn.Header" xml:space="preserve">
-    <value>Fade to black before start</value>
+    <value>Ztmavit před startem</value>
   </data>
 </root>

@@ -1248,10 +1248,10 @@ Alle processen: Heavier, Scant alle processen om afspeelmogelijkheden te bepalen
     <value>Herstarten van de achtergrond is vereist om de instellingen toe te passen</value>
   </data>
   <data name="LanguageSettingsItemSystemDefault.Content" xml:space="preserve">
-    <value>Same as System</value>
+    <value>Zelfde als Systeem</value>
   </data>
   <data name="InfoSettingsRestartRequest.Message" xml:space="preserve">
-    <value>Please restart application for settings to take effect.</value>
+    <value>Herstart het programma om de instellingen in te laten gaan.</value>
   </data>
   <data name="ScreensaverLockOnResume.Header" xml:space="preserve">
     <value>Bij hervatten, weergeef aanmeldscherm</value>

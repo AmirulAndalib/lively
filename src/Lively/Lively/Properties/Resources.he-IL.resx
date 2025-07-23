@@ -127,7 +127,7 @@
     <value>עוצמת קול</value>
   </data>
   <data name="AudioGroup.Text" xml:space="preserve">
-    <value>Audio</value>
+    <value>אודיו</value>
   </data>
   <data name="Community.Description" xml:space="preserve">
     <value>פורום דיונים מקוון</value>
@@ -1268,6 +1268,6 @@ Edge הוא תצוגת האינטרנט המובנית של Windows 10.</value>
     <value>בהמשכה, הצגת מסך כניסה</value>
   </data>
   <data name="ScreensaverFadeIn.Header" xml:space="preserve">
-    <value>Fade to black before start</value>
+    <value>דהייה לשחור לפני ההתחלה</value>
   </data>
 </root>

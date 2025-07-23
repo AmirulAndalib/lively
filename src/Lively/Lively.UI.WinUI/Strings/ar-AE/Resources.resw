@@ -1263,6 +1263,6 @@ https://github.com/rocksdanister/lively/wiki</value>
     <value>عند الاستئناف، عرض شاشة تسجيل الدخول</value>
   </data>
   <data name="ScreensaverFadeIn.Header" xml:space="preserve">
-    <value>Fade to black before start</value>
+    <value>تلاشي إلى الأسود قبل البدء</value>
   </data>
 </root>

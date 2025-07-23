@@ -1263,6 +1263,6 @@ https://github.com/rocksdanister/lively/wiki</value>
     <value>恢復工作階段後，顯示登入螢幕</value>
   </data>
   <data name="ScreensaverFadeIn.Header" xml:space="preserve">
-    <value>Fade to black before start</value>
+    <value>繁體中文</value>
   </data>
 </root>
