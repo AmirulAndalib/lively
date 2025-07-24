@@ -124,6 +124,7 @@
                 Margin="4,0"
                 VerticalAlignment="Center"
                 IsEnabled="True"
+                PlaceholderText="{Binding SearchPlaceholderText, Mode=OneWay}"
                 QueryIcon="Find"
                 QuerySubmitted="AutoSuggestBox_QuerySubmitted"
                 SuggestionChosen="AutoSuggestBox_SuggestionChosen"

@@ -85,6 +85,7 @@ namespace Lively.UI.Shared.ViewModels
             MenuItems = new(GetPages());
             WallpaperCount = desktopCore.Wallpapers.Count;
             IsUpdatedNotify = userSettings.Settings.IsUpdatedNotify;
+            SearchPlaceholderText = GetSearchPlaceholderText();
 
             i18n.SetCulture(userSettings.Settings.Language);
             _ = SetAppTheme(userSettings.Settings.ApplicationThemeBackground);
@@ -111,7 +112,10 @@ namespace Lively.UI.Shared.ViewModels
         }
 
         [ObservableProperty]
-        public bool isWebView2InstallNotify;
+        private string searchPlaceholderText;
+
+        [ObservableProperty]
+        private bool isWebView2InstallNotify;
 
         [ObservableProperty]
         private bool isWebView2Installing;
@@ -187,6 +191,7 @@ namespace Lively.UI.Shared.ViewModels
 
         private void I18n_CultureChanged(object sender, string e)
         {
+            SearchPlaceholderText = GetSearchPlaceholderText();
             foreach (var item in MenuItems)
                 item.Name = GetPageName(item.PageType);
 
@@ -590,6 +595,8 @@ namespace Lively.UI.Shared.ViewModels
                 new() { Name = GetPageName(ContentPageType.settingsSystem), PageType = ContentPageType.settingsSystem }
             ];
         }
+
+        private string GetSearchPlaceholderText() => i18n.GetString("SearchBox/PlaceholderText");
 
         private string GetPageName(ContentPageType pageType)
         {
