@@ -1,0 +1,172 @@
+{
+  "Languages": {
+    "zh-CN": {
+      "saturation": { "text": "饱和度" },
+      "hue": { "text": "色相" },
+      "brightness": { "text": "亮度" },
+      "contrast": { "text": "对比度" },
+      "gamma": { "text": "伽马" },
+      "speed": { "text": "速度" },
+      "scaler": {
+        "text": "选择适配方式",
+        "help": "壁纸缩放算法",
+        "items": ["无", "填充", "等比缩放", "裁剪填充"]
+      },
+      "mute": { "text": "静音" }
+    },
+    "zh-Hant": {
+      "saturation": { "text": "飽和度" },
+      "hue": { "text": "色相" },
+      "brightness": { "text": "亮度" },
+      "contrast": { "text": "對比度" },
+      "gamma": { "text": "伽瑪" },
+      "speed": { "text": "速度" },
+      "scaler": {
+        "text": "選擇適配方式",
+        "help": "桌布縮放算法",
+        "items": ["無", "填滿", "等比縮放", "裁剪填滿"]
+      },
+      "mute": { "text": "靜音" }
+    },
+    "pt-BR": {
+      "saturation": { "text": "Saturação" },
+      "hue": { "text": "Matiz" },
+      "brightness": { "text": "Brilho" },
+      "contrast": { "text": "Contraste" },
+      "gamma": { "text": "Gama" },
+      "speed": { "text": "Velocidade" },
+      "scaler": {
+        "text": "Escolher ajuste",
+        "help": "Algoritmo de dimensionamento do papel de parede",
+        "items": ["Nenhum", "Preencher", "Uniforme", "Preenchimento uniforme"]
+      },
+      "mute": { "text": "Silenciar" }
+    },
+    "pt-PT": {
+      "saturation": { "text": "Saturação" },
+      "hue": { "text": "Matiz" },
+      "brightness": { "text": "Brilho" },
+      "contrast": { "text": "Contraste" },
+      "gamma": { "text": "Gama" },
+      "speed": { "text": "Velocidade" },
+      "scaler": {
+        "text": "Escolher ajuste",
+        "help": "Algoritmo de redimensionamento do fundo",
+        "items": ["Nenhum", "Preencher", "Uniforme", "Preenchimento uniforme"]
+      },
+      "mute": { "text": "Silenciar" }
+    },
+    "es": {
+      "saturation": { "text": "Saturación" },
+      "hue": { "text": "Matiz" },
+      "brightness": { "text": "Brillo" },
+      "contrast": { "text": "Contraste" },
+      "gamma": { "text": "Gamma" },
+      "speed": { "text": "Velocidad" },
+      "scaler": {
+        "text": "Elige un relleno",
+        "help": "Algoritmo de redimensionamiento de fondos de pantalla",
+        "items": ["Ninguno", "Rellenar", "Uniforme", "Relleno uniforme"]
+      },
+      "mute": { "text": "Silenciar" }
+    },
+    "ru": {
+      "saturation": { "text": "Насыщенность" },
+      "hue": { "text": "Оттенок" },
+      "brightness": { "text": "Яркость" },
+      "contrast": { "text": "Контраст" },
+      "gamma": { "text": "Гамма" },
+      "speed": { "text": "Скорость" },
+      "scaler": {
+        "text": "Выбор масштаба",
+        "help": "Алгоритм масштабирования обоев",
+        "items": ["Нет", "Заполнить", "Пропорционально", "Пропорциональное заполнение"]
+      },
+      "mute": { "text": "Без звука" }
+    },
+    "it": {
+      "saturation": { "text": "Saturazione" },
+      "hue": { "text": "Tonalità" },
+      "brightness": { "text": "Luminosità" },
+      "contrast": { "text": "Contrasto" },
+      "gamma": { "text": "Gamma" },
+      "speed": { "text": "Velocità" },
+      "scaler": {
+        "text": "Scegli una modalità",
+        "help": "Algoritmo di ridimensionamento dello sfondo",
+        "items": ["Nessuno", "Riempi", "Uniforme", "Riempimento uniforme"]
+      },
+      "mute": { "text": "Muto" }
+    },
+    "de": {
+      "saturation": { "text": "Sättigung" },
+      "hue": { "text": "Farbton" },
+      "brightness": { "text": "Helligkeit" },
+      "contrast": { "text": "Kontrast" },
+      "gamma": { "text": "Gamma" },
+      "speed": { "text": "Geschwindigkeit" },
+      "scaler": {
+        "text": "Passform auswählen",
+        "help": "Skalierungsalgorithmus für Hintergründe",
+        "items": ["Keine", "Ausfüllen", "Zentriert", "Anpassen"]
+      },
+      "mute": { "text": "Stumm" }
+    },
+    "fr": {
+      "saturation": { "text": "Saturation" },
+      "hue": { "text": "Teinte" },
+      "brightness": { "text": "Luminosité" },
+      "contrast": { "text": "Contraste" },
+      "gamma": { "text": "Gamma" },
+      "speed": { "text": "Vitesse" },
+      "scaler": {
+        "text": "Choisir un ajustement",
+        "help": "Algorithme de mise à l'échelle du fond",
+        "items": ["Aucun", "Remplir", "Uniforme", "Remplissage uniforme"]
+      },
+      "mute": { "text": "Muet" }
+    },
+    "ja": {
+      "saturation": { "text": "彩度" },
+      "hue": { "text": "色相" },
+      "brightness": { "text": "明るさ" },
+      "contrast": { "text": "コントラスト" },
+      "gamma": { "text": "ガンマ" },
+      "speed": { "text": "速度" },
+      "scaler": {
+        "text": "フィット方法を選択",
+        "help": "壁紙のスケーリングアルゴリズム",
+        "items": ["なし", "フィル", "均等", "均等フィル"]
+      },
+      "mute": { "text": "ミュート" }
+    },
+    "ko": {
+      "saturation": { "text": "채도" },
+      "hue": { "text": "색조" },
+      "brightness": { "text": "밝기" },
+      "contrast": { "text": "대비" },
+      "gamma": { "text": "감마" },
+      "speed": { "text": "속도" },
+      "scaler": {
+        "text": "맞춤 선택",
+        "help": "배경화면 크기 조정 알고리즘.",
+        "items": ["없음", "채우기", "비율유지 확대/축소(맞춤)", "비율유지 확대/축소(잘림)"]
+      },
+      "mute": { "text": "음소거" }
+    },
+    "ms": {
+      "saturation": { "text": "Saturasi" },
+      "hue": { "text": "Hue" },
+      "brightness": { "text": "Kecerahan" },
+      "contrast": { "text": "Kontras" },
+      "gamma": { "text": "Gamma" },
+      "speed": { "text": "Kelajuan" },
+      "scaler": {
+        "text": "Pilih Suai",
+        "help": "Algoritma skala latar",
+        "items": ["Tiada", "Isi", "Seragam", "Isi Seragam"]
+      },
+      "mute": { "text": "Senyap" }
+    }
+  }
+}

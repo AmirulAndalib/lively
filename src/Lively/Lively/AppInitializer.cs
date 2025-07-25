@@ -114,19 +114,15 @@ namespace Lively
         {
             try
             {
-                // Default livelyproperty for media files.
-                var mediaProperty = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "mpv", "api", "LivelyProperties.json");
-                var mediaLocProperty = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "mpv", "api", "LivelyProperties.loc.json");
-                if (File.Exists(mediaProperty))
-                {
-                    File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "mpv", "api", "LivelyProperties.json"),
-                        Path.Combine(Constants.CommonPaths.TempVideoDir, "LivelyProperties.json"), true);
-                }
-                if (File.Exists(mediaLocProperty))
-                {
-                    File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "mpv", "api", "LivelyProperties.loc.json"),
-                        Path.Combine(Constants.CommonPaths.TempVideoDir, "LivelyProperties.loc.json"), true);
-                }
+                // Default media wallpaper LivelyProperty configuration.
+                var assetDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Plugins", "Mpv");
+                var livelyPropertyPath = Path.Combine(assetDir, "LivelyProperties.json");
+                var livelyPropertyLocPath = Path.Combine(assetDir, "LivelyProperties.loc.json");
+
+                if (File.Exists(livelyPropertyPath))
+                    File.Copy(livelyPropertyPath, Path.Combine(Constants.CommonPaths.TempVideoDir, "LivelyProperties.json"), true);
+                if (File.Exists(livelyPropertyLocPath))
+                    File.Copy(livelyPropertyLocPath, Path.Combine(Constants.CommonPaths.TempVideoDir, "LivelyProperties.loc.json"), true);
             }
             catch { /* Nothing to do */ }
         }
