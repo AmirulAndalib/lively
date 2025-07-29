@@ -37,6 +37,7 @@ namespace Lively.RPC
         private readonly IRunnerService runnerService;
         private readonly IDisplayManager displayManager;
         private readonly IUserSettingsService userSettings;
+        private readonly IWindowService windowService;
         private readonly IWallpaperLibraryFactory wallpaperLibraryFactory;
         private readonly IWallpaperPluginFactory wallpaperFactory;
 
@@ -45,6 +46,7 @@ namespace Lively.RPC
             IRunnerService runnerService,
             IDisplayManager displayManager,
             IUserSettingsService userSettings,
+            IWindowService windowService,
             IWallpaperPluginFactory wallpaperFactory,
             IWallpaperLibraryFactory wallpaperLibraryFactory)
         {
@@ -53,6 +55,7 @@ namespace Lively.RPC
             this.runnerService = runnerService;
             this.displayManager = displayManager;
             this.userSettings = userSettings;
+            this.windowService = windowService;
             this.wallpaperFactory = wallpaperFactory;
             this.wallpaperLibraryFactory = wallpaperLibraryFactory;
         }
@@ -99,7 +102,7 @@ namespace Lively.RPC
                 // Closing since absolute location can be changed to relative.
                 desktopCore.CloseWallpaper(model);
                 await wallpaper.ShowAsync();
-                isSuccess = await ShowWallpaperDialog(wallpaper);
+                isSuccess = await windowService.ShowWallpaperDialogWindowAsync(wallpaper);
             }
             catch (Exception ex)
             {
@@ -154,7 +157,7 @@ namespace Lively.RPC
                 // Closing since absolute location can be changed to relative.
                 desktopCore.CloseWallpaper(model);
                 await wallpaper.ShowAsync();
-                isSuccess = await ShowWallpaperDialog(wallpaper);
+                isSuccess = await windowService.ShowWallpaperDialogWindowAsync(wallpaper);
             }
             catch (Exception ex)
             {
@@ -410,28 +413,6 @@ namespace Lively.RPC
                 Logger.Error(e);
             }
             return await Task.FromResult(new Empty());
-        }
-
-
-        private async Task<bool> ShowWallpaperDialog(IWallpaper wallpaper)
-        {
-            bool? success = false;
-            await Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new ThreadStart(delegate
-            {
-                var previewWindow = new LibraryPreview(wallpaper)
-                {
-                    Topmost = true,
-                    ShowActivated = true,
-                    WindowStartupLocation = WindowStartupLocation.CenterScreen
-                };
-                previewWindow.Loaded += (s, e) =>
-                {
-                    if (runner.IsVisibleUI)
-                        previewWindow.CenterToWindow(runner.HwndUI);
-                };
-                success = previewWindow.ShowDialog();
-            }));
-            return success ?? false;
         }
 
         private static ErrorCategory GetError(Exception ex)

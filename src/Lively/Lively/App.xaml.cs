@@ -226,9 +226,11 @@ namespace Lively
                 .AddSingleton<CommandsServer>()
                 .AddSingleton<AppUpdateServer>()
                 .AddSingleton<IResourceService, ResourceService>()
+                .AddSingleton<IWindowService, WindowService>()
                 // Transient
                 .AddTransient<AppInitializer>()
                 .AddTransient<LibraryPreviewViewModel>()
+                .AddTransient<DiagnosticViewModel>()
                 .AddTransient<IWallpaperLibraryFactory, WallpaperLibraryFactory>()
                 .AddTransient<IWallpaperPluginFactory, WallpaperPluginFactory>()
                 .AddTransient<ILivelyPropertyFactory, LivelyPropertyFactory>()

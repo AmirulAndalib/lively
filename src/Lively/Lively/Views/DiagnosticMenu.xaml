@@ -10,7 +10,6 @@
     Title="Lively Diagnostics"
     Width="300"
     Height="250"
-    Closing="Window_Closing"
     ResizeMode="CanMinimize"
     Style="{DynamicResource WindowUI}"
     WindowStartupLocation="CenterScreen"
@@ -21,27 +20,27 @@
                 MinWidth="200"
                 MinHeight="35"
                 Margin="0,0,0,5"
-                Click="Generate_Report_Click"
+                Command="{Binding CreateLogFileCommand}"
                 Content="{ext:LocalizedString ExportLogs_Description}" />
             <Button
                 MinWidth="200"
                 MinHeight="35"
                 Margin="0,0,0,5"
-                Click="Open_Debug_View_Click"
+                Command="{Binding OpenLogViewCommand}"
                 Content="{ext:LocalizedString Debug_Description}" />
             <Button
                 MinWidth="200"
                 MinHeight="35"
                 Margin="0,0,0,5"
-                Click="Get_Help_Click"
+                Command="{Binding OpenHelpCommand}"
                 Content="{ext:LocalizedString ReportBug_Description}" />
-            <Button
-                x:Name="GridOverlyButton"
+            <ToggleButton
                 MinWidth="200"
                 MinHeight="35"
-                Click="Grid_Overlay_Click">
-                Grid Overlay [OFF]
-            </Button>
+                Command="{Binding ToggleGridOverlayCommand}"
+                IsChecked="{Binding IsGridOverlayVisible, Mode=OneWay}">
+                Grid Detection Overlay
+            </ToggleButton>
         </StackPanel>
     </Grid>
 </Window>
