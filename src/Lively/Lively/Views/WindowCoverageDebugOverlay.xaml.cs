@@ -1,6 +1,7 @@
 ﻿using Lively.Common.Helpers;
 using Lively.Common.Helpers.Pinvoke;
 using Lively.Common.Services;
+using Lively.Core.Display;
 using Lively.Models;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -17,6 +18,7 @@ namespace Lively.Views
 {
     public partial class WindowCoverageDebugOverlay : Window
     {
+        private readonly IDisplayManager displayManager;
         private readonly DisplayMonitor targetDisplay;
         private readonly DispatcherTimer dispatcherTimer;
         private readonly int tileSize;
@@ -26,6 +28,7 @@ namespace Lively.Views
         {
             InitializeComponent();
             var userSettings = App.Services.GetRequiredService<IUserSettingsService>();
+            this.displayManager = App.Services.GetRequiredService<IDisplayManager>();
 
             dispatcherTimer = new();
             dispatcherTimer.Tick += (s, e) => UpdateGrid();
@@ -37,16 +40,16 @@ namespace Lively.Views
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            var hwnd = new WindowInteropHelper(this).Handle;
-
+            // Move to target screen first to find scale value.
             this.Left = targetDisplay.WorkingArea.Left;
             this.Top = targetDisplay.WorkingArea.Top;
-            this.Width = targetDisplay.WorkingArea.Width;
-            this.Height = targetDisplay.WorkingArea.Height;
-
+            // Calculate scale.
+            var hwnd = new WindowInteropHelper(this).Handle;
             var dpi = NativeMethods.GetDpiForWindow(hwnd);
             scaleFactor = 1f / (dpi / 96f);
-
+            // Resize with scale in mind.
+            this.Width = targetDisplay.WorkingArea.Width * scaleFactor;
+            this.Height = targetDisplay.WorkingArea.Height * scaleFactor;
             // Make window click through.
             WindowUtil.SetWindowExStyle(hwnd, NativeMethods.WindowStyles.WS_EX_TRANSPARENT | NativeMethods.WindowStyles.WS_EX_TOOLWINDOW);
             // Start drawing.
@@ -62,18 +65,19 @@ namespace Lively.Views
         {
             TileCanvas.Children.Clear();
 
-            var screenBounds = targetDisplay.Bounds;
-            int cols = (int)(screenBounds.Width * scaleFactor/ (double)tileSize);
-            int rows = (int)(screenBounds.Height * scaleFactor/ (double)tileSize);
-
+            var windowsOnScreen = WindowUtil.GetVisibleTopLevelWindows()
+                .FindAll(hwnd => displayManager.GetDisplayMonitorFromHWnd(hwnd).Equals(targetDisplay));
+            var screenRect = new Rectangle(targetDisplay.WorkingArea.Left,
+                targetDisplay.WorkingArea.Top,
+                (int)(targetDisplay.WorkingArea.Width * scaleFactor),
+                (int)(targetDisplay.WorkingArea.Height * scaleFactor));
+            int cols = (int)Math.Ceiling(screenRect.Width / (double)tileSize);
+            int rows = (int)Math.Ceiling(screenRect.Height / (double)tileSize);
             bool[,] covered = new bool[rows, cols];
 
-            foreach (var hwnd in WindowUtil.GetVisibleTopLevelWindows())
+            foreach (var hwnd in windowsOnScreen)
             {
                 if (NativeMethods.GetWindowRect(hwnd, out var rect) == 0)
-                    continue;
-
-                if (!RectsIntersect(rect, screenBounds))
                     continue;
 
                 rect = new NativeMethods.RECT
@@ -85,10 +89,10 @@ namespace Lively.Views
                 };
 
                 // Find overlapping tile indices
-                int xStart = Math.Max(0, (rect.Left - screenBounds.Left) / tileSize);
-                int xEnd = Math.Min(cols - 1, (rect.Right - screenBounds.Left - 1) / tileSize);
-                int yStart = Math.Max(0, (rect.Top - screenBounds.Top) / tileSize);
-                int yEnd = Math.Min(rows - 1, (rect.Bottom - screenBounds.Top - 1) / tileSize);
+                int xStart = Math.Max(0, (rect.Left - screenRect.Left) / tileSize);
+                int xEnd = Math.Min(cols - 1, (rect.Right - screenRect.Left - 1) / tileSize);
+                int yStart = Math.Max(0, (rect.Top - screenRect.Top) / tileSize);
+                int yEnd = Math.Min(rows - 1, (rect.Bottom - screenRect.Top - 1) / tileSize);
 
                 for (int y = yStart; y <= yEnd; y++)
                     for (int x = xStart; x <= xEnd; x++)
@@ -114,12 +118,6 @@ namespace Lively.Views
                     TileCanvas.Children.Add(tile);
                 }
             }
-        }
-
-        private static bool RectsIntersect(NativeMethods.RECT a, Rectangle b)
-        {
-            return a.Right > b.Left && a.Left < b.Right &&
-                   a.Bottom > b.Top && a.Top < b.Bottom;
         }
     }
 }

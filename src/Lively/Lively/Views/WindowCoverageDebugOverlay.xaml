@@ -10,6 +10,8 @@
     Height="450"
     AllowsTransparency="True"
     Background="Transparent"
+    BorderBrush="#64808080"
+    BorderThickness="1"
     Closing="Window_Closing"
     Loaded="Window_Loaded"
     ResizeMode="NoResize"
