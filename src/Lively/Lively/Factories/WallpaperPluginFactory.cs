@@ -19,12 +19,20 @@ namespace Lively.Factories
             this.lpFactory = lpFactory;
         }
 
-        public IWallpaper CreateDwmThumbnailWallpaper(LibraryModel model, IntPtr thumbnailSrc, Rectangle targetRect, DisplayMonitor display)
+        public IWallpaper CreateDwmThumbnailWallpaper(LibraryModel model,
+                                                      IntPtr thumbnailSrc,
+                                                      Rectangle targetRect,
+                                                      DisplayMonitor display)
         {
             return new DwmThumbnailPlayer(thumbnailSrc, model, display, targetRect);
         }
 
-        public IWallpaper CreateWallpaper(LibraryModel model, DisplayMonitor display, WallpaperArrangement arrangement, IUserSettingsService userSettings, bool isPreview = false)
+        public IWallpaper CreateWallpaper(LibraryModel model,
+            DisplayMonitor display,
+            WallpaperArrangement arrangement,
+            IUserSettingsService userSettings,
+            bool isPreview = false,
+            bool isScreensaver = false)
         {
             switch (model.LivelyInfo.Type)
             {
@@ -73,7 +81,8 @@ namespace Lively.Factories
                                 display,
                                 lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
                                 userSettings.Settings.VideoPlayerHwAccel,
-                                isPreview,
+                                isPreview: isPreview,
+                                isScreensaver: isScreensaver,
                                 userSettings.Settings.VideoD3D11OutputColorSpace);
                         case LivelyMediaPlayer.vlc:
                             return new VideoVlcPlayer(model.FilePath, 
@@ -96,7 +105,8 @@ namespace Lively.Factories
                                            display,
                                            lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
                                            userSettings.Settings.VideoPlayerHwAccel,
-                                           isPreview,
+                                           isPreview: isPreview,
+                                           isScreensaver: isScreensaver,
                                            userSettings.Settings.VideoD3D11OutputColorSpace);
                     }
                     break;
@@ -113,7 +123,8 @@ namespace Lively.Factories
                                               display,
                                               lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
                                               userSettings.Settings.VideoPlayerHwAccel,
-                                              isPreview, 
+                                              isPreview: isPreview, 
+                                              isScreensaver: isScreensaver, 
                                               userSettings.Settings.VideoD3D11OutputColorSpace);
                         case LivelyPicturePlayer.wmf:
                             return new VideoWmfProcess(model.FilePath, model, display, 0, userSettings.Settings.WallpaperScaling);
@@ -141,7 +152,8 @@ namespace Lively.Factories
                             display,
                             lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
                             userSettings.Settings.VideoPlayerHwAccel,
-                            isPreview, 
+                            isPreview: isPreview, 
+                            isScreensaver: isScreensaver, 
                             userSettings.Settings.VideoD3D11OutputColorSpace, 
                             userSettings.Settings.StreamQuality);
                     }

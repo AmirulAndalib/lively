@@ -25,6 +25,7 @@ namespace Lively.Views
         private readonly WallpaperArrangement arrangement;
         private readonly TaskCompletionSource loadingTaskCompletionSource = new();
         private readonly bool isPreview;
+        private readonly bool isScreensaver;
         private IWallpaper wallpaper;
         private bool _isInitialized = false;
 
@@ -34,8 +35,9 @@ namespace Lively.Views
         public WallpaperPreview(LibraryModel model,
             DisplayMonitor display,
             WallpaperArrangement arrangement,
-            bool autoLoad = true,
-            bool isPreview = true)
+            bool isAutoLoad = true,
+            bool isPreview = true,
+            bool isScreensaver = false)
         {
             userSettings = App.Services.GetRequiredService<IUserSettingsService>();
             wallpaperFactory = App.Services.GetRequiredService<IWallpaperPluginFactory>();
@@ -43,11 +45,12 @@ namespace Lively.Views
             this.display = display;
             this.arrangement = arrangement;
             this.isPreview = isPreview;
+            this.isScreensaver = isScreensaver;
 
             InitializeComponent();
             this.Title = model.Title;
 
-            if (autoLoad)
+            if (isAutoLoad)
                 _ = LoadWallpaperAsync();
         }
 
@@ -59,7 +62,12 @@ namespace Lively.Views
             try
             {
                 await loadingTaskCompletionSource.Task;
-                wallpaper = wallpaperFactory.CreateWallpaper(model, display, arrangement, userSettings, isPreview);
+                wallpaper = wallpaperFactory.CreateWallpaper(model,
+                    display,
+                    arrangement,
+                    userSettings,
+                    isPreview: isPreview,
+                    isScreensaver: isScreensaver);
                 await wallpaper.ShowAsync();
 
                 //Attach wp hwnd to border ui element.

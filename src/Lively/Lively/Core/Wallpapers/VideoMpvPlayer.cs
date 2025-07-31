@@ -24,7 +24,7 @@ using System.Threading.Tasks;
 namespace Lively.Core.Wallpapers
 {
     /// <summary>
-    /// Mpv videoplayer application.
+    /// Mpv video player
     /// <br>References:</br>
     /// <br> https://github.com/mpv-player/mpv/blob/master/DOCS/man/ipc.rst </br>
     /// <br> https://mpv.io/manual/master/  </br>
@@ -74,8 +74,9 @@ namespace Lively.Core.Wallpapers
             LibraryModel model,
             DisplayMonitor display,
             string livelyPropertyPath,
-            bool hwAccel = true,
-            bool onScreenControl = false,
+            bool isHwAccel = true,
+            bool isPreview = false,
+            bool isScreensaver = false,
             VideoColorSpace colorSpace = VideoColorSpace.auto,
             StreamQualitySuggestion streamQuality = StreamQualitySuggestion.Highest)
         {
@@ -105,20 +106,20 @@ namespace Lively.Core.Wallpapers
             cmdArgs.Append("--window-minimized=yes ");
             // Allow windows screensaver
             cmdArgs.Append("--stop-screensaver=no ");
-            //Disable mpv default (built-in) key bindings
+            // Disable mpv default (built-in) key bindings
             cmdArgs.Append("--input-default-bindings=no ");
             // Win11 24H2 and new mpv builds alignment fix, ref: https://github.com/rocksdanister/lively/issues/2415
-            cmdArgs.Append(!onScreenControl ? "--no-border " : " ");
+            cmdArgs.Append(!isPreview && !isScreensaver ? "--no-border " : " ");
             // Permit mpv to receive pointer events reported by the video output driver. Necessary to use the OSC, or to select the buttons in DVD menus. 
-            cmdArgs.Append(!onScreenControl ? "--input-cursor=no " : " ");
+            cmdArgs.Append(!isPreview ? "--input-cursor=no " : " ");
             // On-screen-controller visibility
-            cmdArgs.Append(!onScreenControl ? "--no-osc " : " ");
+            cmdArgs.Append(!isPreview ? "--no-osc " : " ");
             // Alternative: --input-ipc-server=\\.\pipe\
             cmdArgs.Append("--input-ipc-server=" + ipcServerName + " ");
             // Integer scaler for sharpness
             cmdArgs.Append(model.LivelyInfo.Type == WallpaperType.gif ? "--scale=nearest " : " ");
             // GPU decode preference
-            cmdArgs.Append(hwAccel ? "--hwdec=auto-safe " : "--hwdec=no ");
+            cmdArgs.Append(isHwAccel ? "--hwdec=auto-safe " : "--hwdec=no ");
             // Set color space.
             cmdArgs.Append($"--d3d11-output-csp={GetMpvD3D11ColorSpace(colorSpace)} ");
             // Avoid global config file %APPDATA%\mpv\mpv.conf

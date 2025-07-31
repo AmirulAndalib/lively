@@ -335,7 +335,13 @@ namespace Lively.Services
 
         private async Task ShowPreviewWindowAsScreensaver(LibraryModel model, DisplayMonitor display, int volume)
         {
-            var window = new WallpaperPreview(model, display, userSettings.Settings.ScreensaverArragement, false, false)
+            var window = new WallpaperPreview(
+                model,
+                display,
+                userSettings.Settings.ScreensaverArragement,
+                isAutoLoad: false,
+                isPreview: false,
+                isScreensaver: true)
             {
                 WindowStartupLocation = WindowStartupLocation.CenterScreen,
                 BorderThickness = new Thickness(0),
@@ -354,7 +360,12 @@ namespace Lively.Services
 
         private async Task ShowPreviewWindowAsScreensaver(LibraryModel model, Rectangle rect, int volume)
         {
-            var window = new WallpaperPreview(model, displayManager.PrimaryDisplayMonitor, userSettings.Settings.ScreensaverArragement, false, false)
+            var window = new WallpaperPreview(model,
+                displayManager.PrimaryDisplayMonitor,
+                userSettings.Settings.ScreensaverArragement,
+                isAutoLoad: false,
+                isPreview: false,
+                isScreensaver: true)
             {
                 WindowStartupLocation = WindowStartupLocation.CenterScreen,
                 BorderThickness = new Thickness(0),

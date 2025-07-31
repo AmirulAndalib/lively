@@ -9,7 +9,16 @@ namespace Lively.Factories
 {
     public interface IWallpaperPluginFactory
     {
-        IWallpaper CreateWallpaper(LibraryModel model, DisplayMonitor display, WallpaperArrangement arrangement, IUserSettingsService userSettings, bool isPreview = false);
-        IWallpaper CreateDwmThumbnailWallpaper(LibraryModel model, IntPtr thumbnailSrc, Rectangle targetRect, DisplayMonitor display);
+        IWallpaper CreateWallpaper(LibraryModel model,
+            DisplayMonitor display,
+            WallpaperArrangement arrangement,
+            IUserSettingsService userSettings,
+            bool isPreview = false,
+            bool isScreensaver = false);
+        IWallpaper CreateDwmThumbnailWallpaper(
+            LibraryModel model,
+            IntPtr thumbnailSrc,
+            Rectangle targetRect,
+            DisplayMonitor display);
     }
 }
