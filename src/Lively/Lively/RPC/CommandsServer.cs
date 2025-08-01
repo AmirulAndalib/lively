@@ -3,7 +3,6 @@ using Grpc.Core;
 using Lively.Commandline;
 using Lively.Common.Services;
 using Lively.Grpc.Common.Proto.Commands;
-using Lively.Views;
 using System;
 using System.Linq;
 using System.Threading;
@@ -15,21 +14,20 @@ namespace Lively.RPC
 {
     internal class CommandsServer : CommandsService.CommandsServiceBase
     {
-        private DebugLog debugLogWindow;
         private readonly IRunnerService runner;
-        private readonly IUserSettingsService userSettings;
+        private readonly IWindowService windowService;
         private readonly IScreensaverService screensaver;
         private readonly ICommandHandler commandHandler;
 
         public CommandsServer(IRunnerService runner,
             IScreensaverService screensaver,
-            ICommandHandler commandHandler,
-            IUserSettingsService userSettings)
+            IWindowService windowService,
+            ICommandHandler commandHandler)
         {
             this.runner = runner;
             this.screensaver = screensaver;
+            this.windowService = windowService;
             this.commandHandler = commandHandler;
-            this.userSettings = userSettings;
         }
 
         public override Task<Empty> ShowUI(Empty _, ServerCallContext context)
@@ -60,12 +58,7 @@ namespace Lively.RPC
         {
             Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new ThreadStart(delegate
             {
-                if (debugLogWindow == null)
-                {
-                    debugLogWindow = new DebugLog();
-                    debugLogWindow.Closed += (s, e) => debugLogWindow = null;
-                    debugLogWindow.Show();
-                }
+                windowService.ShowLogWindow();
             }));
             return Task.FromResult(new Empty());
         }
