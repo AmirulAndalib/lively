@@ -11,6 +11,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Lively.Core.Wallpapers
@@ -219,6 +220,9 @@ namespace Lively.Core.Wallpapers
 
         private void SendMessage(string msg)
         {
+            if (IsExited)
+                return;
+
             try
             {
                 // Setting process StandardInputEncoding to UTF8.
@@ -296,7 +300,7 @@ namespace Lively.Core.Wallpapers
         public async Task ScreenCapture(string filePath)
         {
             var tcs = new TaskCompletionSource<bool>();
-            void OutputDataReceived(object sender, DataReceivedEventArgs e)
+            void LocalOutputDataReceived(object sender, DataReceivedEventArgs e)
             {
                 if (string.IsNullOrEmpty(e.Data))
                 {
@@ -311,27 +315,32 @@ namespace Lively.Core.Wallpapers
                         var msg = (LivelyMessageScreenshot)obj;
                         if (msg.FileName == Path.GetFileName(filePath))
                         {
+                            process.OutputDataReceived -= LocalOutputDataReceived;
                             tcs.SetResult(msg.Success);
                         }
                     }
                 }
             }
+            process.OutputDataReceived += LocalOutputDataReceived;
 
-            try
+            SendMessage(new LivelyScreenshotCmd()
             {
-                process.OutputDataReceived += OutputDataReceived;
-                SendMessage(new LivelyScreenshotCmd() 
-                { 
-                    FilePath = Path.GetExtension(filePath) != ".jpg" ? filePath + ".jpg" : filePath,
-                    Format = ScreenshotFormat.jpeg,
-                    Delay = 0 //unused
-                });
-                await tcs.Task;
-            }
-            finally
+                FilePath = Path.GetExtension(filePath) != ".jpg" ? filePath + ".jpg" : filePath,
+                Format = ScreenshotFormat.jpeg,
+                Delay = 0 //unused
+            });
+
+            // Timeout
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            using (cts.Token.Register(() =>
             {
-                process.OutputDataReceived -= OutputDataReceived;
-            }
+                if (!IsExited)
+                    process.OutputDataReceived -= LocalOutputDataReceived;
+
+                tcs.TrySetResult(false);
+            }))
+
+            await tcs.Task;
         }
 
         public void Dispose()

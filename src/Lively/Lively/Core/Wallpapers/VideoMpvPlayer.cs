@@ -379,6 +379,9 @@ namespace Lively.Core.Wallpapers
 
         private void SendMessage(string msg)
         {
+            if (IsExited)
+                return;
+
             try
             {
                 PipeClient.SendMessage(ipcServerName, msg);

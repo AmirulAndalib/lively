@@ -117,10 +117,9 @@ namespace Lively.Player.WebView2
                 Message = $"Error parsing cmdline args: {errs.First()}",
             });
 
-            if (Application.MessageLoop)
-                Application.Exit();
-            else
-                Environment.Exit(1);
+            // ERROR_INVALID_PARAMETER
+            // Ref: <https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499->
+            Environment.Exit(87);
         }
 
         public async Task InitializeWebView2Async()

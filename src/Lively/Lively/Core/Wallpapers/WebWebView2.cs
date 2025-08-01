@@ -11,6 +11,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Lively.Core.Wallpapers
@@ -124,6 +125,9 @@ namespace Lively.Core.Wallpapers
 
         private void SendMessage(string msg)
         {
+            if (IsExited)
+                return;
+
             try
             {
                 // Setting process StandardInputEncoding to UTF8.
@@ -183,10 +187,13 @@ namespace Lively.Core.Wallpapers
             Logger.Info($"Wv2{uniqueId}: Process exited with exit code: {process?.ExitCode}");
             if (!isInitialized)
             {
-                // ERROR_FILE_NOT_FOUND
+                // 2 = ERROR_FILE_NOT_FOUND
+                // 87 = ERROR_INVALID_PARAMETER
                 // Ref: <https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499->
                 if (process is not null && process.ExitCode == 2)
                     tcsProcessWait.TrySetResult(new WallpaperWebView2NotFoundException());
+                else if (process is not null && process.ExitCode == 87)
+                    tcsProcessWait.TrySetResult(new WallpaperPluginException("Error initializing. Unknown options are passed."));
                 else
                     tcsProcessWait.TrySetResult(new InvalidOperationException(Properties.Resources.LivelyExceptionGeneral));
             }
@@ -279,7 +286,7 @@ namespace Lively.Core.Wallpapers
         public async Task ScreenCapture(string filePath)
         {
             var tcs = new TaskCompletionSource<bool>();
-            void OutputDataReceived(object sender, DataReceivedEventArgs e)
+            void LocalOutputDataReceived(object sender, DataReceivedEventArgs e)
             {
                 if (string.IsNullOrEmpty(e.Data))
                 {
@@ -294,27 +301,32 @@ namespace Lively.Core.Wallpapers
                         var msg = (LivelyMessageScreenshot)obj;
                         if (msg.FileName == Path.GetFileName(filePath))
                         {
+                            process.OutputDataReceived -= LocalOutputDataReceived;
                             tcs.SetResult(msg.Success);
                         }
                     }
                 }
             }
+            process.OutputDataReceived += LocalOutputDataReceived;
 
-            try
+            SendMessage(new LivelyScreenshotCmd()
             {
-                process.OutputDataReceived += OutputDataReceived;
-                SendMessage(new LivelyScreenshotCmd()
-                {
-                    FilePath = Path.GetExtension(filePath) != ".jpg" ? filePath + ".jpg" : filePath,
-                    Format = ScreenshotFormat.jpeg,
-                    Delay = 0 //unused
-                });
-                await tcs.Task;
-            }
-            finally
+                FilePath = Path.GetExtension(filePath) != ".jpg" ? filePath + ".jpg" : filePath,
+                Format = ScreenshotFormat.jpeg,
+                Delay = 0 //unused
+            });
+
+            // Timeout
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            using (cts.Token.Register(() =>
             {
-                process.OutputDataReceived -= OutputDataReceived;
-            }
+                if (!IsExited)
+                    process.OutputDataReceived -= LocalOutputDataReceived;
+
+                tcs.TrySetResult(false);
+            }))
+
+            await tcs.Task;
         }
 
         public void Dispose()

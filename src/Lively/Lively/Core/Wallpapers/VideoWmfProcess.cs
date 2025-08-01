@@ -172,6 +172,9 @@ namespace Lively.Core.Wallpapers
 
         private void SendMessage(string msg)
         {
+            if (IsExited)
+                return;
+
             try
             {
                 process?.StandardInput.WriteLine(msg);
