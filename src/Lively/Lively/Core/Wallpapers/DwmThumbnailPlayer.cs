@@ -47,7 +47,7 @@ namespace Lively.Core.Wallpapers
 
         public IntPtr InputHandle => IntPtr.Zero;
 
-        public Process Proc => null;
+        public int? Pid => null;
 
         public DisplayMonitor Screen { get; set; }
 
@@ -119,6 +119,9 @@ namespace Lively.Core.Wallpapers
 
         public void Close()
         {
+            if (IsExited)
+                return;
+
             _ = Application.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new ThreadStart(delegate
             {
                 window.Close();
@@ -129,6 +132,9 @@ namespace Lively.Core.Wallpapers
 
         public void Terminate()
         {
+            if (IsExited)
+                return;
+
             Close();
         }
 
@@ -155,6 +161,11 @@ namespace Lively.Core.Wallpapers
         public void SetVolume(int volume)
         {
             //nothing
+        }
+
+        public void Dispose()
+        {
+            Terminate();
         }
     }
 }

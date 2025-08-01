@@ -275,51 +275,52 @@ namespace Lively.Core
                 if (!watchdog.IsRunning)
                     watchdog.Start();
 
+                IWallpaper currentWallpaper = null;
                 try
                 {
                     switch (userSettings.Settings.WallpaperArrangement)
                     {
                         case WallpaperArrangement.per:
                             {
-                                IWallpaper instance = wallpaperFactory.CreateWallpaper(wallpaper, display, userSettings.Settings.WallpaperArrangement, userSettings);
-                                instance.Exited += Wallpaper_Exited;
-                                await instance.ShowAsync();
+                                currentWallpaper = wallpaperFactory.CreateWallpaper(wallpaper, display, userSettings.Settings.WallpaperArrangement, userSettings);
+                                currentWallpaper.Exited += Wallpaper_Exited;
+                                await currentWallpaper.ShowAsync();
 
-                                CloseWallpaper(instance.Screen, fireEvent: false);
-                                if (!TrySetWallpaperPerScreen(instance.Handle, instance.Screen))
+                                CloseWallpaper(currentWallpaper.Screen, fireEvent: false);
+                                if (!TrySetWallpaperPerScreen(currentWallpaper.Handle, currentWallpaper.Screen))
                                     Logger.Error("Failed to set wallpaper as child of WorkerW");
 
                                 // Reload incase page does not handle resize event
-                                if (instance.Category.IsWebWallpaper())
-                                    instance.SetPlaybackPos(0, PlaybackPosType.absolutePercent);
+                                if (currentWallpaper.Category.IsWebWallpaper())
+                                    currentWallpaper.SetPlaybackPos(0, PlaybackPosType.absolutePercent);
 
-                                await SetDesktopPictureOrLockscreen(instance);
+                                await SetDesktopPictureOrLockscreen(currentWallpaper);
 
-                                if (instance.Proc != null)
-                                    watchdog.Add(instance.Proc.Id);
+                                if (currentWallpaper.Pid is int pid)
+                                    watchdog.Add(pid);
 
-                                wallpapers.Add(instance);
+                                wallpapers.Add(currentWallpaper);
                             }
                             break;
                         case WallpaperArrangement.span:
                             {
-                                IWallpaper instance = wallpaperFactory.CreateWallpaper(wallpaper, display, userSettings.Settings.WallpaperArrangement, userSettings);
-                                instance.Exited += Wallpaper_Exited;
-                                await instance.ShowAsync();
+                                currentWallpaper = wallpaperFactory.CreateWallpaper(wallpaper, display, userSettings.Settings.WallpaperArrangement, userSettings);
+                                currentWallpaper.Exited += Wallpaper_Exited;
+                                await currentWallpaper.ShowAsync();
 
                                 CloseAllWallpapers(fireEvent: false);
-                                if (!TrySetWallpaperSpanScreen(instance.Handle))
+                                if (!TrySetWallpaperSpanScreen(currentWallpaper.Handle))
                                     Logger.Error("Failed to set wallpaper as child of WorkerW");
 
-                                if (instance.Category.IsWebWallpaper())
-                                    instance.SetPlaybackPos(0, PlaybackPosType.absolutePercent);
+                                if (currentWallpaper.Category.IsWebWallpaper())
+                                    currentWallpaper.SetPlaybackPos(0, PlaybackPosType.absolutePercent);
 
-                                await SetDesktopPictureOrLockscreen(instance);
+                                await SetDesktopPictureOrLockscreen(currentWallpaper);
 
-                                if (instance.Proc != null)
-                                    watchdog.Add(instance.Proc.Id);
+                                if (currentWallpaper.Pid is int pid)
+                                    watchdog.Add(pid);
 
-                                wallpapers.Add(instance);
+                                wallpapers.Add(currentWallpaper);
                             }
                             break;
                         case WallpaperArrangement.duplicate:
@@ -327,22 +328,22 @@ namespace Lively.Core
                                 CloseAllWallpapers(false);
                                 foreach (var item in displayManager.DisplayMonitors)
                                 {
-                                    IWallpaper instance = wallpaperFactory.CreateWallpaper(wallpaper, item, userSettings.Settings.WallpaperArrangement, userSettings);
-                                    instance.Exited += Wallpaper_Exited;
-                                    await instance.ShowAsync();
+                                    currentWallpaper = wallpaperFactory.CreateWallpaper(wallpaper, item, userSettings.Settings.WallpaperArrangement, userSettings);
+                                    currentWallpaper.Exited += Wallpaper_Exited;
+                                    await currentWallpaper.ShowAsync();
 
-                                    if (!TrySetWallpaperPerScreen(instance.Handle, instance.Screen))
+                                    if (!TrySetWallpaperPerScreen(currentWallpaper.Handle, currentWallpaper.Screen))
                                         Logger.Error("Failed to set wallpaper as child of WorkerW");
 
-                                    if (instance.Category.IsWebWallpaper())
-                                        instance.SetPlaybackPos(0, PlaybackPosType.absolutePercent);
+                                    if (currentWallpaper.Category.IsWebWallpaper())
+                                        currentWallpaper.SetPlaybackPos(0, PlaybackPosType.absolutePercent);
 
-                                    await SetDesktopPictureOrLockscreen(instance);
+                                    await SetDesktopPictureOrLockscreen(currentWallpaper);
 
-                                    if (instance.Proc != null)
-                                        watchdog.Add(instance.Proc.Id);
+                                    if (currentWallpaper.Pid is int pid)
+                                        watchdog.Add(pid);
 
-                                    wallpapers.Add(instance);
+                                    wallpapers.Add(currentWallpaper);
                                 }
 
                                 // Synchronizing position and audio
@@ -365,6 +366,8 @@ namespace Lively.Core
                     Logger.Error(ex1);
                     WallpaperError?.Invoke(this, new WallpaperPluginNotFoundException(ex1.Message));
                     WallpaperChanged?.Invoke(this, EventArgs.Empty);
+
+                    currentWallpaper?.Dispose();
                 }
                 catch (Win32Exception ex2)
                 {
@@ -374,12 +377,16 @@ namespace Lively.Core
                     else
                         WallpaperError?.Invoke(this, ex2);
                     WallpaperChanged?.Invoke(this, EventArgs.Empty);
+
+                    currentWallpaper?.Dispose();
                 }
                 catch (Exception ex3)
                 {
                     Logger.Error(ex3);
                     WallpaperError?.Invoke(this, ex3);
                     WallpaperChanged?.Invoke(this, EventArgs.Empty);
+
+                    currentWallpaper?.Dispose();
                 }
             }
             finally
@@ -687,19 +694,18 @@ namespace Lively.Core
                         //No screens running wallpaper needs to be removed.
                         if (orphanWallpapers.Count != 0)
                         {
-                            orphanWallpapers.ForEach(x =>
-                            {
-                                Logger.Info($"Disconnected Screen: {x.Screen.DeviceName} {x.Screen.Bounds}");
-                                x.Close();
-                            });
-
                             var newOrphans = orphanWallpapers.FindAll(
                                 oldOrphan => wallpapersDisconnected.Find(
                                     newOrphan => newOrphan.Display.Equals(oldOrphan.Screen)) == null);
                             foreach (var item in newOrphans)
                             {
-                                wallpapersDisconnected.Add(new WallpaperLayoutModel((DisplayMonitor)item.Screen, item.Model.LivelyInfoFolderPath));
+                                wallpapersDisconnected.Add(new WallpaperLayoutModel(item.Screen, item.Model.LivelyInfoFolderPath));
                             }
+                            orphanWallpapers.ForEach(x =>
+                            {
+                                Logger.Info($"Disconnected Screen: {x.Screen.DeviceName} {x.Screen.Bounds}");
+                                x.Dispose();
+                            });
                             wallpapers.RemoveAll(x => orphanWallpapers.Contains(x));
                         }
                         break;
@@ -709,7 +715,7 @@ namespace Lively.Core
                             orphanWallpapers.ForEach(x =>
                             {
                                 Logger.Info($"Disconnected Screen: {x.Screen.DeviceName} {x.Screen.Bounds}");
-                                x.Close();
+                                x.Dispose();
                             });
                             wallpapers.RemoveAll(x => orphanWallpapers.Contains(x));
                         }
@@ -892,14 +898,16 @@ namespace Lively.Core
         {
             if (Wallpapers.Count > 0)
             {
-                wallpapers.ForEach(x => x.Close());
+                wallpapers.ForEach(x =>
+                {
+                    x.Close();
+                    x.Dispose();
+                });
                 wallpapers.Clear();
                 watchdog.Clear();
 
                 if (fireEvent)
-                {
                     WallpaperChanged?.Invoke(this, EventArgs.Empty);
-                }
             }
         }
 
@@ -915,12 +923,11 @@ namespace Lively.Core
             {
                 tmp.ForEach(x =>
                 {
-                    if (x.Proc != null)
-                    {
-                        watchdog.Remove(x.Proc.Id);
-                    }
+                    if (x.Pid is int pid)
+                        watchdog.Remove(pid);
 
                     x.Close();
+                    x.Dispose();
                 });
                 wallpapers.RemoveAll(x => tmp.Contains(x));
 
@@ -938,12 +945,11 @@ namespace Lively.Core
             {
                 tmp.ForEach(x =>
                 {
-                    if (x.Proc != null)
-                    {
-                        watchdog.Remove(x.Proc.Id);
-                    }
+                    if (x.Pid is int pid)
+                        watchdog.Remove(pid);
 
                     x.Close();
+                    x.Dispose();
                 });
                 wallpapers.RemoveAll(x => tmp.Contains(x));
                 WallpaperChanged?.Invoke(this, EventArgs.Empty);
@@ -963,12 +969,11 @@ namespace Lively.Core
             {
                 tmp.ForEach(x =>
                 {
-                    if (x.Proc != null)
-                    {
-                        watchdog.Remove(x.Proc.Id);
-                    }
+                    if (x.Pid is int pid)
+                        watchdog.Remove(pid);
 
                     x.Close();
+                    x.Dispose();
                 });
                 wallpapers.RemoveAll(x => tmp.Contains(x));
 

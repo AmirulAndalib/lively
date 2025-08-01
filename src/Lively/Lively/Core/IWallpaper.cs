@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Lively.Core
 {
-    public interface IWallpaper
+    public interface IWallpaper : IDisposable
     {
         /// <summary>
         /// Wallpaper exit event fired
@@ -39,10 +39,10 @@ namespace Lively.Core
         /// <returns></returns>
         IntPtr InputHandle { get; }
         /// <summary>
-        /// Get process information.
+        /// Process Id.
         /// </summary>
         /// <returns>null if not a program wallpaper.</returns>
-        Process Proc { get; }
+        int? Pid { get; }
         /// <summary>
         /// Start wallpaper.
         /// </summary>

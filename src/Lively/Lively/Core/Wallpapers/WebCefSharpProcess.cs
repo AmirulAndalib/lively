@@ -2,7 +2,6 @@
 using Lively.Common.Extensions;
 using Lively.Common.Helpers;
 using Lively.Common.Helpers.Pinvoke;
-using Lively.Common.Helpers.Shell;
 using Lively.Common.JsonConverters;
 using Lively.Models;
 using Lively.Models.Enums;
@@ -20,6 +19,7 @@ namespace Lively.Core.Wallpapers
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly TaskCompletionSource<Exception> tcsProcessWait = new();
+        private readonly Process process;
         private int cefD3DRenderingSubProcessPid;//, cefAudioSubProcessPid;
         private bool isInitialized;
         private static int globalCount;
@@ -37,7 +37,7 @@ namespace Lively.Core.Wallpapers
 
         public IntPtr InputHandle { get; private set; }
 
-        public Process Proc { get; }
+        public int? Pid { get; private set; } = null;
 
         public DisplayMonitor Screen { get; set; }
 
@@ -74,26 +74,22 @@ namespace Lively.Core.Wallpapers
             //cmdArgs.Append(" --verbose-log true"); 
 #endif
 
-            ProcessStartInfo start = new ProcessStartInfo
+            this.process = new Process
             {
-                Arguments = cmdArgs.ToString(),
-                FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.PlayerPartialPaths.CefSharpPath),
-                RedirectStandardInput = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = false,
-                UseShellExecute = false,
-                StandardInputEncoding = Encoding.UTF8,
-                //StandardOutputEncoding = Encoding.UTF8,
-                WorkingDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.PlayerPartialPaths.CefSharpDir)
+                EnableRaisingEvents = true,
+                StartInfo = new ProcessStartInfo
+                {
+                    Arguments = cmdArgs.ToString(),
+                    FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.PlayerPartialPaths.CefSharpPath),
+                    RedirectStandardInput = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = false,
+                    UseShellExecute = false,
+                    StandardInputEncoding = Encoding.UTF8,
+                    //StandardOutputEncoding = Encoding.UTF8,
+                    WorkingDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.PlayerPartialPaths.CefSharpDir)
+                },
             };
-
-            Process webProcess = new Process
-            {
-                StartInfo = start,
-                EnableRaisingEvents = true
-            };
-
-            this.Proc = webProcess;
             this.Model = model;
             this.Screen = display;
 
@@ -127,15 +123,16 @@ namespace Lively.Core.Wallpapers
 
         public async Task ShowAsync()
         {
-            if (Proc is null)
+            if (process is null)
                 return;
 
             try
             {
-                Proc.Exited += Proc_Exited;
-                Proc.OutputDataReceived += Proc_OutputDataReceived;
-                Proc.Start();
-                Proc.BeginOutputReadLine();
+                process.Exited += Proc_Exited;
+                process.OutputDataReceived += Proc_OutputDataReceived;
+                process.Start();
+                Pid = process.Id;
+                process.BeginOutputReadLine();
 
                 await tcsProcessWait.Task;
                 if (tcsProcessWait.Task.Result is not null)
@@ -156,8 +153,8 @@ namespace Lively.Core.Wallpapers
                 //Exited with no error and without even firing OutputDataReceived; probably some external factor.
                 tcsProcessWait.TrySetResult(new InvalidOperationException(Properties.Resources.LivelyExceptionGeneral));
             }
-            Proc.OutputDataReceived -= Proc_OutputDataReceived;
-            Proc?.Dispose();
+            process.OutputDataReceived -= Proc_OutputDataReceived;
+            process?.Dispose();
             IsExited = true;
             Exited?.Invoke(this, EventArgs.Empty);
         }
@@ -190,7 +187,7 @@ namespace Lively.Core.Wallpapers
                             var handle = new IntPtr(((LivelyMessageHwnd)obj).Hwnd);
                             //WindowsForms10.Window.8.app.0.141b42a_r9_ad1
                             InputHandle = NativeMethods.FindWindowEx(handle, IntPtr.Zero, "Chrome_WidgetWin_1", null);
-                            Handle = Proc.GetProcessWindow(true);//FindWindowByProcessId(Proc.Id);
+                            Handle = process.GetProcessWindow(true);//FindWindowByProcessId(Proc.Id);
 
                             if (IntPtr.Equals(InputHandle, IntPtr.Zero) || IntPtr.Equals(Handle, IntPtr.Zero))
                             {
@@ -225,7 +222,7 @@ namespace Lively.Core.Wallpapers
             try
             {
                 // Setting process StandardInputEncoding to UTF8.
-                Proc?.StandardInput.WriteLine(msg);
+                process?.StandardInput.WriteLine(msg);
                 // Or convert message to UTF8.
                 //byte[] bytes = Encoding.UTF8.GetBytes(msg);
                 //Proc.StandardInput.BaseStream.Write(bytes, 0, bytes.Length);
@@ -243,15 +240,21 @@ namespace Lively.Core.Wallpapers
 
         public void Terminate()
         {
+            if (IsExited)
+                return;
+
             try
             {
-                Proc.Kill();
+                process.Kill();
             }
             catch { }
         }
 
         public void Close()
         {
+            if (IsExited)
+                return;
+
             //Issue: Cef.shutdown() crashing when multiple instance is closed simulataneously.
             Terminate();
             /*
@@ -316,7 +319,7 @@ namespace Lively.Core.Wallpapers
 
             try
             {
-                Proc.OutputDataReceived += OutputDataReceived;
+                process.OutputDataReceived += OutputDataReceived;
                 SendMessage(new LivelyScreenshotCmd() 
                 { 
                     FilePath = Path.GetExtension(filePath) != ".jpg" ? filePath + ".jpg" : filePath,
@@ -327,8 +330,14 @@ namespace Lively.Core.Wallpapers
             }
             finally
             {
-                Proc.OutputDataReceived -= OutputDataReceived;
+                process.OutputDataReceived -= OutputDataReceived;
             }
+        }
+
+        public void Dispose()
+        {
+            // Process object is disposed in Exit event.
+            Terminate();
         }
 
         /// <summary>

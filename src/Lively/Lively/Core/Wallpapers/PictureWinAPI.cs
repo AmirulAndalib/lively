@@ -43,7 +43,7 @@ namespace Lively.Core.Wallpapers
 
         public IntPtr InputHandle => IntPtr.Zero;
 
-        public Process Proc => null;
+        public int? Pid => null;
 
         public DisplayMonitor Screen { get; set; }
 
@@ -163,6 +163,11 @@ namespace Lively.Core.Wallpapers
         public void SendMessage(IpcMessage obj)
         {
             //nothing
+        }
+
+        public void Dispose()
+        {
+            Terminate();
         }
     }
 }

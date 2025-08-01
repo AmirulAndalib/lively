@@ -14,9 +14,6 @@ using System.Windows.Interop;
 
 namespace Lively.Views
 {
-    /// <summary>
-    /// Interaction logic for WallpaperPreview.xaml
-    /// </summary>
     public partial class WallpaperPreview : Window
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
@@ -125,6 +122,7 @@ namespace Lively.Views
             //Detach wallpaper window from this dialogue.
             WindowUtil.TrySetParent(wallpaper.Handle, IntPtr.Zero);
             wallpaper.Close();
+            wallpaper.Dispose();
         }
     }
 }

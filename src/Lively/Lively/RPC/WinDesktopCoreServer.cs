@@ -115,22 +115,28 @@ namespace Lively.RPC
             }
             finally
             {
-                wallpaper?.Close();
                 runner.SetBusyUI(false);
-                if (!isSuccess)
+                if (wallpaper != null)
                 {
-                    try
+                    var propertyCopyPath = wallpaper.LivelyPropertyCopyPath;
+                    wallpaper.Close();
+                    wallpaper.Dispose();
+
+                    if (!isSuccess)
                     {
-                        await FileUtil.TryDeleteDirectoryAsync(wallpaperDirectory, 500, 0);
-                        if (wallpaper?.LivelyPropertyCopyPath != null)
+                        try
                         {
-                            var propertiesDirectory = Directory.GetParent(Path.GetDirectoryName(wallpaper.LivelyPropertyCopyPath)).FullName;
-                            await FileUtil.TryDeleteDirectoryAsync(propertiesDirectory, 0, 500);
+                            await FileUtil.TryDeleteDirectoryAsync(wallpaperDirectory, 500, 0);
+                            if (propertyCopyPath != null)
+                            {
+                                var propertiesDirectory = Directory.GetParent(Path.GetDirectoryName(propertyCopyPath)).FullName;
+                                await FileUtil.TryDeleteDirectoryAsync(propertiesDirectory, 0, 500);
+                            }
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Error(ex);
+                        catch (Exception ex)
+                        {
+                            Logger.Error(ex);
+                        }
                     }
                 }
             }
@@ -170,8 +176,9 @@ namespace Lively.RPC
             }
             finally 
             {
-                wallpaper?.Close();
                 runner.SetBusyUI(false);
+                wallpaper?.Close();
+                wallpaper?.Dispose();
             }
 
             return await Task.FromResult(new EditWallpaperResponse()

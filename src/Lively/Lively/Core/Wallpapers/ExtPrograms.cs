@@ -1,6 +1,5 @@
 ﻿using Lively.Common.Extensions;
 using Lively.Common.Helpers;
-using Lively.Common.Helpers.Shell;
 using Lively.Core.Suspend;
 using Lively.Models;
 using Lively.Models.Enums;
@@ -26,7 +25,7 @@ namespace Lively.Core.Wallpapers
 
         public IntPtr InputHandle => Handle;
 
-        public Process Proc { get; }
+        public int? Pid { get; private set; } = null;
 
         public DisplayMonitor Screen { get; set; }
 
@@ -37,6 +36,7 @@ namespace Lively.Core.Wallpapers
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly CancellationTokenSource ctsProcessWait = new CancellationTokenSource();
         private Task<IntPtr> processWaitTask;
+        private readonly Process process;
         private static int globalCount;
         private readonly int uniqueId;
         private readonly int timeOut;
@@ -57,25 +57,19 @@ namespace Lively.Core.Wallpapers
             //-fullscreen disable fullscreen mode if set during compilation (lively is handling resizing window instead).
             //Alternative flags:
             //Unity attaches to workerw by itself; Problem: Process window handle is returning zero.
-            //"-parentHWND " + workerw.ToString();// + " -popupwindow" + " -;
-            //cmdArgs = "-popupwindow -screen-fullscreen 0";
-            string cmdArgs = model.LivelyInfo.Arguments;
-
-            ProcessStartInfo start = new ProcessStartInfo
-            {
-                FileName = path,
-                UseShellExecute = false,
-                WorkingDirectory = System.IO.Path.GetDirectoryName(path),
-                Arguments = cmdArgs,
-            };
-
-            Process _process = new Process()
+            //Examples: "-parentHWND " + workerw.ToString();// + " -popupwindow" + " -;
+            //"-popupwindow -screen-fullscreen 0";
+            this.process = new Process()
             {
                 EnableRaisingEvents = true,
-                StartInfo = start,
+                StartInfo = new()
+                {
+                    FileName = path,
+                    UseShellExecute = false,
+                    WorkingDirectory = System.IO.Path.GetDirectoryName(path),
+                    Arguments = model.LivelyInfo.Arguments,
+                }
             };
-
-            this.Proc = _process;
             this.Model = model;
             this.Screen = display;
             this.timeOut = timeOut;
@@ -87,6 +81,9 @@ namespace Lively.Core.Wallpapers
 
         public async void Close()
         {
+            if (IsExited)
+                return;
+
             ctsProcessWait.TaskWaitCancel();
             while(!processWaitTask.IsTaskWaitCompleted())
                 await Task.Delay(1);
@@ -98,7 +95,7 @@ namespace Lively.Core.Wallpapers
 
         public void Pause()
         {
-            if (Proc != null)
+            if (process != null)
             {
                 //method 0, issue: does not work with every pgm
                 //NativeMethods.DebugActiveProcess((uint)Proc.Id);
@@ -121,7 +118,7 @@ namespace Lively.Core.Wallpapers
 
         public void Play()
         {
-            if (Proc != null)
+            if (process != null)
             {
                 //method 0, issue: does not work with every pgm
                 //NativeMethods.DebugActiveProcessStop((uint)Proc.Id);
@@ -144,14 +141,15 @@ namespace Lively.Core.Wallpapers
 
         public async Task ShowAsync()
         {
-            if (Proc is null)
+            if (process is null)
                 return;
 
             try
             {
-                Proc.Exited += Proc_Exited;
-                Proc.Start();
-                processWaitTask = Proc.WaitForProcessOrGameWindow(Category, timeOut, ctsProcessWait.Token, true);
+                process.Exited += Proc_Exited;
+                process.Start();
+                Pid = process.Id;
+                processWaitTask = process.WaitForProcessOrGameWindow(Category, timeOut, ctsProcessWait.Token, true);
                 this.Handle = await processWaitTask;
                 if (Handle.Equals(IntPtr.Zero))
                 {
@@ -175,17 +173,20 @@ namespace Lively.Core.Wallpapers
 
         private void Proc_Exited(object sender, EventArgs e)
         {
-            Logger.Info($"Program{uniqueId}: Process exited with exit code: {Proc?.ExitCode}");
-            Proc?.Dispose();
+            Logger.Info($"Program{uniqueId}: Process exited with exit code: {process?.ExitCode}");
+            process?.Dispose();
             IsExited = true;
             Exited?.Invoke(this, EventArgs.Empty);
         }
 
         public void Terminate()
         {
+            if (IsExited)
+                return;
+
             try
             {
-                Proc.Kill();
+                process.Kill();
             }
             catch { }
         }
@@ -194,7 +195,7 @@ namespace Lively.Core.Wallpapers
         {
             try
             {
-                VolumeMixer.SetApplicationVolume(Proc.Id, volume);
+                VolumeMixer.SetApplicationVolume(process.Id, volume);
             }
             catch { }
         }
@@ -217,6 +218,12 @@ namespace Lively.Core.Wallpapers
         public void SendMessage(IpcMessage obj)
         {
             //todo
+        }
+
+        public void Dispose()
+        {
+            // Process object is disposed in Exit event.
+            Terminate();
         }
     }
 }

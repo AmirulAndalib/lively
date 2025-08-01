@@ -1,7 +1,6 @@
 ﻿using Lively.Common;
 using Lively.Common.Extensions;
 using Lively.Common.Helpers;
-using Lively.Common.Helpers.Shell;
 using Lively.Models;
 using Lively.Models.Enums;
 using Lively.Models.Message;
@@ -22,6 +21,7 @@ namespace Lively.Core.Wallpapers
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly CancellationTokenSource ctsProcessWait = new CancellationTokenSource();
         private Task<IntPtr> processWaitTask;
+        private readonly Process process;
         private static int globalCount;
         private readonly int uniqueId;
         private readonly int timeOut;
@@ -38,7 +38,7 @@ namespace Lively.Core.Wallpapers
 
         public IntPtr InputHandle => IntPtr.Zero;
 
-        public Process Proc { get; }
+        public int? Pid { get; private set; } = null;
 
         public DisplayMonitor Screen { get; set; }
 
@@ -81,21 +81,17 @@ namespace Lively.Core.Wallpapers
             //media file path.
             cmdArgs.Append("\"" + path + "\"");
 
-            ProcessStartInfo start = new ProcessStartInfo
-            {
-                FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.PlayerPartialPaths.VlcPath),
-                UseShellExecute = false,
-                WorkingDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.PlayerPartialPaths.VlcDir),
-                Arguments = cmdArgs.ToString(),
-            };
-
-            Process _process = new Process()
+            this.process = new Process()
             {
                 EnableRaisingEvents = true,
-                StartInfo = start,
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.PlayerPartialPaths.VlcPath),
+                    UseShellExecute = false,
+                    WorkingDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.PlayerPartialPaths.VlcDir),
+                    Arguments = cmdArgs.ToString(),
+                },
             };
-
-            this.Proc = _process;
             this.Model = model;
             this.Screen = display;
             this.timeOut = 20000;
@@ -106,6 +102,9 @@ namespace Lively.Core.Wallpapers
 
         public async void Close()
         {
+            if (IsExited)
+                return;
+
             ctsProcessWait.TaskWaitCancel();
             while (!processWaitTask.IsTaskWaitCompleted())
                 await Task.Delay(1);
@@ -147,14 +146,15 @@ namespace Lively.Core.Wallpapers
 
         public async Task ShowAsync()
         {
-            if (Proc is null)
+            if (process is null)
                 return;
 
             try
             {
-                Proc.Exited += Proc_Exited;
-                Proc.Start();
-                processWaitTask = Proc.WaitForProcesWindow(timeOut, ctsProcessWait.Token, true);
+                process.Exited += Proc_Exited;
+                process.Start();
+                Pid = process.Id;
+                processWaitTask = process.WaitForProcesWindow(timeOut, ctsProcessWait.Token, true);
                 this.Handle = await processWaitTask;
                 await processWaitTask;
                 if (Handle.Equals(IntPtr.Zero)) {
@@ -179,17 +179,20 @@ namespace Lively.Core.Wallpapers
 
         private void Proc_Exited(object sender, EventArgs e)
         {
-            Logger.Info($"Vlc{uniqueId}: Process exited with exit code: {Proc?.ExitCode}");
-            Proc?.Dispose();
+            Logger.Info($"Vlc{uniqueId}: Process exited with exit code: {process?.ExitCode}");
+            process?.Dispose();
             IsExited = true;
             Exited?.Invoke(this, EventArgs.Empty);
         }
 
         public void Terminate()
         {
+            if (IsExited)
+                return;
+
             try
             {
-                Proc.Kill();
+                process.Kill();
             }
             catch { }
         }
@@ -202,6 +205,12 @@ namespace Lively.Core.Wallpapers
         public void SendMessage(IpcMessage obj)
         {
             //todo
+        }
+
+        public void Dispose()
+        {
+            // Process object is disposed in Exit event.
+            Terminate();
         }
     }
 }

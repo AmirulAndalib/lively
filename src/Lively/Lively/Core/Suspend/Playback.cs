@@ -392,7 +392,7 @@ namespace Lively.Core.Suspend
 
         private bool IsWallpaperPlugin(int pid)
         {
-            return desktopCore.Wallpapers.Any(x => x.Proc != null && x.Proc.Id == pid);
+            return desktopCore.Wallpapers.Any(x => x.Pid != null && x.Pid == pid);
         }
 
         private bool IsExcludedApp(IntPtr hwnd)

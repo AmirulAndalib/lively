@@ -4,8 +4,6 @@ using Lively.Common.Exceptions;
 using Lively.Common.Extensions;
 using Lively.Common.Helpers;
 using Lively.Common.Helpers.IPC;
-using Lively.Common.Helpers.Shell;
-using Lively.Common.Helpers.Storage;
 using Lively.Models;
 using Lively.Models.Enums;
 using Lively.Models.LivelyControls;
@@ -43,6 +41,7 @@ namespace Lively.Core.Wallpapers
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly CancellationTokenSource ctsProcessWait = new();
         private Task<IntPtr> processWaitTask;
+        private readonly Process process;
         private readonly int timeOut;
         private readonly string ipcServerName;
         private bool isVideoStopped;
@@ -56,7 +55,7 @@ namespace Lively.Core.Wallpapers
 
         public bool IsLoaded { get; private set; } = false;
 
-        public Process Proc { get; }
+        public int? Pid { get; private set; } = null;
 
         public WallpaperType Category => Model.LivelyInfo.Type;
 
@@ -127,24 +126,20 @@ namespace Lively.Core.Wallpapers
             // File or online video stream path
             cmdArgs.Append(model.LivelyInfo.Type == WallpaperType.videostream ? GetYtDlMpvArg(streamQuality, path) : "\"" + path + "\"");
 
-            var start = new ProcessStartInfo
-            {
-                FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.PlayerPartialPaths.MpvPath),
-                UseShellExecute = false,
-                RedirectStandardError = false,
-                RedirectStandardInput = false,
-                RedirectStandardOutput = true,
-                WorkingDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.PlayerPartialPaths.MpvDir),
-                Arguments = cmdArgs.ToString(),
-            };
-
-            Process _process = new Process()
+            this.process = new Process()
             {
                 EnableRaisingEvents = true,
-                StartInfo = start,
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.PlayerPartialPaths.MpvPath),
+                    UseShellExecute = false,
+                    RedirectStandardError = false,
+                    RedirectStandardInput = false,
+                    RedirectStandardOutput = true,
+                    WorkingDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.PlayerPartialPaths.MpvDir),
+                    Arguments = cmdArgs.ToString(),
+                },
             };
-
-            this.Proc = _process;
             this.Model = model;
             this.Screen = display;
             this.timeOut = 20000;
@@ -155,6 +150,9 @@ namespace Lively.Core.Wallpapers
 
         public async void Close()
         {
+            if (IsExited)
+                return;
+
             ctsProcessWait.TaskWaitCancel();
             while (!processWaitTask.IsTaskWaitCompleted())
                 await Task.Delay(1);
@@ -280,12 +278,12 @@ namespace Lively.Core.Wallpapers
                         var match = Regex.Match(e.Data, @"Screenshot: '([^']+)'");
                         if (match.Success && match.Groups[1].Value.Equals(filePath, StringComparison.OrdinalIgnoreCase))
                         {
-                            Proc.OutputDataReceived -= LocalOutputDataReceived;
+                            process.OutputDataReceived -= LocalOutputDataReceived;
                             tcs.TrySetResult(true);
                         }
                     }
                 }
-                Proc.OutputDataReceived += LocalOutputDataReceived;
+                process.OutputDataReceived += LocalOutputDataReceived;
 
                 // Save screenshot
                 SendMessage(GetMpvCommand("screenshot-to-file", filePath));
@@ -295,7 +293,7 @@ namespace Lively.Core.Wallpapers
                 using (cts.Token.Register(() => 
                 {
                     if (!IsExited)
-                        Proc.OutputDataReceived -= LocalOutputDataReceived;
+                        process.OutputDataReceived -= LocalOutputDataReceived;
 
                     tcs.TrySetResult(false);
                 }))
@@ -306,17 +304,18 @@ namespace Lively.Core.Wallpapers
 
         public async Task ShowAsync()
         {
-            if (Proc is null)
+            if (process is null)
                 return;
 
             try
             {
-                Proc.Exited += Proc_Exited;
-                Proc.OutputDataReceived += Proc_OutputDataReceived;
-                Proc.Start();
-                Proc.BeginOutputReadLine();
+                process.Exited += Proc_Exited;
+                process.OutputDataReceived += Proc_OutputDataReceived;
+                process.Start();
+                Pid = process.Id;
+                process.BeginOutputReadLine();
 
-                processWaitTask = Proc.WaitForProcesWindow(timeOut, ctsProcessWait.Token, true);
+                processWaitTask = process.WaitForProcesWindow(timeOut, ctsProcessWait.Token, true);
                 this.Handle = await processWaitTask;
 
                 if (Handle.Equals(IntPtr.Zero))
@@ -350,10 +349,10 @@ namespace Lively.Core.Wallpapers
 
         private void Proc_Exited(object sender, EventArgs e)
         {
-            exitCode = Proc?.ExitCode;
+            exitCode = process?.ExitCode;
             Logger.Info($"Mpv{uniqueId}: Process exited with exit code: {exitCode}");
-            Proc.OutputDataReceived -= Proc_OutputDataReceived;
-            Proc?.Dispose();
+            process.OutputDataReceived -= Proc_OutputDataReceived;
+            process?.Dispose();
             IsExited = true;
             Exited?.Invoke(this, EventArgs.Empty);
         }
@@ -368,9 +367,12 @@ namespace Lively.Core.Wallpapers
 
         public void Terminate()
         {
+            if (IsExited)
+                return;
+
             try
             {
-                Proc.Kill();
+                process.Kill();
             }
             catch { }
         }
@@ -455,6 +457,12 @@ namespace Lively.Core.Wallpapers
                 Logger.Error("Mpv{0}: Slider double -> int overlow", uniqueId); 
             }
             catch { }
+        }
+
+        public void Dispose()
+        {
+            // Process object is disposed in Exit event.
+            Terminate();
         }
 
         // Ref: https://github.com/rocksdanister/lively/issues/2194
