@@ -98,7 +98,7 @@ Source: "VC\VC_redist.x64.exe"; DestDir: {tmp}; Flags: deleteafterinstall
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 Source: "Release\Lively.exe"; DestDir: "{app}"; Flags: ignoreversion;
 Source: "Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs;
-Source: "dotnetcore\windowsdesktop-runtime-9.0.7-win-x64"; DestDir: {tmp}; Flags: deleteafterinstall
+Source: "dotnetcore\windowsdesktop-runtime-9.0.7-win-x64.exe"; DestDir: {tmp}; Flags: deleteafterinstall
 Source: "dotnetcore\netcorecheck.exe"; DestDir: {tmp}; Flags: deleteafterinstall
 
 [Icons]
@@ -110,7 +110,7 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 ;skipifsilent
 Filename: "{tmp}\VC_redist.x64.exe"; Parameters: /install /quiet /norestart; Check: VCRedistNeedsInstall; StatusMsg: Installing Visual C++ Redistributable...
 ;Filename: "{tmp}\WindowsAppRuntimeInstall_x86.exe"; Parameters: --quiet; Check: DependencyInstall; Flags: runhidden; StatusMsg: Installing Windows App SDK...
-Filename: "{tmp}\windowsdesktop-runtime-9.0.7-win-x64"; Parameters: /install /quiet /norestart; Check: NetCoreNeedsInstall('9.0.7');  StatusMsg: Installing .NET Desktop Runtime 9.0.7...
+Filename: "{tmp}\windowsdesktop-runtime-9.0.7-win-x64.exe"; Parameters: /install /quiet /norestart; Check: NetCoreNeedsInstall('9.0.7');  StatusMsg: Installing .NET Desktop Runtime 9.0.7...
 
 [Code]
 var
