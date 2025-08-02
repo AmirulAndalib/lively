@@ -24,23 +24,33 @@ namespace Lively.Services
 
         public void SetCulture(string name)
         {
-            if (CultureInfo.DefaultThreadCurrentCulture?.Name == name)
+            CultureInfo culture;
+            try
+            {
+                culture = string.IsNullOrEmpty(name) ? 
+                    CultureInfo.InstalledUICulture : new CultureInfo(name);
+            }
+            catch (CultureNotFoundException)
+            {
+                // Fallback to system language
+                culture = CultureInfo.InstalledUICulture;
+            }
+
+            if (CultureInfo.DefaultThreadCurrentCulture?.Name == culture.Name)
                 return;
 
-            var culture = string.IsNullOrEmpty(name) ? null : new CultureInfo(name);
             CultureInfo.DefaultThreadCurrentCulture = culture;
             CultureInfo.DefaultThreadCurrentUICulture = culture;
-
             // Force UI refresh
             foreach (Window window in Application.Current.Windows)
-                window.Language = XmlLanguage.GetLanguage(name);
+                window.Language = XmlLanguage.GetLanguage(culture.Name);
 
-            CultureChanged?.Invoke(this, name);
+            CultureChanged?.Invoke(this, culture.Name);
         }
 
         public void SetSystemDefaultCulture()
         {
-            SetCulture(null);
+            SetCulture(string.Empty);
         }
 
         public string GetString(string resource)

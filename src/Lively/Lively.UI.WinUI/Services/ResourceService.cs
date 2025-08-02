@@ -49,23 +49,34 @@ namespace Lively.UI.WinUI.Services
 
         public void SetCulture(string name)
         {
+            CultureInfo culture;
+            try
+            {
+                culture = string.IsNullOrEmpty(name) ? 
+                    CultureInfo.InstalledUICulture : new CultureInfo(name);
+            }
+            catch (CultureNotFoundException)
+            {
+                // Fallback to system language
+                culture = CultureInfo.InstalledUICulture;
+            }
+
             // Setting is persisted between sessions (?.)
             // Ref: https://learn.microsoft.com/en-us/uwp/api/windows.globalization.applicationlanguages.primarylanguageoverride?view=winrt-26100
-            if (string.Equals(name, ApplicationLanguages.PrimaryLanguageOverride, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(culture.Name, ApplicationLanguages.PrimaryLanguageOverride, StringComparison.OrdinalIgnoreCase))
                 return;
 
             // Issues:
             // Setting String.Empty (default) is giving error.
             // ApplicationLanguages.Languages list is not ordered, ref: https://github.com/microsoft/microsoft-ui-xaml/issues/10075
-            name = string.IsNullOrEmpty(name) ? CultureInfo.CurrentUICulture.Name : name;
-            ApplicationLanguages.PrimaryLanguageOverride = name;
+            ApplicationLanguages.PrimaryLanguageOverride = culture.Name;
             // Issue:
             // To update GetString().
             // https://github.com/microsoft/WindowsAppSDK/issues/3052
             // https://github.com/microsoft/WindowsAppSDK/issues/2806
-            ResourceContext.SetGlobalQualifierValue("Language", name);
+            ResourceContext.SetGlobalQualifierValue("Language", culture.Name);
 
-            CultureChanged?.Invoke(this, name);
+            CultureChanged?.Invoke(this, culture.Name);
         }
 
         public void SetSystemDefaultCulture()
