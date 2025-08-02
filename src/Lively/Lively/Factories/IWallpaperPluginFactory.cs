@@ -13,8 +13,7 @@ namespace Lively.Factories
             DisplayMonitor display,
             WallpaperArrangement arrangement,
             IUserSettingsService userSettings,
-            bool isPreview = false,
-            bool isScreensaver = false);
+            bool isWindowed = false);
         IWallpaper CreateDwmThumbnailWallpaper(
             LibraryModel model,
             IntPtr thumbnailSrc,

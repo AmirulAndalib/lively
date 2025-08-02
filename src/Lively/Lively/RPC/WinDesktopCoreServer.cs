@@ -97,7 +97,11 @@ namespace Lively.RPC
                 runner.SetBusyUI(true);
                 _ = wallpaperLibraryFactory.CreateWallpaperPackage(request.FilePath, wallpaperDirectory, (WallpaperType)request.Category);
                 var model = wallpaperLibraryFactory.CreateFromDirectory(wallpaperDirectory);
-                wallpaper = wallpaperFactory.CreateWallpaper(model, displayManager.PrimaryDisplayMonitor, WallpaperArrangement.per, userSettings, false);
+                wallpaper = wallpaperFactory.CreateWallpaper(model,
+                    displayManager.PrimaryDisplayMonitor,
+                    WallpaperArrangement.per,
+                    userSettings,
+                    isWindowed: true);
 
                 // Closing since absolute location can be changed to relative.
                 desktopCore.CloseWallpaper(model);
@@ -158,7 +162,11 @@ namespace Lively.RPC
             {
                 runner.SetBusyUI(true);
                 var model = wallpaperLibraryFactory.CreateFromDirectory(request.LivelyInfoPath);
-                wallpaper = wallpaperFactory.CreateWallpaper(model, displayManager.PrimaryDisplayMonitor, WallpaperArrangement.per, userSettings, false);
+                wallpaper = wallpaperFactory.CreateWallpaper(model,
+                    displayManager.PrimaryDisplayMonitor,
+                    WallpaperArrangement.per,
+                    userSettings,
+                    isWindowed: true);
 
                 // Closing since absolute location can be changed to relative.
                 desktopCore.CloseWallpaper(model);

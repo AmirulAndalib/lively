@@ -31,8 +31,7 @@ namespace Lively.Factories
             DisplayMonitor display,
             WallpaperArrangement arrangement,
             IUserSettingsService userSettings,
-            bool isPreview = false,
-            bool isScreensaver = false)
+            bool isWindowed = false)
         {
             switch (model.LivelyInfo.Type)
             {
@@ -81,8 +80,7 @@ namespace Lively.Factories
                                 display,
                                 lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
                                 userSettings.Settings.VideoPlayerHwAccel,
-                                isPreview: isPreview,
-                                isScreensaver: isScreensaver,
+                                isWindowed: isWindowed,
                                 userSettings.Settings.VideoD3D11OutputColorSpace);
                         case LivelyMediaPlayer.vlc:
                             return new VideoVlcPlayer(model.FilePath, 
@@ -105,8 +103,7 @@ namespace Lively.Factories
                                            display,
                                            lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
                                            userSettings.Settings.VideoPlayerHwAccel,
-                                           isPreview: isPreview,
-                                           isScreensaver: isScreensaver,
+                                           isWindowed: isWindowed,
                                            userSettings.Settings.VideoD3D11OutputColorSpace);
                     }
                     break;
@@ -123,8 +120,7 @@ namespace Lively.Factories
                                               display,
                                               lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
                                               userSettings.Settings.VideoPlayerHwAccel,
-                                              isPreview: isPreview, 
-                                              isScreensaver: isScreensaver, 
+                                              isWindowed: isWindowed,
                                               userSettings.Settings.VideoD3D11OutputColorSpace);
                         case LivelyPicturePlayer.wmf:
                             return new VideoWmfProcess(model.FilePath, model, display, 0, userSettings.Settings.WallpaperScaling);
@@ -152,8 +148,7 @@ namespace Lively.Factories
                             display,
                             lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
                             userSettings.Settings.VideoPlayerHwAccel,
-                            isPreview: isPreview, 
-                            isScreensaver: isScreensaver, 
+                            isWindowed: isWindowed,
                             userSettings.Settings.VideoD3D11OutputColorSpace, 
                             userSettings.Settings.StreamQuality);
                     }

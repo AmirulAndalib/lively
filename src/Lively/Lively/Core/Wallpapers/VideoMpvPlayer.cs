@@ -74,8 +74,7 @@ namespace Lively.Core.Wallpapers
             DisplayMonitor display,
             string livelyPropertyPath,
             bool isHwAccel = true,
-            bool isPreview = false,
-            bool isScreensaver = false,
+            bool isWindowed = false,
             VideoColorSpace colorSpace = VideoColorSpace.auto,
             StreamQualitySuggestion streamQuality = StreamQualitySuggestion.Highest)
         {
@@ -108,11 +107,11 @@ namespace Lively.Core.Wallpapers
             // Disable mpv default (built-in) key bindings
             cmdArgs.Append("--input-default-bindings=no ");
             // Win11 24H2 and new mpv builds alignment fix, ref: https://github.com/rocksdanister/lively/issues/2415
-            cmdArgs.Append(!isPreview && !isScreensaver ? "--no-border " : " ");
+            cmdArgs.Append(!isWindowed ? "--no-border " : " ");
             // Permit mpv to receive pointer events reported by the video output driver. Necessary to use the OSC, or to select the buttons in DVD menus. 
-            cmdArgs.Append(!isPreview ? "--input-cursor=no " : " ");
+            cmdArgs.Append("--input-cursor=no ");
             // On-screen-controller visibility
-            cmdArgs.Append(!isPreview ? "--no-osc " : " ");
+            cmdArgs.Append("--no-osc ");
             // Alternative: --input-ipc-server=\\.\pipe\
             cmdArgs.Append("--input-ipc-server=" + ipcServerName + " ");
             // Integer scaler for sharpness
