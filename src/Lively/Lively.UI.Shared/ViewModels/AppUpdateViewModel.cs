@@ -44,6 +44,7 @@ namespace Lively.UI.Shared.ViewModels
 
             UpdateState(appUpdater.Status, appUpdater.LastCheckTime, appUpdater.LastCheckVersion);
             appUpdater.UpdateChecked += AppUpdater_UpdateChecked;
+            i18n.CultureChanged += I18n_CultureChanged;
 
             // This is only run once if the main interface is opened before the initial fetchDelay in Core for update check.
             if (appUpdater.Status == AppUpdateStatus.notchecked)
@@ -206,6 +207,11 @@ namespace Lively.UI.Shared.ViewModels
             {
                 UpdateState(e.UpdateStatus, e.UpdateDate, e.UpdateVersion);
             });
+        }
+
+        private void I18n_CultureChanged(object sender, string e)
+        {
+            UpdateState(appUpdater.Status, appUpdater.LastCheckTime, appUpdater.LastCheckVersion);
         }
 
         private void UpdateState(AppUpdateStatus status, DateTime date, Version version)
