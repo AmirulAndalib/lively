@@ -221,7 +221,7 @@ namespace Lively.Models
             ApplicationThemeBackground = AppThemeBackground.default_mica;
             TaskbarCrashTimeOutDelay = 30;
             Language = string.Empty;
-            VideoD3D11OutputColorSpace = VideoColorSpace.srgb;
+            VideoD3D11OutputColorSpace = VideoColorSpace.auto;
         }
     }
 }
