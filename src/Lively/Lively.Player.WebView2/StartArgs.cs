@@ -30,6 +30,11 @@ namespace Lively.Player.WebView2
         HelpText = "Window size (WxH).")]
         public string Geometry { get; set; }
 
+        [Option("wallpaper-scale",
+        Required = false,
+        HelpText = "Wallpaper scale factor.")]
+        public int? Scale { get; set; }
+
         [Option("wallpaper-audio",
         Default = false,
         HelpText = "Analyse system audio(visualiser data.)")]

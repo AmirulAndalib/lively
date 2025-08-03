@@ -1,6 +1,7 @@
 ﻿using Lively.Common;
 using Lively.Common.Exceptions;
 using Lively.Common.Extensions;
+using Lively.Common.Helpers;
 using Lively.Common.Helpers.Pinvoke;
 using Lively.Common.JsonConverters;
 using Lively.Models;
@@ -54,13 +55,18 @@ namespace Lively.Core.Wallpapers
             int volume)
         {
             LivelyPropertyCopyPath = livelyPropertyPath;
+            // We correct/default the scale since dpi do not update once set as wallpaper layer.
+            var wallpaperScale = 100;
+            if (DpiUtil.TryGetDisplayScale(display.HMonitor, out double scale))
+                wallpaperScale = (int)Math.Round(scale * 100);
 
             var cmdArgs = new StringBuilder();
             cmdArgs.Append(" --wallpaper-pause-media ");
+            cmdArgs.Append(" --wallpaper-volume " + volume);
+            cmdArgs.Append(" --wallpaper-scale " + wallpaperScale);
             cmdArgs.Append(" --wallpaper-url " + "\"" + path + "\"");
             cmdArgs.Append(" --wallpaper-display " + "\"" + display.DeviceId + "\"");
             cmdArgs.Append(" --wallpaper-property " + "\"" + LivelyPropertyCopyPath + "\"");
-            cmdArgs.Append(" --wallpaper-volume " + volume);
             cmdArgs.Append(" --wallpaper-geometry " + display.Bounds.Width + "x" + display.Bounds.Height);
             //--audio false Issue: https://github.com/commandlineparser/commandline/issues/702
             cmdArgs.Append(model.LivelyInfo.Type == WallpaperType.webaudio ? " --wallpaper-audio true" : " ");

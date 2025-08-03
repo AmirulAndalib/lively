@@ -140,6 +140,14 @@ namespace Lively.Player.WebView2
 
             // Defaults
             webView.CoreWebView2.IsMuted = startArgs.Volume == 0;
+            if (startArgs.Scale != null)
+            {
+                using var g = Graphics.FromHwnd(webView.Handle);
+                // 100% scale = 96 dpi
+                var currentScale = g.DpiX / 96d;
+                // Adjust zoom to neutralize current DPI and apply target scale.
+                webView.ZoomFactor = (startArgs.Scale.Value / 100d) / currentScale;
+            }
 
             if (!IsDebugging)
             {

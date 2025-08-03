@@ -9,6 +9,30 @@ namespace Lively.Common.Helpers.Pinvoke
 #pragma warning disable CA1707, CA1401, CA1712
     public static class NativeMethods
     {
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetThreadDpiAwarenessContext();
+
+        [DllImport("user32.dll")]
+        public static extern DPI_AWARENESS GetAwarenessFromDpiAwarenessContext(IntPtr dpiContext);
+
+        public enum DPI_AWARENESS
+        {
+            DPI_UNAWARE = 0,
+            SYSTEM_AWARE = 1,
+            PER_MONITOR_AWARE = 2
+        }
+
+        public enum MonitorDpiType
+        {
+            MDT_Effective_DPI = 0,
+            MDT_Angular_DPI = 1,
+            MDT_Raw_DPI = 2,
+            MDT_Default = MDT_Effective_DPI
+        }
+
+        [DllImport("Shcore.dll")]
+        public static extern int GetDpiForMonitor(IntPtr hmonitor, MonitorDpiType dpiType, out uint dpiX, out uint dpiY);
+
         public enum GetAncestorFlags
         {
             /// <summary>
