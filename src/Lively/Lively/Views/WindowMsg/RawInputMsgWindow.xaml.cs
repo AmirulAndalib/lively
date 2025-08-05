@@ -32,14 +32,16 @@ namespace Lively.Views.WindowMsg
         private readonly IUserSettingsService userSettings;
         private readonly IDesktopCore desktopCore;
         private readonly IDisplayManager displayManager;
+        private readonly bool isMouseButtonsSwapped;
 
         public RawInputMsgWindow(IUserSettingsService userSettings, IDesktopCore desktopCore, IDisplayManager displayManager)
         {
+            InitializeComponent();
             this.userSettings = userSettings;
             this.desktopCore = desktopCore;
             this.displayManager = displayManager;
 
-            InitializeComponent();
+            this.isMouseButtonsSwapped = IsMouseButtonsSwapped();
             this.InputMode = InputForwardMode.mousekeyboard;
             UpdateDesktopHandles();
             desktopCore.WallpaperReset += (s, e) => UpdateDesktopHandles();
@@ -120,53 +122,74 @@ namespace Lively.Views.WindowMsg
                         switch (mouse.Mouse.Buttons)
                         {
                             case Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.LeftButtonDown:
-                                ForwardMessageMouse(P.X, P.Y, (int)NativeMethods.WM.LBUTTONDOWN, (IntPtr)0x0001);
-                                MouseDownRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.left));
+                                {
+                                    if (!isMouseButtonsSwapped)
+                                        ForwardMessageMouse(P.X, P.Y, (int)NativeMethods.WM.LBUTTONDOWN, (IntPtr)0x0001);
+  
+                                    MouseDownRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.left));
+                                }
                                 break;
                             case Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.LeftButtonUp:
-                                ForwardMessageMouse(P.X, P.Y, (int)NativeMethods.WM.LBUTTONUP, (IntPtr)0x0001);
-                                MouseUpRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.left));
+                                {
+                                    if (!isMouseButtonsSwapped)
+                                        ForwardMessageMouse(P.X, P.Y, (int)NativeMethods.WM.LBUTTONUP, (IntPtr)0x0001);
+
+                                    MouseUpRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.left));
+                                }
                                 break;
                             case Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.RightButtonDown:
-                                //issue: click being skipped; desktop already has its own rightclick contextmenu.
-                                //ForwardMessage(M.X, M.Y, (int)NativeMethods.WM.RBUTTONDOWN, (IntPtr)0x0002);
-                                MouseDownRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.right));
+                                {
+                                    // Note: Right click is being skipped since it conflicts with desktop contextmenu.
+                                    // ForwardMessageMouse(P.X, P.Y, (int)NativeMethods.WM.RBUTTONDOWN, (IntPtr)0x0002)
+
+                                    if (isMouseButtonsSwapped)
+                                        ForwardMessageMouse(P.X, P.Y, (int)NativeMethods.WM.LBUTTONDOWN, (IntPtr)0x0001);
+
+                                    MouseDownRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.right));
+                                }
                                 break;
                             case Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.RightButtonUp:
-                                //issue: click being skipped; desktop already has its own rightclick contextmenu.
-                                //ForwardMessage(M.X, M.Y, (int)NativeMethods.WM.RBUTTONUP, (IntPtr)0x0002);
-                                MouseUpRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.right));
+                                {
+                                    if (isMouseButtonsSwapped)
+                                        ForwardMessageMouse(P.X, P.Y, (int)NativeMethods.WM.LBUTTONUP, (IntPtr)0x0001);
+
+                                    MouseUpRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.right));
+                                }
                                 break;
                             case Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.None:
-                                ForwardMessageMouse(P.X, P.Y, (int)NativeMethods.WM.MOUSEMOVE, (IntPtr)0x0020);
-                                MouseMoveRaw?.Invoke(this, new MouseRawArgs(P.X, P.Y));
+                                {
+                                    ForwardMessageMouse(P.X, P.Y, (int)NativeMethods.WM.MOUSEMOVE, (IntPtr)0x0020);
+                                    MouseMoveRaw?.Invoke(this, new MouseRawArgs(P.X, P.Y));
+                                }
                                 break;
                             case Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.MouseWheel:
-                                //Disabled, not tested yet.
-                                /*
-                                https://github.com/ivarboms/game-engine/blob/master/Input/RawInput.cpp
-                                Mouse wheel deltas are represented as multiples of 120.
-                                MSDN: The delta was set to 120 to allow Microsoft or other vendors to build
-                                finer-resolution wheels (a freely-rotating wheel with no notches) to send more
-                                messages per rotation, but with a smaller value in each message.
-                                Because of this, the value is converted to a float in case a mouse's wheel
-                                reports a value other than 120, in which case dividing by 120 would produce
-                                a very incorrect value.
-                                More info: http://social.msdn.microsoft.com/forums/en-US/gametechnologiesgeneral/thread/1deb5f7e-95ee-40ac-84db-58d636f601c7/
-                                */
+                                {
+                                    //Disabled, not tested yet.
+                                    /*
+                                    https://github.com/ivarboms/game-engine/blob/master/Input/RawInput.cpp
+                                    Mouse wheel deltas are represented as multiples of 120.
+                                    MSDN: The delta was set to 120 to allow Microsoft or other vendors to build
+                                    finer-resolution wheels (a freely-rotating wheel with no notches) to send more
+                                    messages per rotation, but with a smaller value in each message.
+                                    Because of this, the value is converted to a float in case a mouse's wheel
+                                    reports a value other than 120, in which case dividing by 120 would produce
+                                    a very incorrect value.
+                                    More info: http://social.msdn.microsoft.com/forums/en-US/gametechnologiesgeneral/thread/1deb5f7e-95ee-40ac-84db-58d636f601c7/
+                                    */
 
-                                /*
-                                // One wheel notch is represented as this delta (WHEEL_DELTA).
-                                const float oneNotch = 120;
+                                    /*
+                                    // One wheel notch is represented as this delta (WHEEL_DELTA).
+                                    const float oneNotch = 120;
 
-                                // Mouse wheel delta in multiples of WHEEL_DELTA (120).
-                                float mouseWheelDelta = mouse.Mouse.RawButtons;
+                                    // Mouse wheel delta in multiples of WHEEL_DELTA (120).
+                                    float mouseWheelDelta = mouse.Mouse.RawButtons;
 
-                                // Convert each notch from [-120, 120] to [-1, 1].
-                                mouseWheelDelta = mouseWheelDelta / oneNotch;
+                                    // Convert each notch from [-120, 120] to [-1, 1].
+                                    mouseWheelDelta = mouseWheelDelta / oneNotch;
 
-                                MouseScrollSimulate(mouseWheelDelta);
-                                */
+                                    MouseScrollSimulate(mouseWheelDelta);
+                                    */
+                                }
                                 break;
                         }
                         break;
@@ -329,6 +352,11 @@ namespace Lively.Views.WindowMsg
         {
             IntPtr hWnd = NativeMethods.GetForegroundWindow();
             return (IntPtr.Equals(hWnd, desktopHwnd) || IntPtr.Equals(hWnd, progmanHwnd));
+        }
+
+        private static bool IsMouseButtonsSwapped()
+        {
+            return NativeMethods.GetSystemMetrics((int)NativeMethods.SystemMetric.SM_SWAPBUTTON) != 0;
         }
     }
 
