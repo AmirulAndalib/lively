@@ -492,15 +492,17 @@ namespace Lively.UI.WinUI.Services
 
         public async Task<bool> ShowWallpaperProjectDirectoryDialogAsync(string folderPath)
         {
-            return await new ContentDialog()
+            var folderView = new UserControls.FolderView() { FolderPath = folderPath };
+            var dlg = new ContentDialog()
             {
                 Title = "Confirm project structure?",
-                Content = new UserControls.FolderView() { FolderPath = folderPath },
+                Content = folderView,
                 PrimaryButtonText = i18n.GetString("TextYes"),
                 SecondaryButtonText = i18n.GetString("TextNo"),
                 DefaultButton = ContentDialogButton.Primary,
                 XamlRoot = App.Services.GetRequiredService<MainWindow>().Content.XamlRoot,
-            }.ShowAsyncQueue() == ContentDialogResult.Primary;
+            };
+            return folderView.Data.Count == 1 || await dlg.ShowAsyncQueue() == ContentDialogResult.Primary;
         }
     }
 }
