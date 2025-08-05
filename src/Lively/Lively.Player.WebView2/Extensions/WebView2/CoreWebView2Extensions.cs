@@ -16,8 +16,8 @@ namespace Lively.Player.WebView2.Extensions.WebView2
                 throw new ArgumentNullException(nameof(filePath));
 
             var fileName = Path.GetFileName(filePath);
-            // Use unique hostname to avoid webview cache issues.
-            var hostName = new DirectoryInfo(filePath).Parent.Name;
+            // Hex format to creates valid hostname and prevent cache conflicts between folders.
+            var hostName = $"localapp{new DirectoryInfo(filePath).Parent.GetHashCode():X8}";
             var directoryPath = Path.GetDirectoryName(filePath);
             webView.CoreWebView2.SetVirtualHostNameToFolderMapping(
                 hostName,
