@@ -79,6 +79,7 @@ message SettingsDataModel {
     bool screensaver_plugin_notify = 67;
     int32 screensaver_volume_global = 68;
     bool screensaver_fade_in = 69;
+    TargetColorSpaceMode video_target_color_space_mode = 70;
 }
 
 message AppRulesSettings {
@@ -238,4 +239,11 @@ enum ScreensaverTypeRule
 {
     wallpaper_ = 0;
     different = 1;
+}
+
+enum TargetColorSpaceMode
+{
+    target = 0;
+    source = 1;
+    sourceDynamic = 2;
 }

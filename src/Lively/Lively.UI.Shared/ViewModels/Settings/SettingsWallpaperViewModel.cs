@@ -52,6 +52,7 @@ namespace Lively.UI.Shared.ViewModels
             MouseMoveOnDesktop = userSettings.Settings.MouseInputMovAlways;
             SelectedVideoPlayerIndex = (int)userSettings.Settings.VideoPlayer;
             VideoPlayerHWDecode = userSettings.Settings.VideoPlayerHwAccel;
+            IsWindowsManageVideoColor = userSettings.Settings.VideoTargetColorSpaceMode == TargetColorspaceHintMode.source;
             SelectedGifPlayerIndex = (int)userSettings.Settings.GifPlayer;
             SelectedWebBrowserIndex = (int)userSettings.Settings.WebBrowser;
             WebDebuggingPort = userSettings.Settings.WebDebugPort;
@@ -188,6 +189,23 @@ namespace Lively.UI.Shared.ViewModels
                     _ = WallpaperRestart([WallpaperType.video, WallpaperType.videostream, WallpaperType.gif]);
                 }
                 SetProperty(ref _videoPlayerHWDecode, value);
+            }
+        }
+
+        private bool _isWindowsManageVideoColor;
+        public bool IsWindowsManageVideoColor
+        {
+            get => _isWindowsManageVideoColor;
+            set
+            {
+                var currentValue = value ? TargetColorspaceHintMode.source : TargetColorspaceHintMode.target;
+                if (userSettings.Settings.VideoTargetColorSpaceMode != currentValue)
+                {
+                    userSettings.Settings.VideoTargetColorSpaceMode = currentValue;
+                    UpdateSettingsConfigFile();
+                    _ = WallpaperRestart([WallpaperType.video, WallpaperType.videostream, WallpaperType.gif]);
+                }
+                SetProperty(ref _isWindowsManageVideoColor, value);
             }
         }
 

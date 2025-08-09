@@ -187,6 +187,7 @@ namespace Lively.RPC
             userSettings.Settings.IsScreensaverPluginNotify = req.ScreensaverPluginNotify;
             userSettings.Settings.ScreensaverGlobalVolume = req.ScreensaverVolumeGlobal;
             userSettings.Settings.ScreensaverFadeIn = req.ScreensaverFadeIn;
+            userSettings.Settings.VideoTargetColorSpaceMode = (TargetColorspaceHintMode)req.VideoTargetColorSpaceMode;
 
             try
             {
@@ -300,6 +301,7 @@ namespace Lively.RPC
                 ScreensaverPluginNotify = settings.IsScreensaverPluginNotify,
                 ScreensaverVolumeGlobal = settings.ScreensaverGlobalVolume,
                 ScreensaverFadeIn = settings.ScreensaverFadeIn,
+                VideoTargetColorSpaceMode = (TargetColorSpaceMode)settings.VideoTargetColorSpaceMode,
             };
             return Task.FromResult(resp);
         }

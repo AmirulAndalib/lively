@@ -260,6 +260,7 @@ namespace Lively.Grpc.Client
                 ScreensaverPluginNotify = settings.IsScreensaverPluginNotify,
                 ScreensaverVolumeGlobal = settings.ScreensaverGlobalVolume,
                 ScreensaverFadeIn = settings.ScreensaverFadeIn,
+                VideoTargetColorSpaceMode = (TargetColorSpaceMode)settings.VideoTargetColorSpaceMode,
             };
         }
 
@@ -353,6 +354,7 @@ namespace Lively.Grpc.Client
                 IsScreensaverPluginNotify = settings.ScreensaverPluginNotify,
                 ScreensaverGlobalVolume = settings.ScreensaverVolumeGlobal,
                 ScreensaverFadeIn = settings.ScreensaverFadeIn,
+                VideoTargetColorSpaceMode = (TargetColorspaceHintMode)settings.VideoTargetColorSpaceMode
             };
         }
 

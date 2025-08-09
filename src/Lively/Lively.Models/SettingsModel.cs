@@ -133,9 +133,9 @@ namespace Lively.Models
         /// Time in seconds between taskbar restart (hinting system instability) to stop Lively.
         /// </summary>
         public int TaskbarCrashTimeOutDelay { get; set; }
-        public VideoColorSpace VideoD3D11OutputColorSpace { get; set; }
         public double ProcessMonitorGridTileCoverageThreshold { get; set; }
         public int ProcessMonitorGridTileSize { get; set; }
+        public TargetColorspaceHintMode VideoTargetColorSpaceMode { get; set; }
 
         public SettingsModel()
         {
@@ -221,7 +221,7 @@ namespace Lively.Models
             ApplicationThemeBackground = AppThemeBackground.default_mica;
             TaskbarCrashTimeOutDelay = 30;
             Language = string.Empty;
-            VideoD3D11OutputColorSpace = VideoColorSpace.auto;
+            VideoTargetColorSpaceMode = TargetColorspaceHintMode.target;
         }
     }
 }

@@ -75,7 +75,7 @@ namespace Lively.Core.Wallpapers
             string livelyPropertyPath,
             bool isHwAccel = true,
             bool isWindowed = false,
-            VideoColorSpace colorSpace = VideoColorSpace.auto,
+            TargetColorspaceHintMode colorSpaceMode = TargetColorspaceHintMode.target,
             StreamQualitySuggestion streamQuality = StreamQualitySuggestion.Highest)
         {
             LivelyPropertyCopyPath = livelyPropertyPath;
@@ -118,8 +118,8 @@ namespace Lively.Core.Wallpapers
             cmdArgs.Append(model.LivelyInfo.Type == WallpaperType.gif ? "--scale=nearest " : " ");
             // GPU decode preference
             cmdArgs.Append(isHwAccel ? "--hwdec=auto-safe " : "--hwdec=no ");
-            // Set color space.
-            cmdArgs.Append($"--d3d11-output-csp={GetMpvD3D11ColorSpace(colorSpace)} ");
+            // Select which metadata to use for the --target-colorspace-hint, requires gpu-next vo.
+            cmdArgs.Append($"--target-colorspace-hint-mode={GetMpvTargetColorSpace(colorSpaceMode)} ");
             // Avoid global config file %APPDATA%\mpv\mpv.conf
             cmdArgs.Append(configDir is not null ? "--config-dir=" + "\"" + configDir + "\" " : "--no-config ");
             // File or online video stream path
@@ -545,16 +545,15 @@ namespace Lively.Core.Wallpapers
             return dirs.FirstOrDefault(x => Directory.Exists(x));
         }
 
-        private static string GetMpvD3D11ColorSpace(VideoColorSpace color)
+        // Ref: https://mpv.io/manual/master/#options-target-colorspace-hint-mode
+        private static string GetMpvTargetColorSpace(TargetColorspaceHintMode color)
         {
             return color switch
             {
-                VideoColorSpace.auto => "auto",
-                VideoColorSpace.srgb => "srgb",
-                VideoColorSpace.linear => "linear",
-                VideoColorSpace.pq => "pq",
-                VideoColorSpace.bt2020 => "bt.2020",
-                _ => throw new ArgumentOutOfRangeException(nameof(color), $"Unsupported color space: {color}")
+                TargetColorspaceHintMode.target => "target",
+                TargetColorspaceHintMode.source => "source",
+                TargetColorspaceHintMode.sourceDynamic => "source-dynamic",
+                _ => throw new ArgumentOutOfRangeException(nameof(color), $"Unsupported color space target: {color}")
             };
         }
 

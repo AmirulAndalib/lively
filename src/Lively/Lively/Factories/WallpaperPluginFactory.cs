@@ -81,7 +81,7 @@ namespace Lively.Factories
                                 lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
                                 userSettings.Settings.VideoPlayerHwAccel,
                                 isWindowed: isWindowed,
-                                userSettings.Settings.VideoD3D11OutputColorSpace);
+                                userSettings.Settings.VideoTargetColorSpaceMode);
                         case LivelyMediaPlayer.vlc:
                             return new VideoVlcPlayer(model.FilePath, 
                                 model, 
@@ -103,8 +103,8 @@ namespace Lively.Factories
                                            display,
                                            lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
                                            userSettings.Settings.VideoPlayerHwAccel,
-                                           isWindowed: isWindowed,
-                                           userSettings.Settings.VideoD3D11OutputColorSpace);
+                                           isWindowed: isWindowed, 
+                                           userSettings.Settings.VideoTargetColorSpaceMode);
                     }
                     break;
                 case WallpaperType.picture:
@@ -121,7 +121,7 @@ namespace Lively.Factories
                                               lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
                                               userSettings.Settings.VideoPlayerHwAccel,
                                               isWindowed: isWindowed,
-                                              userSettings.Settings.VideoD3D11OutputColorSpace);
+                                              userSettings.Settings.VideoTargetColorSpaceMode);
                         case LivelyPicturePlayer.wmf:
                             return new VideoWmfProcess(model.FilePath, model, display, 0, userSettings.Settings.WallpaperScaling);
                     }
@@ -149,7 +149,7 @@ namespace Lively.Factories
                             lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
                             userSettings.Settings.VideoPlayerHwAccel,
                             isWindowed: isWindowed,
-                            userSettings.Settings.VideoD3D11OutputColorSpace, 
+                            userSettings.Settings.VideoTargetColorSpaceMode,
                             userSettings.Settings.StreamQuality);
                     }
                     else

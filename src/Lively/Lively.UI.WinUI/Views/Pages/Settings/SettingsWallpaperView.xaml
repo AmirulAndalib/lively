@@ -114,6 +114,9 @@
                             <controls:SettingsCard x:Uid="VideoHardwareDecode">
                                 <ToggleSwitch IsOn="{Binding VideoPlayerHWDecode, Mode=TwoWay}" />
                             </controls:SettingsCard>
+                            <controls:SettingsCard Header="Let Windows manage colors (HDR passthrough)">
+                                <ToggleSwitch IsOn="{Binding IsWindowsManageVideoColor, Mode=TwoWay}" />
+                            </controls:SettingsCard>
                         </controls:SettingsExpander.Items>
                     </controls:SettingsExpander>
                     <InfoBar
