@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using WebView = Microsoft.Web.WebView2.WinForms.WebView2;
@@ -17,7 +18,7 @@ namespace Lively.Player.WebView2.Extensions.WebView2
 
             var fileName = Path.GetFileName(filePath);
             // Hex format to creates valid hostname and prevent cache conflicts between folders.
-            var hostName = $"localapp{filePath.GetHashCode():X8}";
+            var hostName = GetStableHostName(filePath);
             var directoryPath = Path.GetDirectoryName(filePath);
             webView.CoreWebView2.SetVirtualHostNameToFolderMapping(
                 hostName,
@@ -75,6 +76,17 @@ namespace Lively.Player.WebView2.Extensions.WebView2
                 return false;
             }
             return true;
+        }
+
+        private static string GetStableHostName(string filePath)
+        {
+            var folderPath = Path.GetDirectoryName(filePath) ?? filePath;
+            using var sha1 = SHA1.Create();
+            var bytes = Encoding.UTF8.GetBytes(folderPath);
+            var hash = sha1.ComputeHash(bytes);
+
+            var longHash = BitConverter.ToUInt64(hash, 0);
+            return $"localapp-{longHash:X16}".ToLowerInvariant();
         }
     }
 }
