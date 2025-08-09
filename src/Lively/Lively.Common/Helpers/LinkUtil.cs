@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Lively.Common
@@ -93,6 +95,17 @@ namespace Lively.Common
             {
                 return string.Empty;
             }
+        }
+
+        public static string GetStableHostName(string filePath)
+        {
+            var folderPath = Path.GetDirectoryName(filePath) ?? filePath;
+            using var sha1 = SHA1.Create();
+            var bytes = Encoding.UTF8.GetBytes(folderPath);
+            var hash = sha1.ComputeHash(bytes);
+
+            var hex = BitConverter.ToString(hash, 0, 8).Replace("-", "").ToLowerInvariant();
+            return $"localapp-{hex}";
         }
     }
 }

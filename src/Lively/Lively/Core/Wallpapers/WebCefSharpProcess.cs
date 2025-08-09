@@ -1,4 +1,5 @@
 ﻿using Lively.Common;
+using Lively.Common.Exceptions;
 using Lively.Common.Extensions;
 using Lively.Common.Helpers;
 using Lively.Common.Helpers.Pinvoke;
@@ -149,10 +150,15 @@ namespace Lively.Core.Wallpapers
 
         private void Proc_Exited(object sender, EventArgs e)
         {
+            Logger.Info($"Cef{uniqueId}: Process exited with exit code: {process?.ExitCode}");
             if (!isInitialized)
             {
-                //Exited with no error and without even firing OutputDataReceived; probably some external factor.
-                tcsProcessWait.TrySetResult(new InvalidOperationException(Properties.Resources.LivelyExceptionGeneral));
+                // 87 = ERROR_INVALID_PARAMETER
+                // Ref: <https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499->
+                if (process is not null && process.ExitCode == 87)
+                    tcsProcessWait.TrySetResult(new WallpaperPluginException("Error initializing. Unknown options are passed."));
+                else
+                    tcsProcessWait.TrySetResult(new InvalidOperationException(Properties.Resources.LivelyExceptionGeneral));
             }
             process.OutputDataReceived -= Proc_OutputDataReceived;
             process?.Dispose();
