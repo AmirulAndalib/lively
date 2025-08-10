@@ -1,4 +1,5 @@
 ﻿using CommandLine;
+using Lively.Models.Enums;
 
 namespace Lively.Player.WebView2
 {
@@ -17,8 +18,8 @@ namespace Lively.Player.WebView2
 
         [Option("wallpaper-type",
         Required = true,
-        HelpText = "LinkType class.")]
-        public string Type { get; set; }
+        HelpText = "Type of wallpaper.")]
+        public WebPageType Type { get; set; }
 
         [Option("wallpaper-display",
         Required = false,
@@ -42,24 +43,24 @@ namespace Lively.Player.WebView2
 
         [Option("wallpaper-debug",
         Required = false,
-        HelpText = "Debugging port")]
+        HelpText = "Debugging port.")]
         public string DebugPort { get; set; }
 
         [Option("wallpaper-cache",
         Required = false,
-        HelpText = "disk cache path")]
+        HelpText = "disk cache path.")]
         public string CachePath { get; set; }
 
         [Option("wallpaper-volume",
         Required = false,
         Default = 100,
-        HelpText = "Audio volume")]
+        HelpText = "Audio volume.")]
         public int Volume { get; set; }
 
         [Option("wallpaper-system-information",
         Default = false,
         Required = false,
-        HelpText = "Lively hw monitor api")]
+        HelpText = "Lively hw monitor api.")]
         public bool SysInfo { get; set; }
 
         [Option("wallpaper-system-nowplaying", 
@@ -69,7 +70,7 @@ namespace Lively.Player.WebView2
 
         [Option("wallpaper-pause-event",
         Required = false,
-        HelpText = "Wallpaper playback changed notify")]
+        HelpText = "Wallpaper playback changed notify.")]
         public bool PauseEvent { get; set; }
 
         [Option("wallpaper-pause-media",
@@ -79,7 +80,12 @@ namespace Lively.Player.WebView2
 
         [Option("wallpaper-verbose-log",
         Required = false,
-        HelpText = "Verbose Logging")]
+        HelpText = "Verbose Logging.")]
         public bool VerboseLog { get; set; }
+
+        [Option("wallpaper-color-scheme",
+        Required = false,
+        HelpText = "Set PreferredColorScheme.")]
+        public AppTheme Theme { get; set; }
     }
 }

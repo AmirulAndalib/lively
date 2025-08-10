@@ -3,7 +3,6 @@ using CefSharp.SchemeHandler;
 using CefSharp.WinForms;
 using CommandLine;
 using Lively.Common.Helpers;
-using Lively.Common.Helpers.Storage;
 using Lively.Common.JsonConverters;
 using Lively.Common.Services;
 using Lively.Models.Enums;
@@ -46,7 +45,7 @@ namespace Lively.Player.CefSharp
                     // .html fullpath
                     Url = "chrome://version",
                     //online or local(file)
-                    Type = "online",
+                    Type = WebPageType.online,
                     // LivelyProperties.json path if any
                     Properties = @"",
                     SysInfo = false,
@@ -346,44 +345,26 @@ namespace Lively.Player.CefSharp
                 //Creates GPUCache regardless even if disk CachePath is not set!
                 settings.CefCommandLineArgs.Add("disable-gpu-shader-disk-cache");
 
-            WebPageType pageType = default;
-            string path = startArgs.Url;
-            if (startArgs.Type.Equals("local", StringComparison.OrdinalIgnoreCase))
+            switch (startArgs.Type)
             {
-                pageType = WebPageType.local;
-            }
-            else if (startArgs.Type.Equals("online", StringComparison.OrdinalIgnoreCase))
-            {
-                string tmp = null;
-                if (StreamUtil.TryParseShadertoy(startArgs.Url, ref tmp))
-                {
-                    pageType = WebPageType.shadertoy;
-                    path = tmp;
-                }
-                else if (StreamUtil.TryParseYouTubeVideoIdFromUrl(path, ref tmp))
-                {
-                    pageType = WebPageType.yt;
-                    path = "https://www.youtube.com/embed/" + tmp +
-                        "?version=3&rel=0&autoplay=1&loop=1&controls=0&playlist=" + tmp;
-                }
-                else
-                    pageType = WebPageType.online;
-            }
-
-            switch (pageType)
-            {
-                case WebPageType.shadertoy:
+                case WebPageType.online:
                     {
+                        string tmp = null;
                         Cef.Initialize(settings);
-                        chromeBrowser = new ChromiumWebBrowser(string.Empty);
-                        chromeBrowser.LoadHtml(path);
-                    }
-                    break;
-                case WebPageType.yt:
-                    {
-                        Cef.Initialize(settings);
-                        chromeBrowser = new ChromiumWebBrowser(string.Empty);
-                        chromeBrowser.Load(path);
+                        if (StreamUtil.TryParseShadertoy(startArgs.Url, ref tmp))
+                        {
+                            chromeBrowser = new ChromiumWebBrowser(string.Empty);
+                            chromeBrowser.LoadHtml(tmp);
+                        }
+                        else if (StreamUtil.TryParseYouTubeVideoIdFromUrl(startArgs.Url, ref tmp))
+                        {
+                            chromeBrowser = new ChromiumWebBrowser(string.Empty);
+                            chromeBrowser.LoadHtml($"https://www.youtube.com/embed/{tmp}?version=3&rel=0&autoplay=1&loop=1&controls=0&playlist={tmp}");
+                        }
+                        else
+                        {
+                            chromeBrowser = new ChromiumWebBrowser(startArgs.Url);
+                        }
                     }
                     break;
                 case WebPageType.local:
@@ -392,27 +373,20 @@ namespace Lively.Player.CefSharp
                         {
                             SchemeName = "localfolder",
                             IsFetchEnabled = true,
-                            //DomainName = "html",//Path.GetFileName(path),//"cefsharp",
                             SchemeHandlerFactory = new FolderSchemeHandlerFactory
                             (
-                                rootFolder: Path.GetDirectoryName(path),
-                                hostName: Path.GetFileName(path),
-                                    defaultPage: Path.GetFileName(path)//"index.html" // will default to index.html
+                                rootFolder: Path.GetDirectoryName(startArgs.Url),
+                                hostName: Path.GetFileName(startArgs.Url),
+                                defaultPage: Path.GetFileName(startArgs.Url)//"index.html" // will default to index.html
                             )
 
                         });
-                        path = "localfolder://" + Path.GetFileName(path);
-
                         Cef.Initialize(settings);
-                        chromeBrowser = new ChromiumWebBrowser(path);
+                        chromeBrowser = new ChromiumWebBrowser($"localfolder://{Path.GetFileName(startArgs.Url)}");
                     }
                     break;
-                case WebPageType.online:
-                    {
-                        Cef.Initialize(settings);
-                        chromeBrowser = new ChromiumWebBrowser(path);
-                    }
-                    break;
+                default:
+                    throw new NotImplementedException();
             }
 
             //cef right click contextmenu disable.
@@ -560,7 +534,7 @@ namespace Lively.Player.CefSharp
         private void ChromeBrowser_LoadError(object sender, LoadErrorEventArgs e)
         {
             Debug.WriteLine("Error Loading Page:-" + e.ErrorText);  //ERR_BLOCKED_BY_RESPONSE, likely missing audio/video codec error for youtube.com?
-            if (startArgs.Type.Equals("local", StringComparison.OrdinalIgnoreCase) || e.ErrorCode == CefErrorCode.Aborted || e.ErrorCode == (CefErrorCode)(-27))//e.ErrorCode == CefErrorCode.NameNotResolved || e.ErrorCode == CefErrorCode.InternetDisconnected   || e.ErrorCode == CefErrorCode.NetworkAccessDenied || e.ErrorCode == CefErrorCode.NetworkIoSuspended)
+            if (startArgs.Type == WebPageType.local || e.ErrorCode == CefErrorCode.Aborted || e.ErrorCode == (CefErrorCode)(-27))//e.ErrorCode == CefErrorCode.NameNotResolved || e.ErrorCode == CefErrorCode.InternetDisconnected   || e.ErrorCode == CefErrorCode.NetworkAccessDenied || e.ErrorCode == CefErrorCode.NetworkIoSuspended)
             {
                 //ignoring some error's.
                 return;

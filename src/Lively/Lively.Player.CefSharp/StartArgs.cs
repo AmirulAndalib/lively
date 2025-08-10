@@ -1,4 +1,5 @@
 ﻿using CommandLine;
+using Lively.Models.Enums;
 
 namespace Lively.Player.CefSharp
 {
@@ -17,8 +18,8 @@ namespace Lively.Player.CefSharp
 
         [Option("wallpaper-type",
         Required = true,
-        HelpText = "LinkType class.")]
-        public string Type { get; set; }
+        HelpText = "Type of wallpaper.")]
+        public WebPageType Type { get; set; }
 
         [Option("wallpaper-display",
         Required = true,

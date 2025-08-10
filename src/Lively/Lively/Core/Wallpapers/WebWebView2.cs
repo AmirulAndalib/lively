@@ -52,6 +52,7 @@ namespace Lively.Core.Wallpapers
             DisplayMonitor display,
             string debugPort,
             string livelyPropertyPath,
+            AppTheme theme,
             int volume)
         {
             LivelyPropertyCopyPath = livelyPropertyPath;
@@ -65,6 +66,7 @@ namespace Lively.Core.Wallpapers
             cmdArgs.Append(" --wallpaper-volume " + volume);
             cmdArgs.Append(" --wallpaper-scale " + wallpaperScale);
             cmdArgs.Append(" --wallpaper-url " + "\"" + path + "\"");
+            cmdArgs.Append(" --wallpaper-color-scheme " + theme + " ");
             cmdArgs.Append(" --wallpaper-display " + "\"" + display.DeviceId + "\"");
             cmdArgs.Append(" --wallpaper-property " + "\"" + LivelyPropertyCopyPath + "\"");
             cmdArgs.Append(" --wallpaper-geometry " + display.Bounds.Width + "x" + display.Bounds.Height);

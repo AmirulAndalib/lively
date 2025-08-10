@@ -4,6 +4,7 @@ using Lively.Common.Extensions;
 using Lively.Common.Helpers;
 using Lively.Common.JsonConverters;
 using Lively.Common.Services;
+using Lively.Models.Enums;
 using Lively.Models.Message;
 using Lively.Player.WebView2.Extensions.WebView2;
 using Microsoft.Web.WebView2.Core;
@@ -46,7 +47,7 @@ namespace Lively.Player.WebView2
                     // .html fullpath
                     Url = "https://google.com/",
                     //online or local(file)
-                    Type = "online",
+                    Type = WebPageType.online,
                     // LivelyProperties.json path if any
                     Properties = @"",
                     SysInfo = false,
@@ -141,6 +142,7 @@ namespace Lively.Player.WebView2
 
             // Defaults
             webView.CoreWebView2.IsMuted = startArgs.Volume == 0;
+            webView.CoreWebView2.Profile.PreferredColorScheme = startArgs.Theme.GetPreferredColorScheme();
             if (startArgs.Scale != null)
             {
                 using var g = Graphics.FromHwnd(webView.Handle);
@@ -172,7 +174,7 @@ namespace Lively.Player.WebView2
 
             switch (startArgs.Type)
             {
-                case "online":
+                case WebPageType.online:
                     {
                         string tmp = null;
                         if (StreamUtil.TryParseShadertoy(startArgs.Url, ref tmp))
@@ -186,7 +188,7 @@ namespace Lively.Player.WebView2
                             webView.CoreWebView2.Navigate(startArgs.Url);
                     }
                     break;
-                case "local":
+                case WebPageType.local:
                     {
                         webView.NavigateToLocalPath(startArgs.Url);
                     }

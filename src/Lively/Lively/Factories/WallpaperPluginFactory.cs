@@ -54,6 +54,7 @@ namespace Lively.Factories
                                 display,
                                 userSettings.Settings.WebDebugPort,
                                 lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
+                                userSettings.Settings.ApplicationTheme,
                                 userSettings.Settings.AudioVolumeGlobal);
                     }
                     break;
@@ -168,6 +169,7 @@ namespace Lively.Factories
                                                     display,
                                                     userSettings.Settings.WebDebugPort,
                                                     lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
+                                                    userSettings.Settings.ApplicationTheme,
                                                     userSettings.Settings.AudioVolumeGlobal),
                         };
                     }

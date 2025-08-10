@@ -1,4 +1,5 @@
 ﻿using Lively.Common;
+using Lively.Models.Enums;
 using Microsoft.Web.WebView2.Core;
 using Newtonsoft.Json;
 using System;
@@ -78,6 +79,17 @@ namespace Lively.Player.WebView2.Extensions.WebView2
                 return false;
             }
             return true;
+        }
+
+        public static CoreWebView2PreferredColorScheme GetPreferredColorScheme(this AppTheme theme)
+        {
+            return theme switch
+            {
+                AppTheme.Auto => CoreWebView2PreferredColorScheme.Auto,
+                AppTheme.Dark => CoreWebView2PreferredColorScheme.Dark,
+                AppTheme.Light => CoreWebView2PreferredColorScheme.Light,
+                _ => CoreWebView2PreferredColorScheme.Auto,
+            };
         }
     }
 }

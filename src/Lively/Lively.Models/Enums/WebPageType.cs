@@ -2,9 +2,7 @@
 {
     public enum WebPageType
     {
-        shadertoy,
-        yt,
         online,
-        local,
+        local
     }
 }
