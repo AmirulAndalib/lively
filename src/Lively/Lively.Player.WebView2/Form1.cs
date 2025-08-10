@@ -83,7 +83,6 @@ namespace Lively.Player.WebView2
                 }
             }
 
-
             InitializeWebView2Async().Await(() => {
                 _ = ListenToParent();
             }, 
@@ -124,7 +123,9 @@ namespace Lively.Player.WebView2
 
         public async Task InitializeWebView2Async()
         {
-            webView = new WebView();
+            webView = new WebView() {
+                DefaultBackgroundColor = Color.Transparent
+            };
             webView.NavigationCompleted += WebView_NavigationCompleted;
             webView.CoreWebView2InitializationCompleted += WebView_CoreWebView2InitializationCompleted;
 
@@ -238,6 +239,9 @@ namespace Lively.Player.WebView2
 
         private async void WebView_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
         {
+            // Restore default.
+            webView.DefaultBackgroundColor = Color.White;
+
             if (!e.IsSuccess)
             {
                 WriteToParent(new LivelyMessageConsole()
