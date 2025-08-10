@@ -139,7 +139,7 @@ namespace Lively.UI.Shared.ViewModels
         private bool isUpdateAvailable;
 
         [ObservableProperty]
-        private string appThemeBackground = string.Empty;
+        private string appThemeBackground = null;
 
         [ObservableProperty]
         private bool isControlPanelTeachingTipOpen;
@@ -452,7 +452,7 @@ namespace Lively.UI.Shared.ViewModels
                 case Models.Enums.AppThemeBackground.default_mica:
                 case Models.Enums.AppThemeBackground.default_acrylic:
                     {
-                        AppThemeBackground = string.Empty;
+                        AppThemeBackground = null;
                     }
                     break;
                 case Models.Enums.AppThemeBackground.dynamic:
@@ -462,14 +462,14 @@ namespace Lively.UI.Shared.ViewModels
                             var wallpaper = desktopCore.Wallpapers.FirstOrDefault(x => x.Display.Equals(displayManager.PrimaryMonitor));
                             if (wallpaper is null)
                             {
-                                AppThemeBackground = string.Empty;
+                                AppThemeBackground = null;
                             }
                             else
                             {
                                 var userThemeDir = Path.Combine(wallpaper.LivelyInfoFolderPath, "lively_theme");
                                 if (Directory.Exists(userThemeDir))
                                 {
-                                    var themeFile = string.Empty;
+                                    string themeFile = null;
                                     try
                                     {
                                         themeFile = themeFactory.CreateFromDirectory(userThemeDir).File;
@@ -491,7 +491,7 @@ namespace Lively.UI.Shared.ViewModels
                         }
                         else
                         {
-                            AppThemeBackground = string.Empty;
+                            AppThemeBackground = null;
                         }
                     }
                     break;
@@ -499,11 +499,11 @@ namespace Lively.UI.Shared.ViewModels
                     {
                         if (!string.IsNullOrWhiteSpace(userSettings.Settings.ApplicationThemeBackgroundPath))
                         {
-                            var themeFile = string.Empty;
+                            string themeFile = null;
                             try
                             {
                                 var theme = themeFactory.CreateFromDirectory(userSettings.Settings.ApplicationThemeBackgroundPath);
-                                themeFile = theme.Type == ThemeType.picture ? theme.File : string.Empty;
+                                themeFile = theme.Type == ThemeType.picture ? theme.File : null;
                             }
                             catch { }
                             AppThemeBackground = themeFile;
@@ -512,7 +512,7 @@ namespace Lively.UI.Shared.ViewModels
                     break;
                 default:
                     {
-                        AppThemeBackground = string.Empty;
+                        AppThemeBackground = null;
                     }
                     break;
             }
