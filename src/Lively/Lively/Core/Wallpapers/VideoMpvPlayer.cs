@@ -107,7 +107,7 @@ namespace Lively.Core.Wallpapers
             // Disable mpv default (built-in) key bindings
             cmdArgs.Append("--input-default-bindings=no ");
             // Win11 24H2 and new mpv builds alignment fix, ref: https://github.com/rocksdanister/lively/issues/2415
-            cmdArgs.Append(!isWindowed ? "--no-border " : " ");
+            cmdArgs.Append(!isWindowed ? "--no-border " : "--border=yes ");
             // Permit mpv to receive pointer events reported by the video output driver. Necessary to use the OSC, or to select the buttons in DVD menus. 
             cmdArgs.Append("--input-cursor=no ");
             // On-screen-controller visibility
