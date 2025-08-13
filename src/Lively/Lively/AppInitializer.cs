@@ -178,8 +178,7 @@ namespace Lively
                 userSettings.Settings.AppFocusPause = AppRules.ignore;
                 userSettings.Settings.AppFullscreenPause = AppRules.pause;
                 userSettings.Settings.DisplayPauseSettings = DisplayPause.perdisplay;
-                // This setting is now being ignored and to remove defaults if any.
-                userSettings.AppRules.RemoveAll(x => x.Rule != AppRules.pause);
+                userSettings.AppRules.Clear();
                 // Apple changes
                 userSettings.Save<SettingsModel>();
                 userSettings.Save<List<ApplicationRulesModel>>();
