@@ -1,10 +1,5 @@
-﻿using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using System.Windows.Input;
 
 namespace Lively.UI.WinUI.Behaviors
@@ -39,23 +34,29 @@ namespace Lively.UI.WinUI.Behaviors
 
         private static void OnCommandChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is CheckBox checkBox)
+            if (d is not CheckBox checkBox)
+                return;
+
+            checkBox.Checked -= OnCheckBoxCheckedChanged;
+            checkBox.Unchecked -= OnCheckBoxCheckedChanged;
+
+            if (e.NewValue is ICommand)
             {
-                checkBox.Checked -= OnCheckBoxCheckedChanged;
-                checkBox.Unchecked -= OnCheckBoxCheckedChanged;
-                if (e.NewValue is ICommand command)
-                {
-                    checkBox.Checked += OnCheckBoxCheckedChanged;
-                    checkBox.Unchecked += OnCheckBoxCheckedChanged;
-                }
+                checkBox.Checked += OnCheckBoxCheckedChanged;
+                checkBox.Unchecked += OnCheckBoxCheckedChanged;
             }
         }
 
         private static void OnCheckBoxCheckedChanged(object sender, RoutedEventArgs e)
         {
-            if (sender is CheckBox checkBox && GetCommand(checkBox) != null && GetCommand(checkBox).CanExecute(GetCommandParameter(checkBox)))
+            if (sender is CheckBox checkBox)
             {
-                GetCommand(checkBox).Execute(GetCommandParameter(checkBox));
+                var command = GetCommand(checkBox);
+                var parameter = GetCommandParameter(checkBox);
+                if (command?.CanExecute(parameter) == true)
+                {
+                    command.Execute(parameter);
+                }
             }
         }
     }

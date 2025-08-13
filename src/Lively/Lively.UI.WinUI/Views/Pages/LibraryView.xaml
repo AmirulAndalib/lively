@@ -38,17 +38,9 @@
     </Page.Resources>
 
     <Grid>
-        <!--
-        <Grid.RowDefinitions>
-            <RowDefinition Height="100" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-        -->
-
         <!--  TODO: Write a custom ItemsRepeater  -->
         <!--  ref: https://learn.microsoft.com/en-us/windows/apps/design/controls/items-repeater  -->
         <GridView
-            x:Name="gridView"
             Margin="5"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"

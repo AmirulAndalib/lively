@@ -1,41 +1,43 @@
-﻿using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using System.Windows.Input;
 
-namespace Lively.UI.WinUI.Behaviors
+namespace Lively.UI.WinUI.Behaviors;
+
+public static class GridViewItemClickBehavior
 {
-    public static class GridViewItemClickBehavior
+    public static readonly DependencyProperty ItemClickCommandProperty =
+        DependencyProperty.RegisterAttached("ItemClickCommand", typeof(ICommand), typeof(GridViewItemClickBehavior), new PropertyMetadata(null, OnItemClickCommandChanged));
+
+    public static ICommand GetItemClickCommand(DependencyObject obj)
     {
-        public static readonly DependencyProperty ItemClickCommandProperty =
-            DependencyProperty.RegisterAttached("ItemClickCommand", typeof(ICommand), typeof(GridViewItemClickBehavior), new PropertyMetadata(null, OnItemClickCommandChanged));
+        return (ICommand)obj.GetValue(ItemClickCommandProperty);
+    }
 
-        public static ICommand GetItemClickCommand(DependencyObject obj)
-        {
-            return (ICommand)obj.GetValue(ItemClickCommandProperty);
-        }
+    public static void SetItemClickCommand(DependencyObject obj, ICommand value)
+    {
+        obj.SetValue(ItemClickCommandProperty, value);
+    }
 
-        public static void SetItemClickCommand(DependencyObject obj, ICommand value)
-        {
-            obj.SetValue(ItemClickCommandProperty, value);
-        }
+    private static void OnItemClickCommandChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not GridView gridView)
+            return;
 
-        private static void OnItemClickCommandChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        gridView.ItemClick -= GridView_ItemClick;
+
+        if (e.NewValue is ICommand)
+            gridView.ItemClick += GridView_ItemClick;
+    }
+
+    private static void GridView_ItemClick(object sender, ItemClickEventArgs e)
+    {
+        if (sender is GridView currentGridView)
         {
-            if (d is GridView gridView)
+            var command = GetItemClickCommand(currentGridView);
+            if (command?.CanExecute(e.ClickedItem) == true)
             {
-                gridView.ItemClick += (sender, args) =>
-                {
-                    ICommand command = GetItemClickCommand(gridView);
-                    if (command?.CanExecute(args.ClickedItem) == true)
-                    {
-                        command.Execute(args.ClickedItem);
-                    }
-                };
+                command.Execute(e.ClickedItem);
             }
         }
     }

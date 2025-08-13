@@ -1,16 +1,10 @@
-﻿using Microsoft.UI.Xaml.Controls.Primitives;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace Lively.UI.WinUI.Behaviors
 {
-    public class SliderValueChangedBehavior
+    public static class SliderValueChangedBehavior
     {
         public static readonly DependencyProperty CommandProperty =
             DependencyProperty.RegisterAttached("Command", typeof(ICommand), typeof(SliderValueChangedBehavior), new PropertyMetadata(null, OnCommandChanged));
@@ -40,21 +34,25 @@ namespace Lively.UI.WinUI.Behaviors
 
         private static void OnCommandChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is Slider slider)
-            {
-                slider.ValueChanged -= OnSliderValueChanged;
-                if (e.NewValue is ICommand command)
-                {
-                    slider.ValueChanged += OnSliderValueChanged;
-                }
-            }
+            if (d is not Slider slider)
+                return;
+
+            slider.ValueChanged -= Slider_ValueChanged;
+
+            if (e.NewValue is ICommand)
+                slider.ValueChanged += Slider_ValueChanged;
         }
 
-        private static void OnSliderValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+        private static void Slider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
         {
-            if (sender is Slider slider && GetCommand(slider) != null && GetCommand(slider).CanExecute(GetCommandParameter(slider)))
+            if (sender is Slider slider)
             {
-                GetCommand(slider).Execute(GetCommandParameter(slider));
+                var command = GetCommand(slider);
+                var parameter = GetCommandParameter(slider);
+                if (command?.CanExecute(parameter) == true)
+                {
+                    command.Execute(parameter);
+                }
             }
         }
     }

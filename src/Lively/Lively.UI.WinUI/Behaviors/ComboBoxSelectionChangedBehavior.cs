@@ -1,10 +1,5 @@
-﻿using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using System.Windows.Input;
 
 namespace Lively.UI.WinUI.Behaviors
@@ -39,21 +34,27 @@ namespace Lively.UI.WinUI.Behaviors
 
         private static void OnCommandChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is ComboBox comboBox)
+            if (d is not ComboBox comboBox)
+                return;
+
+            comboBox.SelectionChanged -= OnComboBoxSelectionChanged;
+
+            if (e.NewValue is ICommand)
             {
-                comboBox.SelectionChanged -= OnComboBoxSelectionChanged;
-                if (e.NewValue is ICommand command)
-                {
-                    comboBox.SelectionChanged += OnComboBoxSelectionChanged;
-                }
+                comboBox.SelectionChanged += OnComboBoxSelectionChanged;
             }
         }
 
         private static void OnComboBoxSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (sender is ComboBox comboBox && GetCommand(comboBox) != null && GetCommand(comboBox).CanExecute(GetCommandParameter(comboBox)))
+            if (sender is ComboBox comboBox)
             {
-                GetCommand(comboBox).Execute(GetCommandParameter(comboBox));
+                var command = GetCommand(comboBox);
+                var parameter = GetCommandParameter(comboBox);
+                if (command?.CanExecute(parameter) == true)
+                {
+                    command.Execute(parameter);
+                }
             }
         }
     }

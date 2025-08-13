@@ -1,15 +1,10 @@
-﻿using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using System.Windows.Input;
 
 namespace Lively.UI.WinUI.Behaviors
 {
-    public class TextBoxTextChangedBehavior
+    public static class TextBoxTextChangedBehavior
     {
         public static readonly DependencyProperty CommandProperty =
             DependencyProperty.RegisterAttached("Command", typeof(ICommand), typeof(TextBoxTextChangedBehavior), new PropertyMetadata(null, OnCommandChanged));
@@ -39,21 +34,25 @@ namespace Lively.UI.WinUI.Behaviors
 
         private static void OnCommandChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is TextBox textBox)
-            {
-                textBox.TextChanged -= OnTextBoxTextChanged;
-                if (e.NewValue is ICommand command)
-                {
-                    textBox.TextChanged += OnTextBoxTextChanged;
-                }
-            }
+            if (d is not TextBox textBox)
+                return;
+
+            textBox.TextChanged -= TextBox_TextChanged;
+
+            if (e.NewValue is ICommand)
+                textBox.TextChanged += TextBox_TextChanged;
         }
 
-        private static void OnTextBoxTextChanged(object sender, TextChangedEventArgs e)
+        private static void TextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (sender is TextBox textBox && GetCommand(textBox) != null && GetCommand(textBox).CanExecute(GetCommandParameter(textBox)))
+            if (sender is TextBox textBox)
             {
-                GetCommand(textBox).Execute(GetCommandParameter(textBox));
+                var command = GetCommand(textBox);
+                var parameter = GetCommandParameter(textBox);
+                if (command?.CanExecute(parameter) == true)
+                {
+                    command.Execute(parameter);
+                }
             }
         }
     }
