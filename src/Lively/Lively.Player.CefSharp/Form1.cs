@@ -19,6 +19,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Lively.Common.Extensions;
 
 namespace Lively.Player.CefSharp
 {
@@ -94,11 +95,9 @@ namespace Lively.Player.CefSharp
 
         private void HandleParseError(IEnumerable<Error> errs)
         {
-            WriteToParent(new LivelyMessageConsole()
-            {
-                Category = ConsoleMessageType.error,
-                Message = $"Error parsing cmdline args: {errs.First()}",
-            });
+            if (errs != null)
+                string.Join(Environment.NewLine, errs).SendError(SendToParent, "Error parsing launch arguments");
+
             // ERROR_INVALID_PARAMETER
             // Ref: <https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499->
             Environment.Exit(87);
@@ -191,15 +190,11 @@ namespace Lively.Player.CefSharp
                                         catch (Exception ie)
                                         {
                                             success = false;
-                                            WriteToParent(new LivelyMessageConsole()
-                                            {
-                                                Category = ConsoleMessageType.error,
-                                                Message = $"Screenshot capture fail: {ie.Message}"
-                                            });
+                                            ie.SendError(SendToParent, "Failed to capture screenshot");
                                         }
                                         finally
                                         {
-                                            WriteToParent(new LivelyMessageScreenshot()
+                                            SendToParent(new LivelyMessageScreenshot()
                                             {
                                                 FileName = Path.GetFileName(scr.FilePath),
                                                 Success = success
@@ -264,13 +259,9 @@ namespace Lively.Player.CefSharp
                                     break;
                                 }
                             }
-                            catch (Exception e)
+                            catch (Exception ie)
                             {
-                                WriteToParent(new LivelyMessageConsole()
-                                {
-                                    Category = ConsoleMessageType.error,
-                                    Message = $"Ipc parse error: {e.Message}"
-                                });
+                                ie.SendError(SendToParent);
                             }
                         }
                     }
@@ -278,11 +269,7 @@ namespace Lively.Player.CefSharp
             }
             catch (Exception e)
             {
-                WriteToParent(new LivelyMessageConsole()
-                {
-                    Category = ConsoleMessageType.error,
-                    Message = $"Ipc stdin error: {e.Message}",
-                });
+                e.SendError(SendToParent);
             }
             finally
             {
@@ -300,7 +287,7 @@ namespace Lively.Player.CefSharp
             Cef.Shutdown();
         }
 
-        public void WriteToParent(IpcMessage obj)
+        private void SendToParent(IpcMessage obj)
         {
             if (!IsDebugging)
                 Console.WriteLine(JsonConvert.SerializeObject(obj));
@@ -406,11 +393,7 @@ namespace Lively.Player.CefSharp
 
         private void ChromeBrowser_ConsoleMessage(object sender, ConsoleMessageEventArgs e)
         {
-            WriteToParent(new LivelyMessageConsole()
-            {
-                Category = ConsoleMessageType.console,
-                Message = $"{e.Message}, source: {e.Source} ({e.Line})",
-            });
+            $"{e.Message}, source: {e.Source} ({e.Line})".SendConsole(SendToParent);
         }
 
         private void ChromeBrowser_TitleChanged(object sender, TitleChangedEventArgs e)
@@ -424,7 +407,7 @@ namespace Lively.Player.CefSharp
                 return;
 
             RestoreLivelyProperties(startArgs.Properties);
-            WriteToParent(new LivelyMessageWallpaperLoaded() { Success = true });
+            SendToParent(new LivelyMessageWallpaperLoaded() { Success = true });
 
             if (!initializedServices)
             {
@@ -514,18 +497,14 @@ namespace Lively.Player.CefSharp
             }
             catch (Exception ex)
             {
-                WriteToParent(new LivelyMessageConsole()
-                {
-                    Category = ConsoleMessageType.error,
-                    Message = ex.Message
-                });
+                ex.SendError(SendToParent);
             }
         }
 
         private void ChromeBrowser_IsBrowserInitializedChanged1(object sender, EventArgs e)
         {
             //sends cefsharp handle to lively. (this is a subprocess of this application, so simply searching process.mainwindowhandle won't help.)
-            WriteToParent(new LivelyMessageHwnd()
+            SendToParent(new LivelyMessageHwnd()
             {
                 Hwnd = chromeBrowser.GetBrowser().GetHost().GetWindowHandle().ToInt32()
             });

@@ -1,5 +1,6 @@
 ﻿using CommandLine;
 using Lively.Common;
+using Lively.Common.Exceptions;
 using Lively.Common.Extensions;
 using Lively.Common.Helpers;
 using Lively.Common.JsonConverters;
@@ -87,13 +88,7 @@ namespace Lively.Player.WebView2
             InitializeWebView2Async().Await(() => {
                 _ = ListenToParent();
             }, 
-            (err) => {
-                WriteToParent(new LivelyMessageConsole()
-                {
-                    Category = ConsoleMessageType.error,
-                    Message = $"InitializeWebView2 fail: {err.Message}"
-                });
-            });
+            (err) => err.SendError(SendToParent, "Failed to initialize WebView2"));
         }
 
         // Hide from taskview and taskbar.
@@ -111,11 +106,8 @@ namespace Lively.Player.WebView2
 
         private void HandleParseError(IEnumerable<Error> errs)
         {
-            WriteToParent(new LivelyMessageConsole()
-            {
-                Category = ConsoleMessageType.error,
-                Message = $"Error parsing cmdline args: {errs.First()}",
-            });
+            if (errs != null)
+                string.Join(Environment.NewLine, errs).SendError(SendToParent, "Error parsing launch arguments");
 
             // ERROR_INVALID_PARAMETER
             // Ref: <https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499->
@@ -207,16 +199,12 @@ namespace Lively.Player.WebView2
 
         private void CoreWebView2_ProcessFailed(object sender, CoreWebView2ProcessFailedEventArgs e)
         {
-            // Expected behavior, reason  DebugActiveProcess(CEF_D3DRenderingSubProcess)
+            // Expected behavior: DebugActiveProcess(CEF_D3DRenderingSubProcess)
             // Ref: https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2processfailedkind
             if (isPaused && e.Reason == CoreWebView2ProcessFailedReason.Unresponsive)
                 return;
 
-            WriteToParent(new LivelyMessageConsole()
-            {
-                Category = ConsoleMessageType.error,
-                Message = $"Process fail: {e.Reason}",
-            });
+            e.Reason.ToString().SendError(SendToParent, "CoreWebView2 process failed");
         }
 
         private void CoreWebView2_NewWindowRequested(object sender, CoreWebView2NewWindowRequestedEventArgs e)
@@ -232,7 +220,7 @@ namespace Lively.Player.WebView2
 
         private void WebView_CoreWebView2InitializationCompleted(object sender, CoreWebView2InitializationCompletedEventArgs e)
         {
-            WriteToParent(new LivelyMessageHwnd()
+            SendToParent(new LivelyMessageHwnd()
             {
                 Hwnd = webView.Handle.ToInt32()
             });
@@ -251,16 +239,12 @@ namespace Lively.Player.WebView2
 
             if (!e.IsSuccess)
             {
-                WriteToParent(new LivelyMessageConsole()
-                {
-                    Message = e.WebErrorStatus.ToString(),
-                    Category = ConsoleMessageType.error
-                });
+                e.WebErrorStatus.ToString().SendError(SendToParent, "WebView navigation failed");
                 return;
             }
 
             await RestoreLivelyProperties(startArgs.Properties);
-            WriteToParent(new LivelyMessageWallpaperLoaded() { Success = e.IsSuccess });
+            SendToParent(new LivelyMessageWallpaperLoaded() { Success = e.IsSuccess });
 
             if (!initializedServices)
             {
@@ -283,11 +267,7 @@ namespace Lively.Player.WebView2
                         }
                         catch (Exception ex)
                         {
-                            WriteToParent(new LivelyMessageConsole()
-                            {
-                                Category = ConsoleMessageType.log,
-                                Message = $"Error sending track:{ex.Message}",
-                            });
+                            ex.SendError(SendToParent, "Error sending track information");
 
                         }
                     };
@@ -433,15 +413,11 @@ namespace Lively.Player.WebView2
                                             catch (Exception ie)
                                             {
                                                 success = false;
-                                                WriteToParent(new LivelyMessageConsole()
-                                                {
-                                                    Category = ConsoleMessageType.error,
-                                                    Message = $"Screenshot capture fail: {ie.Message}"
-                                                });
+                                                ie.SendError(SendToParent, "Failed to capture screenshot");
                                             }
                                             finally
                                             {
-                                                WriteToParent(new LivelyMessageScreenshot()
+                                                SendToParent(new LivelyMessageScreenshot()
                                                 {
                                                     FileName = Path.GetFileName(scr.FilePath),
                                                     Success = success
@@ -498,11 +474,7 @@ namespace Lively.Player.WebView2
                             }
                             catch (Exception ie)
                             {
-                                WriteToParent(new LivelyMessageConsole()
-                                {
-                                    Category = ConsoleMessageType.error,
-                                    Message = $"Ipc action error: {ie.Message}"
-                                });
+                                ie.SendError(SendToParent);
                             }
                         }
                     }
@@ -510,11 +482,7 @@ namespace Lively.Player.WebView2
             }
             catch (Exception e)
             {
-                WriteToParent(new LivelyMessageConsole()
-                {
-                    Category = ConsoleMessageType.error,
-                    Message = $"Ipc stdin error: {e.Message}",
-                });
+                e.SendError(SendToParent);
             }
             finally
             {
@@ -533,11 +501,7 @@ namespace Lively.Player.WebView2
             }
             catch (Exception ex)
             {
-                WriteToParent(new LivelyMessageConsole()
-                {
-                    Category = ConsoleMessageType.error,
-                    Message = ex.Message
-                });
+                ex.SendError(SendToParent);
             }
         }
 
@@ -549,7 +513,7 @@ namespace Lively.Player.WebView2
             webView?.Dispose();
         }
 
-        public void WriteToParent(IpcMessage obj)
+        private void SendToParent(IpcMessage obj)
         {
             if (!IsDebugging)
                 Console.WriteLine(JsonConvert.SerializeObject(obj));
