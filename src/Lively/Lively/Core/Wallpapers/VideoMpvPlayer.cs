@@ -92,6 +92,8 @@ namespace Lively.Core.Wallpapers
             cmdArgs.Append("--loop-file ");
             // Do not close after media end
             cmdArgs.Append("--keep-open ");
+            // Disable SystemMediaTransportControls, Jul 2024 change: https://github.com/mpv-player/mpv/pull/14338
+            cmdArgs.Append("--media-controls=no ");
             //Open window at (-9999,0)
             cmdArgs.Append("--geometry=-9999:0 ");
             // Always create gui window
