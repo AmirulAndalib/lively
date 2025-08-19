@@ -34,6 +34,7 @@ namespace Lively.Player.CefSharp
         private IAudioVisualizerService audioVisualizerService;
         private INowPlayingService nowPlayingService;
 
+        private AppTheme SystemTheme { get; } = ThemeUtil.GetWindowsTheme();
         private bool IsDebugging { get; } = BuildInfoUtil.IsDebugBuild();
 
         public Form1()
@@ -44,7 +45,7 @@ namespace Lively.Player.CefSharp
                 startArgs = new StartArgs
                 {
                     // .html fullpath
-                    Url = "chrome://version",
+                    Url = "https://google.com/",
                     //online or local(file)
                     Type = WebPageType.online,
                     // LivelyProperties.json path if any
@@ -81,15 +82,40 @@ namespace Lively.Player.CefSharp
                         this.Size = new Size(width, height);
                     }
                 }
+
+                var darkColor = Color.FromArgb(30, 30, 30);
+                var lightColor = Color.FromArgb(240, 240, 240);
+                this.BackColor = startArgs.Theme switch
+                {
+                    AppTheme.Auto => SystemTheme == AppTheme.Dark ? darkColor : lightColor,
+                    AppTheme.Light => lightColor,
+                    AppTheme.Dark => darkColor,
+                    _ => darkColor,
+                };
             }
 
-            try
+            try 
             {
                 InitializeCefSharp();
             }
-            finally
-            {
+            catch (Exception ex) {
+                ex.SendError(SendToParent, "Failed to initialize CefSharp");
+            }
+            finally {
                 _ = ListenToParent();
+            }
+        }
+
+        // Hide from taskview and taskbar.
+        // ShowInTaskbar = true does not create TOOLWINDOW.
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                var cp = base.CreateParams;
+                cp.ExStyle |= 0x00000080; // WS_EX_TOOLWINDOW
+                cp.ExStyle |= 0x08000000; // WS_EX_NOACTIVATE
+                return cp;
             }
         }
 
@@ -312,7 +338,6 @@ namespace Lively.Player.CefSharp
                 // Required >120.1.80, otherwise crash when multiple instance.
                 // Ref: https://github.com/cefsharp/CefSharp/issues/4668
                 RootCachePath = Path.Combine(Path.GetTempPath(), "Lively Wallpaper", "CEF", Path.GetRandomFileName())
-                //Locale = "en",
             };
             //ref: https://magpcss.org/ceforum/apidocs3/projects/(default)/_cef_browser_settings_t.html#universal_access_from_file_urls
             //settings.CefCommandLineArgs.Add("allow-universal-access-from-files", "1"); //UNSAFE, Testing Only!
@@ -501,13 +526,29 @@ namespace Lively.Player.CefSharp
             }
         }
 
-        private void ChromeBrowser_IsBrowserInitializedChanged1(object sender, EventArgs e)
+        private async void ChromeBrowser_IsBrowserInitializedChanged1(object sender, EventArgs e)
         {
             //sends cefsharp handle to lively. (this is a subprocess of this application, so simply searching process.mainwindowhandle won't help.)
             SendToParent(new LivelyMessageHwnd()
             {
                 Hwnd = chromeBrowser.GetBrowser().GetHost().GetWindowHandle().ToInt32()
             });
+
+
+            try
+            {
+                var pageTheme = startArgs.Theme == AppTheme.Auto ? SystemTheme : startArgs.Theme;
+                if (pageTheme == AppTheme.Dark)
+                {
+                    // Ref: https://github.com/cefsharp/CefSharp/discussions/3955
+                    using var devToolsClient = chromeBrowser.GetDevToolsClient();
+                    await devToolsClient.Emulation.SetAutoDarkModeOverrideAsync(true);
+                }
+            }
+            catch (Exception ex)
+            {
+                ex.SendError(SendToParent, "Failed to set page theme");
+            }
         }
 
         private void ChromeBrowser_LoadError(object sender, LoadErrorEventArgs e)

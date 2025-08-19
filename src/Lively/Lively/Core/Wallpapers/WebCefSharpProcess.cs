@@ -53,6 +53,7 @@ namespace Lively.Core.Wallpapers
             string livelyPropertyPath,
             string debugPort,
             bool diskCache,
+            AppTheme theme,
             int volume)
         {
             //Streams can also use browser.
@@ -61,6 +62,7 @@ namespace Lively.Core.Wallpapers
 
             var cmdArgs = new StringBuilder();
             cmdArgs.Append(" --wallpaper-url " + "\"" + path + "\"");
+            cmdArgs.Append(" --wallpaper-color-scheme " + theme + " ");
             cmdArgs.Append(" --wallpaper-display " + "\"" + display.DeviceId + "\"");
             cmdArgs.Append(" --wallpaper-property " + "\"" + LivelyPropertyCopyPath + "\"");
             cmdArgs.Append(" --wallpaper-volume " + volume);
@@ -224,8 +226,8 @@ namespace Lively.Core.Wallpapers
                                 throw new Exception("Browser input/window handle NULL.");
                             }
 
-                            //TaskView crash fix
-                            WindowUtil.RemoveWindowFromTaskbar(Handle);
+                            // We are doing this player side.
+                            // WindowUtil.RemoveWindowFromTaskbar(Handle);
                         }
                         catch (Exception ie)
                         {

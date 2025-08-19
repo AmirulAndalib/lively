@@ -72,5 +72,10 @@ namespace Lively.Player.CefSharp
         Required = false,
         HelpText = "Verbose Logging")]
         public bool VerboseLog { get; set; }
+
+        [Option("wallpaper-color-scheme",
+        Required = false,
+        HelpText = "Set PreferredColorScheme.")]
+        public AppTheme Theme { get; set; }
     }
 }

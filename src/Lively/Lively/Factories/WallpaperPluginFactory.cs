@@ -47,6 +47,7 @@ namespace Lively.Factories
                                 lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
                                 userSettings.Settings.WebDebugPort,
                                 userSettings.Settings.CefDiskCache,
+                                userSettings.Settings.ApplicationTheme,
                                 userSettings.Settings.AudioVolumeGlobal);
                         case LivelyWebBrowser.webview2:
                             return new WebWebView2(model.FilePath,
@@ -163,6 +164,7 @@ namespace Lively.Factories
                                                         lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
                                                         userSettings.Settings.WebDebugPort,
                                                         userSettings.Settings.CefDiskCache,
+                                                        userSettings.Settings.ApplicationTheme,
                                                         userSettings.Settings.AudioVolumeGlobal),
                             _ => new WebWebView2(model.FilePath,
                                                     model,
