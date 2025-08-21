@@ -2,7 +2,6 @@ using Lively.Common;
 using Lively.Common.Factories;
 using Lively.Common.Helpers;
 using Lively.Common.Helpers.Pinvoke;
-using Lively.Common.Helpers.Shell;
 using Lively.Common.Helpers.Storage;
 using Lively.Common.Services;
 using Lively.Core;
@@ -94,22 +93,25 @@ namespace Lively.Services
                             ShowActivated = false,
                             Topmost = true
                         };
-                        fadeInWindow.Loaded += async (s, e) =>
+                        fadeInWindow.Loaded += (s, e) =>
                         {
                             fadeInWindow.NativeResize(displayManager.VirtualScreenBounds);
                             fadeInWindow.WindowStyle = WindowStyle.None;
                             fadeInWindow.ResizeMode = ResizeMode.NoResize;
-
-                            // To prevent MouseMove firing immediately
-                            await Task.Delay(1000);
-                            fadeInWindow.PreviewKeyDown += (s, e) => tcs.TrySetResult(false);
-                            fadeInWindow.PreviewMouseDown += (s, e) => tcs.TrySetResult(false);
-                            fadeInWindow.PreviewMouseMove += (s, e) => tcs.TrySetResult(false);
                         };
                         fadeInWindow.FadeInAnimationCompleted += (s, e) => tcs.TrySetResult(true);
                         fadeInWindow.Show();
 
+                        void RawInput_UserInput(object sender, object e) => tcs.TrySetResult(false);
+                        rawInput.MouseMoveRaw += RawInput_UserInput;
+                        rawInput.MouseDownRaw += RawInput_UserInput;
+                        rawInput.KeyboardClickRaw += RawInput_UserInput;
+
                         await tcs.Task;
+                        rawInput.MouseMoveRaw -= RawInput_UserInput;
+                        rawInput.MouseDownRaw -= RawInput_UserInput;
+                        rawInput.KeyboardClickRaw -= RawInput_UserInput;
+
                         if (!tcs.Task.Result)
                             return;
                     }
