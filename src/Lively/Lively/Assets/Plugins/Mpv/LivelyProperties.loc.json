@@ -72,15 +72,15 @@
     },
     "ru": {
       "saturation": { "text": "Насыщенность" },
-      "hue": { "text": "Оттенок" },
+      "hue": { "text": "Тон" },
       "brightness": { "text": "Яркость" },
       "contrast": { "text": "Контраст" },
       "gamma": { "text": "Гамма" },
       "speed": { "text": "Скорость" },
       "scaler": {
-        "text": "Выбор масштаба",
-        "help": "Алгоритм масштабирования обоев",
-        "items": ["Нет", "Заполнить", "Пропорционально", "Пропорциональное заполнение"]
+        "text": "Выбрать по размеру",
+        "help": "Алгоритм масштабирования обоев.",
+        "items": ["Никакой", "Заполнение", "Равномерно", "Равномерное заполнение"]
       },
       "mute": { "text": "Выключить звук" }
     },
@@ -223,6 +223,20 @@
         "items": ["Ніякий", "Заповнення", "Рівномірний", "Рівномірне заповнення"]
       },
       "mute": { "text": "Без звуку" }
+    },
+    "tr": {
+      "saturation": { "text": "Doygunluk" },
+      "hue": { "text": "Ton" },
+      "brightness": { "text": "Parlaklık" },
+      "contrast": { "text": "Kontrast" },
+      "gamma": { "text": "Gama" },
+      "speed": { "text": "Hız" },
+      "scaler": {
+        "text": "Sığdırma Metodunu Seçin",
+        "help": "Duvar kağıdı ölçekleme algoritması",
+        "items": ["Hiçbiri", "Doldur", "Aynı", "Aynı şekilde doldur"]
+      },
+      "mute": { "text": "Sustur" }
     }
   }
 }

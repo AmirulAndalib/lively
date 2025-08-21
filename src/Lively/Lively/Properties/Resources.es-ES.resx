@@ -1272,12 +1272,12 @@ Edge es la vista web integrada en Windows 10.</value>
     <value>Desvanecer a negro antes de iniciar</value>
   </data>
   <data name="VideoLetWindowsManageColor.Header" xml:space="preserve">
-    <value>Let Windows manage colors</value>
+    <value>Permita que Windows maneje los colores</value>
   </data>
   <data name="ScreensaverWindowsSettings.Header" xml:space="preserve">
-    <value>Windows Settings</value>
+    <value>Configuración de Windows</value>
   </data>
   <data name="DescriptionConfirmProjectDirectory.Text" xml:space="preserve">
-    <value>Confirm project structure?</value>
+    <value>¿Confirmar estructura del proyecto?</value>
   </data>
 </root>

@@ -1269,12 +1269,12 @@ Edge ialah Webview sedia ada bagi Windows 10.</value>
     <value>Pudar kepada hitam sebelum bermula</value>
   </data>
   <data name="VideoLetWindowsManageColor.Header" xml:space="preserve">
-    <value>Let Windows manage colors</value>
+    <value>Biarkan Windows menguruskan warna</value>
   </data>
   <data name="ScreensaverWindowsSettings.Header" xml:space="preserve">
-    <value>Windows Settings</value>
+    <value>Tetapan Windows</value>
   </data>
   <data name="DescriptionConfirmProjectDirectory.Text" xml:space="preserve">
-    <value>Confirm project structure?</value>
+    <value>Sahkan struktur projek?</value>
   </data>
 </root>

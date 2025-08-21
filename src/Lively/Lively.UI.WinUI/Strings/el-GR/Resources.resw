@@ -1269,12 +1269,12 @@ https://github.com/rocksdanister/lively/wiki</value>
     <value>Ξεθώριασμα σε μαύρο πριν από την έναρξη</value>
   </data>
   <data name="VideoLetWindowsManageColor.Header" xml:space="preserve">
-    <value>Let Windows manage colors</value>
+    <value>Να επιτρέπεται στα Windows να διαχειρίζονται τα χρώματα</value>
   </data>
   <data name="ScreensaverWindowsSettings.Header" xml:space="preserve">
-    <value>Windows Settings</value>
+    <value>Ρυθμίσεις Windows</value>
   </data>
   <data name="DescriptionConfirmProjectDirectory.Text" xml:space="preserve">
-    <value>Confirm project structure?</value>
+    <value>Επιβεβαίωση δομής έργου;</value>
   </data>
 </root>

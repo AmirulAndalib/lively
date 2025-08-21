@@ -1265,12 +1265,12 @@ Wenn dies immer noch nicht funktioniert, schließen &amp; starten Sie Lively ode
     <value>Vor dem Start zu Schwarz verblassen</value>
   </data>
   <data name="VideoLetWindowsManageColor.Header" xml:space="preserve">
-    <value>Let Windows manage colors</value>
+    <value>Farben von Windows verwalten lassen</value>
   </data>
   <data name="ScreensaverWindowsSettings.Header" xml:space="preserve">
-    <value>Windows Settings</value>
+    <value>Windows-Einstellungen</value>
   </data>
   <data name="DescriptionConfirmProjectDirectory.Text" xml:space="preserve">
-    <value>Confirm project structure?</value>
+    <value>Projekt-Struktur bestätigen?</value>
   </data>
 </root>

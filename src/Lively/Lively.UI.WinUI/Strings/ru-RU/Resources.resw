@@ -1269,12 +1269,12 @@ Edge - встроенный в Windows 10 WebView.</value>
     <value>Затухание до темноты перед началом</value>
   </data>
   <data name="VideoLetWindowsManageColor.Header" xml:space="preserve">
-    <value>Let Windows manage colors</value>
+    <value>Разрешить Windows управлять цветами</value>
   </data>
   <data name="ScreensaverWindowsSettings.Header" xml:space="preserve">
-    <value>Windows Settings</value>
+    <value>Параметры Windows</value>
   </data>
   <data name="DescriptionConfirmProjectDirectory.Text" xml:space="preserve">
-    <value>Confirm project structure?</value>
+    <value>Подтвердить структуру проекта?</value>
   </data>
 </root>

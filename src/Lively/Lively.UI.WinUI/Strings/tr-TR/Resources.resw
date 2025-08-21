@@ -1263,15 +1263,15 @@ Hala çalışmıyorsa, Lively'yi kapatın ve yeniden başlatın / Windows'u yeni
     <value>Ekran koruyucu devreye girdiğinde bilgisayarı kilitle</value>
   </data>
   <data name="ScreensaverFadeIn.Header" xml:space="preserve">
-    <value>Fade to black before start</value>
+    <value>Başlamadan önce karartma</value>
   </data>
   <data name="VideoLetWindowsManageColor.Header" xml:space="preserve">
-    <value>Let Windows manage colors</value>
+    <value>Windows'un renkleri yönetmesine izin ver</value>
   </data>
   <data name="ScreensaverWindowsSettings.Header" xml:space="preserve">
-    <value>Windows Settings</value>
+    <value>Windows Ayarları</value>
   </data>
   <data name="DescriptionConfirmProjectDirectory.Text" xml:space="preserve">
-    <value>Confirm project structure?</value>
+    <value>Proje yapısını onayla?</value>
   </data>
 </root>

@@ -1266,12 +1266,12 @@ https://github.com/rocksdanister/lively/wiki</value>
     <value>Затухаць перад запускам</value>
   </data>
   <data name="VideoLetWindowsManageColor.Header" xml:space="preserve">
-    <value>Let Windows manage colors</value>
+    <value>Задаваць колеры з дапамогай Windows</value>
   </data>
   <data name="ScreensaverWindowsSettings.Header" xml:space="preserve">
-    <value>Windows Settings</value>
+    <value>Налады Windows</value>
   </data>
   <data name="DescriptionConfirmProjectDirectory.Text" xml:space="preserve">
-    <value>Confirm project structure?</value>
+    <value>Пацвердзіць структуру праекта?</value>
   </data>
 </root>
