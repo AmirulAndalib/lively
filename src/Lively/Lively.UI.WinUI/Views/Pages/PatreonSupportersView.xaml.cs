@@ -1,18 +1,20 @@
 using Lively.Common;
+using Lively.Common.Extensions;
 using Lively.Common.Helpers;
 using Lively.Grpc.Client;
 using Lively.Models.Enums;
 using Lively.UI.Shared.ViewModels;
 using Lively.UI.WinUI.Extensions;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.Web.WebView2.Core;
 using System;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using Windows.UI;
 
 namespace Lively.UI.WinUI.Views.Pages
 {
@@ -26,9 +28,8 @@ namespace Lively.UI.WinUI.Views.Pages
             this.viewModel = App.Services.GetRequiredService<PatreonSupportersViewModel>();
             this.DataContext = viewModel;
 
-            // Error when setting in xaml
-            WebView.DefaultBackgroundColor = ((SolidColorBrush)App.Current.Resources["ApplicationPageBackgroundThemeBrush"]).Color;
-            _ = InitializeWebView2Async();
+            InitializeWebView2Async().Await(() => { },
+                (ex) => viewModel.SupportersFetchError = $"Exception: {ex.GetType().Name}\nMessage: {ex.Message}");
         }
 
         private async Task InitializeWebView2Async()
@@ -36,20 +37,13 @@ namespace Lively.UI.WinUI.Views.Pages
             if (!viewModel.IsWebView2Available)
                 return;
 
-            try
-            {
-                var options = new CoreWebView2EnvironmentOptions();
-                // WebView2 runs outside the packaged sandbox, so we must redirect paths to the packaged LocalCache if it exists.
-                // This workaround addresses a known issue on Windows 10 22H2, where WebView2 does not automatically pick up the redirected path.
-                var resolvedTempWebView2Dir = PackageUtil.ValidateAndResolvePath(Constants.CommonPaths.TempWebView2Dir);
-                var userDataDir = Path.Combine(resolvedTempWebView2Dir, Assembly.GetExecutingAssembly().GetName().Name);
-                var webView2Environment = await CoreWebView2Environment.CreateWithOptionsAsync(null, userDataDir, options);
-                await WebView.EnsureCoreWebView2Async(webView2Environment);
-            }
-            catch (Exception ex)
-            {
-                viewModel.SupportersFetchError = $"Exception: {ex.GetType().Name}\nMessage: {ex.Message}";
-            }
+            var options = new CoreWebView2EnvironmentOptions();
+            // WebView2 runs outside the packaged sandbox, so we must redirect paths to the packaged LocalCache if it exists.
+            // This workaround addresses a known issue on Windows 10 22H2, where WebView2 does not automatically pick up the redirected path.
+            var resolvedTempWebView2Dir = PackageUtil.ValidateAndResolvePath(Constants.CommonPaths.TempWebView2Dir);
+            var userDataDir = Path.Combine(resolvedTempWebView2Dir, Assembly.GetExecutingAssembly().GetName().Name);
+            var webView2Environment = await CoreWebView2Environment.CreateWithOptionsAsync(null, userDataDir, options);
+            await WebView.EnsureCoreWebView2Async(webView2Environment);
         }
 
         private void WebView_CoreWebView2Initialized(WebView2 sender, CoreWebView2InitializedEventArgs args)
@@ -68,8 +62,8 @@ namespace Lively.UI.WinUI.Views.Pages
                     AppTheme.Dark => "dark",
                     _ => "auto",
                 };
-                var accentColorDark1 = ((Windows.UI.Color)App.Current.Resources["SystemAccentColorDark1"]).ToHex().Substring(1);
-                var accentColorLight1 = ((Windows.UI.Color)App.Current.Resources["SystemAccentColorLight1"]).ToHex().Substring(1);
+                var accentColorDark1 = ((Color)App.Current.Resources["SystemAccentColorDark1"]).ToHex().Substring(1);
+                var accentColorLight1 = ((Color)App.Current.Resources["SystemAccentColorLight1"]).ToHex().Substring(1);
                 var param = $"?theme={pageTheme}&colorLight={accentColorLight1}&colorDark={accentColorDark1}";
 
                 var url = viewModel.IsBetaBuild ?
@@ -107,6 +101,8 @@ namespace Lively.UI.WinUI.Views.Pages
 
         private void WebView_NavigationCompleted(WebView2 sender, CoreWebView2NavigationCompletedEventArgs args)
         {
+            // Reset to default
+            WebView.DefaultBackgroundColor = Colors.White;
             WebViewProgress.Visibility = Visibility.Collapsed;
         }
 

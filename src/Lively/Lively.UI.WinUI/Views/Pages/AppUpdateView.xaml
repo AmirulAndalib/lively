@@ -32,6 +32,7 @@
             <WebView2
                 x:Name="WebView"
                 CoreWebView2Initialized="WebView_CoreWebView2Initialized"
+                DefaultBackgroundColor="Transparent"
                 NavigationCompleted="WebView_NavigationCompleted"
                 NavigationStarting="WebView_NavigationStarting"
                 Visibility="{Binding UpdateChangelogError, Mode=OneWay, Converter={StaticResource NullVisibilityConverter}, ConverterParameter=Reverse}" />
