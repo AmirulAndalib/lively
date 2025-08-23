@@ -27,6 +27,7 @@ namespace Lively.Core.Wallpapers
         private readonly int timeOut;
 
         public event EventHandler Exited;
+        public event EventHandler Loaded;
 
         public bool IsLoaded => Handle != IntPtr.Zero;
 
@@ -168,6 +169,7 @@ namespace Lively.Core.Wallpapers
                     WindowUtil.RemoveWindowFromTaskbar(Handle);
                     //todo: Restore livelyproperties.json settings here..
                 }
+                Loaded?.Invoke(this, EventArgs.Empty);
             }
             catch (Exception)
             {

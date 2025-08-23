@@ -281,19 +281,23 @@ namespace Lively.Core
                     {
                         case WallpaperArrangement.per:
                             {
-                                currentWallpaper = wallpaperFactory.CreateWallpaper(wallpaper, display, userSettings.Settings.WallpaperArrangement, userSettings);
+                                // WebView2 can share a rendering process across multiple instances based on the UserData folder.
+                                // This sometimes causes the rendering process to start in a paused state because of current wallpaper (?),
+                                // leading to wallpaper startup issues. We are closing first for safety.
+                                // Refer to IWebView2UserDataFactory for more details.
+                                CloseWallpaper(display, fireEvent: false);
+
+                                currentWallpaper = wallpaperFactory.CreateWallpaper(wallpaper, display, userSettings.Settings.WallpaperArrangement);
                                 currentWallpaper.Exited += Wallpaper_Exited;
+                                currentWallpaper.Loaded += Wallpaper_Loaded;
                                 await currentWallpaper.ShowAsync();
 
-                                CloseWallpaper(currentWallpaper.Screen, fireEvent: false);
                                 if (!TrySetWallpaperPerScreen(currentWallpaper.Handle, currentWallpaper.Screen))
                                     Logger.Error("Failed to set wallpaper as child of WorkerW");
 
                                 // Reload incase page does not handle resize event
                                 if (currentWallpaper.Category.IsWebWallpaper())
                                     currentWallpaper.SetPlaybackPos(0, PlaybackPosType.absolutePercent);
-
-                                await SetDesktopPictureOrLockscreen(currentWallpaper);
 
                                 if (currentWallpaper.Pid is int pid)
                                     watchdog.Add(pid);
@@ -303,18 +307,18 @@ namespace Lively.Core
                             break;
                         case WallpaperArrangement.span:
                             {
-                                currentWallpaper = wallpaperFactory.CreateWallpaper(wallpaper, display, userSettings.Settings.WallpaperArrangement, userSettings);
+                                CloseAllWallpapers(fireEvent: false);
+
+                                currentWallpaper = wallpaperFactory.CreateWallpaper(wallpaper, display, userSettings.Settings.WallpaperArrangement);
                                 currentWallpaper.Exited += Wallpaper_Exited;
+                                currentWallpaper.Loaded += Wallpaper_Loaded;
                                 await currentWallpaper.ShowAsync();
 
-                                CloseAllWallpapers(fireEvent: false);
                                 if (!TrySetWallpaperSpanScreen(currentWallpaper.Handle))
                                     Logger.Error("Failed to set wallpaper as child of WorkerW");
 
                                 if (currentWallpaper.Category.IsWebWallpaper())
                                     currentWallpaper.SetPlaybackPos(0, PlaybackPosType.absolutePercent);
-
-                                await SetDesktopPictureOrLockscreen(currentWallpaper);
 
                                 if (currentWallpaper.Pid is int pid)
                                     watchdog.Add(pid);
@@ -325,10 +329,12 @@ namespace Lively.Core
                         case WallpaperArrangement.duplicate:
                             {
                                 CloseAllWallpapers(false);
+
                                 foreach (var item in displayManager.DisplayMonitors)
                                 {
-                                    currentWallpaper = wallpaperFactory.CreateWallpaper(wallpaper, item, userSettings.Settings.WallpaperArrangement, userSettings);
+                                    currentWallpaper = wallpaperFactory.CreateWallpaper(wallpaper, item, userSettings.Settings.WallpaperArrangement);
                                     currentWallpaper.Exited += Wallpaper_Exited;
+                                    currentWallpaper.Loaded += Wallpaper_Loaded;
                                     await currentWallpaper.ShowAsync();
 
                                     if (!TrySetWallpaperPerScreen(currentWallpaper.Handle, currentWallpaper.Screen))
@@ -336,8 +342,6 @@ namespace Lively.Core
 
                                     if (currentWallpaper.Category.IsWebWallpaper())
                                         currentWallpaper.SetPlaybackPos(0, PlaybackPosType.absolutePercent);
-
-                                    await SetDesktopPictureOrLockscreen(currentWallpaper);
 
                                     if (currentWallpaper.Pid is int pid)
                                         watchdog.Add(pid);
@@ -394,6 +398,11 @@ namespace Lively.Core
             }
         }
 
+        private async void Wallpaper_Loaded(object sender, EventArgs e)
+        {
+            await SetDesktopPictureOrLockscreen(sender as IWallpaper);
+        }
+
         private void Wallpaper_Exited(object sender, EventArgs e)
         {
             RefreshDesktop();
@@ -408,19 +417,6 @@ namespace Lively.Core
             {
                 try
                 {
-                    int maxIterations = 50;
-                    //upto ~5sec wait for wallpaper to get ready..
-                    for (int i = 1; i <= maxIterations; i++)
-                    {
-                        if (i == maxIterations)
-                            throw new Exception("Timed out..");
-
-                        if (wallpaper.IsLoaded)
-                            break;
-
-                        await Task.Delay(100);
-                    }
-
                     // Desktop-bridge redirection not working IDesktopWallpaper COM/SystemParametersInfo.
                     var resolvedScreenshotDir = PackageUtil.ValidateAndResolvePath(Constants.CommonPaths.ScreenshotDir);
                     var imgPath = Path.Combine(resolvedScreenshotDir, Path.GetRandomFileName() + ".jpg");

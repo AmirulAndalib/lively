@@ -12,11 +12,17 @@ namespace Lively.Factories
 {
     public class WallpaperPluginFactory : IWallpaperPluginFactory
     {
+        private readonly IWebView2UserDataFactory webView2UserDataFactory;
         private readonly ILivelyPropertyFactory lpFactory;
+        private readonly IUserSettingsService userSettings;
 
-        public WallpaperPluginFactory(ILivelyPropertyFactory lpFactory)
+        public WallpaperPluginFactory(ILivelyPropertyFactory lpFactory,
+            IWebView2UserDataFactory webViewUserDataFactory, 
+            IUserSettingsService userSettings)
         {
             this.lpFactory = lpFactory;
+            this.userSettings = userSettings;
+            this.webView2UserDataFactory = webViewUserDataFactory;
         }
 
         public IWallpaper CreateDwmThumbnailWallpaper(LibraryModel model,
@@ -30,7 +36,6 @@ namespace Lively.Factories
         public IWallpaper CreateWallpaper(LibraryModel model,
             DisplayMonitor display,
             WallpaperArrangement arrangement,
-            IUserSettingsService userSettings,
             bool isWindowed = false)
         {
             switch (model.LivelyInfo.Type)
@@ -55,6 +60,7 @@ namespace Lively.Factories
                                 display,
                                 userSettings.Settings.WebDebugPort,
                                 lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
+                                GetWebView2UserDataDir(arrangement, display),
                                 userSettings.Settings.ApplicationTheme,
                                 userSettings.Settings.AudioVolumeGlobal);
                     }
@@ -171,12 +177,19 @@ namespace Lively.Factories
                                                     display,
                                                     userSettings.Settings.WebDebugPort,
                                                     lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
+                                                    GetWebView2UserDataDir(arrangement, display),
                                                     userSettings.Settings.ApplicationTheme,
                                                     userSettings.Settings.AudioVolumeGlobal),
                         };
                     }
             }
             throw new PluginNotFoundException("Wallpaper player not found.");
+        }
+
+        private string GetWebView2UserDataDir(WallpaperArrangement arrangement, DisplayMonitor display)
+        {
+            return userSettings.Settings.CefDiskCache ? 
+                webView2UserDataFactory.GetUserDataFolder(arrangement, display) : webView2UserDataFactory.GetTempUserDataFolder();
         }
 
         #region exceptions

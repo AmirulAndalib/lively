@@ -56,7 +56,6 @@ namespace Lively.Views
                 wallpaper = wallpaperFactory.CreateWallpaper(model,
                     display,
                     arrangement,
-                    userSettings,
                     isWindowed: true);
                 await wallpaper.ShowAsync();
 

@@ -53,6 +53,7 @@ namespace Lively.Core.Wallpapers
         private readonly string filePath;
 
         public event EventHandler Exited;
+        public event EventHandler Loaded;
 
         public PictureWinApi(string filePath,
             LibraryModel model,
@@ -134,7 +135,7 @@ namespace Lively.Core.Wallpapers
             desktop.SetPosition(arrangement == WallpaperArrangement.span ? DesktopWallpaperPosition.Span : desktopScaler);
             desktop.SetWallpaper(arrangement == WallpaperArrangement.span ? null : Screen.DeviceId, filePath);
 
-            //Nothing to setup..
+            Loaded?.Invoke(this, EventArgs.Empty);
         }
 
         public void Close()

@@ -234,6 +234,7 @@ namespace Lively
                 .AddTransient<IWallpaperLibraryFactory, WallpaperLibraryFactory>()
                 .AddTransient<IWallpaperPluginFactory, WallpaperPluginFactory>()
                 .AddTransient<ILivelyPropertyFactory, LivelyPropertyFactory>()
+                .AddTransient<IWebView2UserDataFactory, WebView2UserDataFactory>()
                 //.AddTransient<IScreenRecorder, ScreenRecorderlibScreen>()
                 .AddTransient<ICommandHandler, CommandHandler>()
                 .AddTransient<IDownloadService, HttpDownloadService>()

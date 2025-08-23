@@ -1,7 +1,6 @@
 ﻿using Lively.Common;
 using Lively.Common.Exceptions;
 using Lively.Common.Extensions;
-using Lively.Common.Helpers;
 using Lively.Common.Helpers.Pinvoke;
 using Lively.Common.JsonConverters;
 using Lively.Models;
@@ -21,6 +20,8 @@ namespace Lively.Core.Wallpapers
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly TaskCompletionSource<Exception> tcsProcessWait = new();
+        private readonly TaskCompletionSource contentReadyTcs = new();
+        private bool IsContentReady => contentReadyTcs.Task.IsCompleted;
         private readonly Process process;
         private int cefD3DRenderingSubProcessPid;//, cefAudioSubProcessPid;
         private bool isInitialized;
@@ -28,6 +29,7 @@ namespace Lively.Core.Wallpapers
         private readonly int uniqueId;
 
         public event EventHandler Exited;
+        public event EventHandler Loaded;
 
         public bool IsLoaded { get; private set; } = false;
 
@@ -103,26 +105,22 @@ namespace Lively.Core.Wallpapers
         
         public void Pause()
         {
-            //minimize browser.
-            //NativeMethods.ShowWindow(hwndWebView, (uint)NativeMethods.SHOWWINDOW.SW_SHOWMINNOACTIVE);
-            if (cefD3DRenderingSubProcessPid != 0)
-            {
-                //Cef spawns multiple subprocess but "Intermediate D3D Window" seems to do the trick..
-                //The "System Idle Process" is given process ID 0, Kernel is 1.
-                _ = NativeMethods.DebugActiveProcess((uint)cefD3DRenderingSubProcessPid);
-                SendMessage(new LivelySuspendCmd()); //"{\"Type\":7}"
-            }
+            // The "System Idle Process" is given process ID 0, Kernel is 1.
+            if (!IsContentReady || cefD3DRenderingSubProcessPid == 0)
+                return;
+
+            // Cef spawns multiple subprocess but "Intermediate D3D Window" seems to do the trick..
+            _ = NativeMethods.DebugActiveProcess((uint)cefD3DRenderingSubProcessPid);
+            SendMessage(new LivelySuspendCmd()); //"{\"Type\":7}"
         }
 
         public void Play()
         {
-            //Show minimized browser.
-            //NativeMethods.ShowWindow(hwndWebView, (uint)NativeMethods.SHOWWINDOW.SW_SHOWNOACTIVATE);
-            if (cefD3DRenderingSubProcessPid != 0)
-            {
-                _ = NativeMethods.DebugActiveProcessStop((uint)cefD3DRenderingSubProcessPid);
-                SendMessage(new LivelyResumeCmd()); //"{\"Type\":8}"
-            }
+            if (!IsContentReady || cefD3DRenderingSubProcessPid == 0)
+                return;
+
+            _ = NativeMethods.DebugActiveProcessStop((uint)cefD3DRenderingSubProcessPid);
+            SendMessage(new LivelyResumeCmd()); //"{\"Type\":8}"
         }
 
         public async Task ShowAsync()
@@ -168,7 +166,7 @@ namespace Lively.Core.Wallpapers
             Exited?.Invoke(this, EventArgs.Empty);
         }
 
-        private void Proc_OutputDataReceived(object sender, DataReceivedEventArgs e)
+        private async void Proc_OutputDataReceived(object sender, DataReceivedEventArgs e)
         {
             //When the redirected stream is closed, a null line is sent to the event handler.
             if (!string.IsNullOrEmpty(e.Data))
@@ -186,6 +184,7 @@ namespace Lively.Core.Wallpapers
                 if (obj is null)
                     return;
 
+                // Log message
                 switch (obj.Type)
                 {
                     case MessageType.msg_console:
@@ -208,43 +207,56 @@ namespace Lively.Core.Wallpapers
                         break;
                 }
 
-                if (!isInitialized || !IsLoaded)
+                // Process message
+                switch (obj.Type)
                 {
-                    if (obj.Type == MessageType.msg_hwnd)
-                    {
-                        Exception error = null;
-                        try
+                    case MessageType.msg_hwnd:
+                        if (!isInitialized)
                         {
-                            //CefBrowserWindow
-                            var handle = new IntPtr(((LivelyMessageHwnd)obj).Hwnd);
-                            //WindowsForms10.Window.8.app.0.141b42a_r9_ad1
-                            InputHandle = NativeMethods.FindWindowEx(handle, IntPtr.Zero, "Chrome_WidgetWin_1", null);
-                            Handle = process.GetProcessWindow(true);//FindWindowByProcessId(Proc.Id);
-
-                            if (IntPtr.Equals(InputHandle, IntPtr.Zero) || IntPtr.Equals(Handle, IntPtr.Zero))
+                            Exception error = null;
+                            try
                             {
-                                throw new Exception("Browser input/window handle NULL.");
-                            }
+                                //CefBrowserWindow
+                                var handle = new IntPtr(((LivelyMessageHwnd)obj).Hwnd);
+                                //WindowsForms10.Window.8.app.0.141b42a_r9_ad1
+                                InputHandle = NativeMethods.FindWindowEx(handle, IntPtr.Zero, "Chrome_WidgetWin_1", null);
+                                Handle = process.GetProcessWindow(true);//FindWindowByProcessId(Proc.Id);
 
-                            // We are doing this player side.
-                            // WindowUtil.RemoveWindowFromTaskbar(Handle);
+                                if (IntPtr.Equals(InputHandle, IntPtr.Zero) || IntPtr.Equals(Handle, IntPtr.Zero))
+                                {
+                                    throw new Exception("Browser input/window handle NULL.");
+                                }
+
+                                // We are doing this player side.
+                                // WindowUtil.RemoveWindowFromTaskbar(Handle);
+                            }
+                            catch (Exception ie)
+                            {
+                                error = ie;
+                            }
+                            finally
+                            {
+                                isInitialized = true;
+                                tcsProcessWait.TrySetResult(error);
+                            }
                         }
-                        catch (Exception ie)
+                        break;
+                    case MessageType.msg_wploaded:
+                        if (!IsLoaded)
                         {
-                            error = ie;
+                            // Takes time for rendering window to spawn, CefSharp ChromeBrowser.LoadingStateChanged.
+                            _ = NativeMethods.GetWindowThreadProcessId(NativeMethods.FindWindowEx(InputHandle, IntPtr.Zero, "Intermediate D3D Window", null), out cefD3DRenderingSubProcessPid);
+                            IsLoaded = true;
+                            Loaded?.Invoke(this, EventArgs.Empty);
+
+                            // Wait before pausing or other internal fn since some pages can have transition.
+                            await Task.Delay(1000);
+                            if (!IsExited)
+                                contentReadyTcs.TrySetResult();
+                            else
+                                contentReadyTcs.TrySetException(new InvalidOperationException("Process exited."));
                         }
-                        finally
-                        {
-                            isInitialized = true;
-                            tcsProcessWait.TrySetResult(error);
-                        }
-                    }
-                    else if (obj.Type == MessageType.msg_wploaded)
-                    {
-                        //Takes time for rendering window to spawn.. this should be enough.
-                        _ = NativeMethods.GetWindowThreadProcessId(NativeMethods.FindWindowEx(InputHandle, IntPtr.Zero, "Intermediate D3D Window", null), out cefD3DRenderingSubProcessPid);
-                        IsLoaded = ((LivelyMessageWallpaperLoaded)obj).Success;
-                    }
+                        break;
                 }
             }
         }
@@ -330,6 +342,8 @@ namespace Lively.Core.Wallpapers
 
         public async Task ScreenCapture(string filePath)
         {
+            await WaitForContentReadyAsync(TimeSpan.FromSeconds(5));
+
             var tcs = new TaskCompletionSource();
             void LocalOutputDataReceived(object sender, DataReceivedEventArgs e)
             {
@@ -381,6 +395,12 @@ namespace Lively.Core.Wallpapers
         {
             // Process object is disposed in Exit event.
             Terminate();
+        }
+
+        private async Task WaitForContentReadyAsync(TimeSpan timeout)
+        {
+            using var cts = new CancellationTokenSource(timeout);
+            await contentReadyTcs.Task.WaitAsync(cts.Token);
         }
 
         /// <summary>

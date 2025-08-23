@@ -26,6 +26,7 @@ namespace Lively.Core.Wallpapers
         private BlankWindow window;
 
         public event EventHandler Exited;
+        public event EventHandler Loaded;
 
         public DwmThumbnailPlayer(IntPtr thumbnailSrc, LibraryModel model, DisplayMonitor display, Rectangle targetRect)
         {
@@ -79,6 +80,9 @@ namespace Lively.Core.Wallpapers
                     dwmThumbnail.Show();
                     dwmThumbnail.Update(new Rectangle(targetRect.Left, targetRect.Top, targetRect.Width, targetRect.Height),
                         new Rectangle(0, 0, targetRect.Width, targetRect.Height));
+
+                    IsLoaded = true;
+                    Loaded?.Invoke(this, EventArgs.Empty);
                 }
                 catch
                 {

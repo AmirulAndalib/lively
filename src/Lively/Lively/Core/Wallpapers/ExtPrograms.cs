@@ -42,6 +42,7 @@ namespace Lively.Core.Wallpapers
         private readonly int timeOut;
 
         public event EventHandler Exited;
+        public event EventHandler Loaded;
 
         /// <summary>
         /// Launch Program(.exe) Unity, godot.. as wallpaper.
@@ -162,6 +163,7 @@ namespace Lively.Core.Wallpapers
                     WindowUtil.BorderlessWinStyle(Handle);
                     WindowUtil.RemoveWindowFromTaskbar(Handle);
                 }
+                Loaded?.Invoke(this, EventArgs.Empty);
             }
             catch (Exception)
             {

@@ -100,7 +100,6 @@ namespace Lively.RPC
                 wallpaper = wallpaperFactory.CreateWallpaper(model,
                     displayManager.PrimaryDisplayMonitor,
                     WallpaperArrangement.per,
-                    userSettings,
                     isWindowed: true);
 
                 // Closing since absolute location can be changed to relative.
@@ -165,7 +164,6 @@ namespace Lively.RPC
                 wallpaper = wallpaperFactory.CreateWallpaper(model,
                     displayManager.PrimaryDisplayMonitor,
                     WallpaperArrangement.per,
-                    userSettings,
                     isWindowed: true);
 
                 // Closing since absolute location can be changed to relative.

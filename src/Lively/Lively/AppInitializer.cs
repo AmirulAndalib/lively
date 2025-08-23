@@ -59,6 +59,7 @@ namespace Lively
             Directory.CreateDirectory(Constants.CommonPaths.ThemeCacheDir);
             Directory.CreateDirectory(Constants.CommonPaths.TempWebView2Dir);
             Directory.CreateDirectory(Constants.CommonPaths.ScreenshotDir);
+            Directory.CreateDirectory(Constants.CommonPaths.CefRootCacheDir);
         }
 
         private void SetupWallpaperDirectories()

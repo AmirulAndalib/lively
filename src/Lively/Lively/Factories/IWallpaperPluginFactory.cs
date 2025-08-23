@@ -12,7 +12,6 @@ namespace Lively.Factories
         IWallpaper CreateWallpaper(LibraryModel model,
             DisplayMonitor display,
             WallpaperArrangement arrangement,
-            IUserSettingsService userSettings,
             bool isWindowed = false);
         IWallpaper CreateDwmThumbnailWallpaper(
             LibraryModel model,

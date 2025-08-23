@@ -50,6 +50,7 @@ namespace Lively.Core.Wallpapers
         private int? exitCode;
 
         public event EventHandler Exited;
+        public event EventHandler Loaded;
 
         public string LivelyPropertyCopyPath { get; }
 
@@ -333,7 +334,9 @@ namespace Lively.Core.Wallpapers
                 //Wait a bit for properties to apply.
                 //Todo: check ipc mgs and do this properly.
                 await Task.Delay(69);
+
                 IsLoaded = true;
+                Loaded?.Invoke(this, EventArgs.Empty);
             }
             catch (Exception)
             {

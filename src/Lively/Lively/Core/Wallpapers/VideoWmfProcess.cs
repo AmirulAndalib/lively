@@ -24,6 +24,7 @@ namespace Lively.Core.Wallpapers
         private readonly int uniqueId;
 
         public event EventHandler Exited;
+        public event EventHandler Loaded;
 
         public bool IsLoaded { get; private set; } = false;
 
@@ -165,6 +166,7 @@ namespace Lively.Core.Wallpapers
                     else if (obj.Type == MessageType.msg_wploaded)
                     {
                         IsLoaded = ((LivelyMessageWallpaperLoaded)obj).Success;
+                        Loaded?.Invoke(this, EventArgs.Empty);
                     }
                 }
             }
