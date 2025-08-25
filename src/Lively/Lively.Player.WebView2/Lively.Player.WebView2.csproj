@@ -127,7 +127,7 @@
       <Version>2.9.1</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Web.WebView2">
-      <Version>1.0.3351.48</Version>
+      <Version>1.0.3405.78</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
