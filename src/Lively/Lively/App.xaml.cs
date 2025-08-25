@@ -2,11 +2,9 @@
 using GrpcDotNetNamedPipes;
 using Lively.Commandline;
 using Lively.Common;
-using Lively.Common.Extensions;
 using Lively.Common.Factories;
 using Lively.Common.Helpers;
-using Lively.Common.Helpers.Archive;
-using Lively.Common.Helpers.Files;
+using Lively.Common.Helpers.Pinvoke;
 using Lively.Common.Services;
 using Lively.Core;
 using Lively.Core.Display;
@@ -18,20 +16,15 @@ using Lively.Grpc.Common.Proto.Desktop;
 using Lively.Grpc.Common.Proto.Display;
 using Lively.Grpc.Common.Proto.Update;
 using Lively.Helpers;
-using Lively.Models;
 using Lively.Models.Enums;
 using Lively.Models.Services;
 using Lively.RPC;
 using Lively.Services;
 using Lively.ViewModels;
-using Lively.Views;
 using Lively.Views.WindowMsg;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -137,7 +130,31 @@ namespace Lively
                 QuitApp();
                 return;
             }
-            
+
+            Services.GetRequiredService<WndProcMsgWindow>().WindowMessageReceived += (s, args) =>
+            {
+                if (args.Message == (uint)NativeMethods.WM.ENDSESSION)
+                {
+                    QuitApp();
+                }
+                else if (args.Message == (uint)NativeMethods.WM.QUERYENDSESSION)
+                {
+                    // ENDSESSION_CLOSEAPP
+                    if (args.LParam != IntPtr.Zero && args.LParam == (IntPtr)0x00000001)
+                    {
+                        ReleaseMutex();
+                        //The app is being queried if it can close for an update.
+                        _ = NativeMethods.RegisterApplicationRestart(
+                            null,
+                            (int)NativeMethods.RestartFlags.RESTART_NO_CRASH |
+                            (int)NativeMethods.RestartFlags.RESTART_NO_HANG |
+                            (int)NativeMethods.RestartFlags.RESTART_NO_REBOOT);
+
+                        args.Result = (IntPtr)1;
+                    }
+                }
+            };
+
             // System notification.
             Services.GetRequiredService<IDesktopCore>().WallpaperError += (s, e) =>
             {
@@ -176,8 +193,8 @@ namespace Lively
             };
 
             //Ref: https://github.com/Kinnara/ModernWpf/blob/master/ModernWpf/Helpers/ColorsHelper.cs
-            SystemEvents.UserPreferenceChanged += (s, e) => {
-                if (e.Category == UserPreferenceCategory.General)
+            Microsoft.Win32.SystemEvents.UserPreferenceChanged += (s, e) => {
+                if (e.Category == Microsoft.Win32.UserPreferenceCategory.General)
                 {
                     if (userSettings.Settings.ApplicationTheme == Models.Enums.AppTheme.Auto)
                     {

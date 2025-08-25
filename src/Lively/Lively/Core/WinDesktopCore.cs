@@ -8,11 +8,13 @@ using Lively.Common.Helpers.Pinvoke;
 using Lively.Common.Helpers.Shell;
 using Lively.Common.Services;
 using Lively.Core.Display;
+using Lively.Core.Suspend;
 using Lively.Core.Watchdog;
 using Lively.Factories;
 using Lively.Models;
 using Lively.Models.Enums;
 using Lively.Models.Message;
+using Lively.Views.WindowMsg;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -33,11 +35,14 @@ namespace Lively.Core
         private readonly SemaphoreSlim semaphoreSlimWallpaperLoadingLock = new(1, 1);
         private readonly List<IWallpaper> wallpapers = new(2);
         public ReadOnlyCollection<IWallpaper> Wallpapers => wallpapers.AsReadOnly();
-        private IntPtr workerW, progman, shellDLL_DefView;
+        private IntPtr workerW, progman, shellDLL_DefView, original_WorkerW;
         public IntPtr DesktopWorkerW => workerW;
         private bool disposedValue;
         private bool isRaisedDesktopWithLayeredShellView;
         private readonly List<WallpaperLayoutModel> wallpapersDisconnected = [];
+
+        private int prevExplorerPid = GetTaskbarExplorerPid();
+        private DateTime prevExplorerCrashTime = DateTime.MinValue;
 
         public event EventHandler<Exception> WallpaperError;
         public event EventHandler WallpaperChanged;
@@ -48,13 +53,19 @@ namespace Lively.Core
         private readonly IWallpaperLibraryFactory wallpaperLibraryFactory;
         private readonly ITransparentTbService ttbService;
         private readonly IWatchdogService watchdog;
+        private readonly IPlayback playback;
+        private readonly RawInputMsgWindow rawInput;
+        private readonly WndProcMsgWindow WndProc;
         private readonly IDisplayManager displayManager;
         private readonly WindowEventHook workerWHook;
 
         public WinDesktopCore(IUserSettingsService userSettings,
             IDisplayManager displayManager,
             ITransparentTbService ttbService,
+            IPlayback playback,
             IWatchdogService watchdog,
+            RawInputMsgWindow rawInput,
+            WndProcMsgWindow wndProc,
             IWallpaperPluginFactory wallpaperFactory,
             IWallpaperLibraryFactory wallpaperLibraryFactory)
         {
@@ -62,6 +73,9 @@ namespace Lively.Core
             this.displayManager = displayManager;
             this.ttbService = ttbService;
             this.watchdog = watchdog;
+            this.playback = playback;
+            this.rawInput = rawInput;
+            this.WndProc = wndProc;
             this.wallpaperFactory = wallpaperFactory;
             this.wallpaperLibraryFactory = wallpaperLibraryFactory;
 
@@ -71,28 +85,15 @@ namespace Lively.Core
             if (SystemParameters.HighContrast)
                 Logger.Warn("Highcontrast mode detected, some functionalities may not work properly.");
 
+            SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
             this.displayManager.DisplayUpdated += DisplaySettingsChanged_Hwnd;
-            WallpaperChanged += SetupDesktop_WallpaperChanged;
-
-            SystemEvents.SessionSwitch += async(s, e) => {
-                if (e.Reason == SessionSwitchReason.SessionUnlock)
-                {
-                    //Issue: https://github.com/rocksdanister/lively/issues/802
-                    if (!(DesktopWorkerW == IntPtr.Zero || NativeMethods.IsWindow(DesktopWorkerW)))
-                    {
-                        Logger.Info("WorkerW invalid after unlock, resetting..");
-                        await ResetWallpaperAsync();
-                    }
-                    else
-                    {
-                        if (Wallpapers.Any(x => x.IsExited))
-                        {
-                            Logger.Info("Wallpaper crashed after unlock, resetting..");
-                            await ResetWallpaperAsync();
-                        }
-                    }
-                }
-            };
+            this.WndProc.TaskbarCreated += WndProc_TaskbarCreated;
+            this.WallpaperChanged += SetupDesktop_WallpaperChanged;
+            this.playback.WallpaperControlChanged += Playback_WallpaperControlChanged;
+            this.rawInput.MouseMoveRaw += RawInput_MouseMoveRaw;
+            this.rawInput.MouseDownRaw += RawInput_MouseDownRaw;
+            this.rawInput.MouseUpRaw += RawInput_MouseUpRaw;
+            this.rawInput.KeyboardClickRaw += RawInput_KeyboardClickRaw;
 
             // Initialize desktop and update handles.
             SetupDesktopLayer();
@@ -212,6 +213,9 @@ namespace Lively.Core
                 // WorkerW is assumed as progman here.
                 workerW = progman;
             }
+
+            // For checking if desktop foreground.
+            original_WorkerW = DesktopUtil.GetDesktopWorkerW();
 
             Logger.Info($"WorkerW initialized {workerW}");
             WallpaperReset?.Invoke(this, EventArgs.Empty);
@@ -652,11 +656,14 @@ namespace Lively.Core
             await semaphoreSlimWallpaperLoadingLock.WaitAsync();
             try
             {
-                Logger.Info("Display settings changed, screen(s):");
-                displayManager.DisplayMonitors.ToList().ForEach(x => Logger.Info(x.DeviceName + " " + x.Bounds));
-                RefreshWallpaper();
-                RestoreDisconnectedWallpapers();
-                EnsureWorkerWZOrder();
+                using (playback.DeferPlayback())
+                {
+                    Logger.Info("Display settings changed, screen(s):");
+                    displayManager.DisplayMonitors.ToList().ForEach(x => Logger.Info(x.DeviceName + " " + x.Bounds));
+                    RefreshWallpaper();
+                    RestoreDisconnectedWallpapers();
+                    EnsureWorkerWZOrder();
+                }
             }
             finally
             {
@@ -924,9 +931,7 @@ namespace Lively.Core
                 wallpapers.RemoveAll(x => tmp.Contains(x));
 
                 if (fireEvent)
-                {
                     WallpaperChanged?.Invoke(this, EventArgs.Empty);
-                }
             }
         }
 
@@ -970,9 +975,7 @@ namespace Lively.Core
                 wallpapers.RemoveAll(x => tmp.Contains(x));
 
                 if (fireEvent)
-                {
                     WallpaperChanged?.Invoke(this, EventArgs.Empty);
-                }
             }
         }
 
@@ -981,9 +984,7 @@ namespace Lively.Core
             wallpapers.ForEach(x =>
             {
                 if (x.Model.LivelyInfoFolderPath == info_path)
-                {
                     x.SendMessage(msg);
-                }
             });
         }
 
@@ -993,26 +994,6 @@ namespace Lively.Core
             {
                 if (x.Screen.Equals(display) && info_path == x.Model.LivelyInfoFolderPath)
                     x.SendMessage(msg);
-            });
-        }
-
-        public void SeekWallpaper(LibraryModel wp, float seek, PlaybackPosType type)
-        {
-            wallpapers.ForEach(x =>
-            {
-                if (x.Model == wp)
-                {
-                    x.SetPlaybackPos(seek, type);
-                }
-            });
-        }
-
-        public void SeekWallpaper(DisplayMonitor display, float seek, PlaybackPosType type)
-        {
-            wallpapers.ForEach(x =>
-            {
-                if (x.Screen.Equals(display))
-                    x.SetPlaybackPos(seek, type);
             });
         }
 
@@ -1089,6 +1070,212 @@ namespace Lively.Core
                     0,
                     windowFlags);
             }
+        }
+
+        private async void WndProc_TaskbarCreated(object sender, EventArgs e)
+        {
+            Logger.Info("WM_TASKBARCREATED: New taskbar created.");
+            int newExplorerPid = GetTaskbarExplorerPid();
+            if (prevExplorerPid != newExplorerPid)
+            {
+                // Detect explorer crash because otherwise dpi change also sends WM_TASKBARCREATED.
+                Logger.Info($"Explorer crashed, pid mismatch: {prevExplorerPid} != {newExplorerPid}");
+                if ((DateTime.Now - prevExplorerCrashTime).TotalSeconds > userSettings.Settings.TaskbarCrashTimeOutDelay)
+                {
+                    await ResetWallpaperAsync();
+                }
+                else
+                {
+                    Logger.Warn("Explorer restarted multiple times in the last 30s.");
+                    _ = Task.Run(() => MessageBox.Show(Properties.Resources.DescExplorerCrash,
+                            $"{Properties.Resources.TitleAppName} - {Properties.Resources.TextError}",
+                            MessageBoxButton.OK, MessageBoxImage.Error));
+                    CloseAllWallpapers();
+                    await ResetWallpaperAsync();
+                }
+                prevExplorerCrashTime = DateTime.Now;
+                prevExplorerPid = newExplorerPid;
+            }
+
+        }
+
+        private async void SystemEvents_SessionSwitch(object sender, SessionSwitchEventArgs e)
+        {
+            if (e.Reason == SessionSwitchReason.SessionUnlock)
+            {
+                //Issue: https://github.com/rocksdanister/lively/issues/802
+                if (!(DesktopWorkerW == IntPtr.Zero || NativeMethods.IsWindow(DesktopWorkerW)))
+                {
+                    Logger.Info("WorkerW invalid after unlock, resetting..");
+                    await ResetWallpaperAsync();
+                }
+                else
+                {
+                    await Task.Delay(500);
+                    if (Wallpapers.Any(x => x.IsExited))
+                    {
+                        Logger.Info("Wallpaper crashed after unlock, resetting..");
+                        await ResetWallpaperAsync();
+                    }
+                }
+            }
+        }
+
+        private void RawInput_MouseMoveRaw(object sender, MouseRawArgs e)
+        {
+            // Don't forward when not on desktop unless configured.
+            if (userSettings.Settings.InputForward == InputForwardMode.off || !IsDesktop() && !userSettings.Settings.MouseInputMovAlways)
+                return;
+
+            try
+            {
+                ForwardMouseToWallpapers(e.X, e.Y, InputUtil.MouseMove);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+            }
+        }
+
+        private void RawInput_MouseDownRaw(object sender, MouseClickRawArgs e)
+        {
+            if (userSettings.Settings.InputForward == InputForwardMode.off || !IsDesktop())
+                return;
+
+            try
+            {
+                switch (e.Button)
+                {
+                    case RawInputMouseBtn.left:
+                        if (!InputUtil.IsMouseButtonsSwapped)
+                            ForwardMouseToWallpapers(e.X, e.Y, InputUtil.MouseLeftButtonDown);
+                        break;
+                    case RawInputMouseBtn.right:
+                        if (InputUtil.IsMouseButtonsSwapped)
+                            ForwardMouseToWallpapers(e.X, e.Y, InputUtil.MouseLeftButtonDown);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+            }
+        }
+
+        private void RawInput_MouseUpRaw(object sender, MouseClickRawArgs e)
+        {
+            if (userSettings.Settings.InputForward == InputForwardMode.off || !IsDesktop())
+                return;
+
+            try
+            {
+                switch (e.Button)
+                {
+                    case RawInputMouseBtn.left:
+                        if (!InputUtil.IsMouseButtonsSwapped)
+                            ForwardMouseToWallpapers(e.X, e.Y, InputUtil.MouseLeftButtonUp);
+                        break;
+                    case RawInputMouseBtn.right:
+                        if (InputUtil.IsMouseButtonsSwapped)
+                            ForwardMouseToWallpapers(e.X, e.Y, InputUtil.MouseLeftButtonUp);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+            }
+        }
+
+        private void RawInput_KeyboardClickRaw(object sender, KeyboardClickRawArgs e)
+        {
+            try
+            {
+                // Don't forward when not on desktop.
+                if (userSettings.Settings.InputForward != InputForwardMode.mousekeyboard || !IsDesktop())
+                    return;
+
+                // Detect active wallpaper based on cursor.
+                if (!NativeMethods.GetCursorPos(out NativeMethods.POINT P))
+                    return;
+
+                var display = displayManager.GetDisplayMonitorFromPoint(new System.Drawing.Point(P.X, P.Y));
+                foreach (var wallpaper in Wallpapers)
+                {
+                    if (wallpaper.Category.IsDeviceInputAllowed() &&
+                        (display.Equals(wallpaper.Screen) || userSettings.Settings.WallpaperArrangement == WallpaperArrangement.span))
+                    {
+                        InputUtil.ForwardMessageKeyboard(wallpaper.InputHandle, e.WindowMessage, e.VirtualKey, e.ScanCode, e.IsKeyDown);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+            }
+        }
+
+        private void ForwardMouseToWallpapers(int x, int y, Action<IntPtr, int, int> forwardAction)
+        {
+            var display = displayManager.GetDisplayMonitorFromPoint(new System.Drawing.Point(x, y));
+            var pos = userSettings.Settings.WallpaperArrangement switch
+            {
+                WallpaperArrangement.per => InputUtil.ToMouseDisplayLocal(x, y, display.Bounds),
+                WallpaperArrangement.span => InputUtil.ToMouseSpanLocal(x, y, displayManager.VirtualScreenBounds),
+                WallpaperArrangement.duplicate => InputUtil.ToMouseDisplayLocal(x, y, display.Bounds),
+                _ => InputUtil.ToMouseDisplayLocal(x, y, display.Bounds),
+            };
+
+            foreach (var wallpaper in Wallpapers)
+            {
+                if (wallpaper.Category.IsDeviceInputAllowed() &&
+                    (wallpaper.Screen.Equals(display) || userSettings.Settings.WallpaperArrangement == WallpaperArrangement.span))
+                {
+                    forwardAction(wallpaper.InputHandle, pos.X, pos.Y);
+                }
+            }
+        }
+
+        private void Playback_WallpaperControlChanged(object sender, WallpaperControlEventArgs e)
+        {
+            try
+            {
+                foreach (var wallpaper in Wallpapers)
+                {
+                    // Skip if targeting specific display and this isn't it
+                    if (e.Display != null && !wallpaper.Screen.Equals(e.Display))
+                        continue;
+
+                    switch (e.Action)
+                    {
+                        case WallpaperControlAction.Pause:
+                            wallpaper.Pause();
+                            break;
+                        case WallpaperControlAction.Play:
+                            wallpaper.Play();
+                            break;
+                        case WallpaperControlAction.SetVolume:
+                            wallpaper.SetVolume(e.Volume ?? 0);
+                            break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+            }
+        }
+
+        private bool IsDesktop()
+        {
+            IntPtr hWnd = NativeMethods.GetForegroundWindow();
+            return (IntPtr.Equals(hWnd, original_WorkerW) || IntPtr.Equals(hWnd, progman));
+        }
+
+        private static int GetTaskbarExplorerPid()
+        {
+            _ = NativeMethods.GetWindowThreadProcessId(NativeMethods.FindWindow("Shell_TrayWnd", null), out int pid);
+            return pid;
         }
 
         private static bool IsWindows7 => 

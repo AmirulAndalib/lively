@@ -5,10 +5,10 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Lively.Core.Suspend
+namespace Lively.Common.Helpers
 {
     //credit: https://stackoverflow.com/questions/14306048/controlling-volume-mixer
-    public class VolumeMixer
+    public class VolumeMixerUtil
     {
         public static float? GetApplicationVolume(int pid)
         {
@@ -59,7 +59,7 @@ namespace Lively.Core.Suspend
         private static ISimpleAudioVolume GetVolumeObject(int pid)
         {
             // get the speakers (1st render + multimedia) device
-            IMMDeviceEnumerator deviceEnumerator = (IMMDeviceEnumerator)(new MMDeviceEnumerator());
+            IMMDeviceEnumerator deviceEnumerator = (IMMDeviceEnumerator)new MMDeviceEnumerator();
             IMMDevice speakers;
             deviceEnumerator.GetDefaultAudioEndpoint(EDataFlow.eRender, ERole.eMultimedia, out speakers);
 

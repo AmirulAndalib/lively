@@ -6,6 +6,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Lively.Common.Helpers.Pinvoke;
 using Lively.Models;
+using Lively.Views.WindowMsg;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -48,25 +49,29 @@ namespace Lively.Core.Display
         public DisplayMonitor PrimaryDisplayMonitor => DisplayMonitors
             .FirstOrDefault(x => x.IsPrimary);
 
-        public DisplayManager()
+        private readonly WndProcMsgWindow wndProc;
+
+        public DisplayManager(WndProcMsgWindow wndProc)
         {
+            this.wndProc = wndProc;
+            this.wndProc.WindowMessageReceived += WndProc_WindowMessageReceived;
+
             RefreshDisplayMonitorList();
+        }
+
+        private void WndProc_WindowMessageReceived(object sender, WindowMessageEventArgs args)
+        {
+            if (args.Message == (uint)NativeMethods.WM.DISPLAYCHANGE)
+            //|| (msg == (uint)NativeMethods.WM.SETTINGCHANGE && wParam == ((IntPtr)NativeMethods.SPI.SPI_SETWORKAREA)))
+            {
+                RefreshDisplayMonitorList();
+            }
         }
 
         public uint OnHwndCreated(IntPtr hWnd, out bool register)
         {
             register = false;
             return 0;
-        }
-
-        public IntPtr OnWndProc(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam)
-        {
-            if (msg == (uint)NativeMethods.WM.DISPLAYCHANGE)
-            //|| (msg == (uint)NativeMethods.WM.SETTINGCHANGE && wParam == ((IntPtr)NativeMethods.SPI.SPI_SETWORKAREA)))
-            {
-                RefreshDisplayMonitorList();
-            }
-            return IntPtr.Zero;
         }
 
         public DisplayMonitor GetDisplayMonitorFromHWnd(IntPtr hWnd)

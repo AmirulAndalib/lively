@@ -17,38 +17,36 @@ namespace Lively.Core.Suspend
     /// <summary>
     /// System monitor logic to pause/unpause wallpaper playback.
     /// </summary>
-    public class Playback : IPlayback
+    public partial class Playback : IPlayback
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
-        private PlaybackState _wallpaperPlayback;
-        public PlaybackState WallpaperPlayback
+        private PlaybackPolicy _wallpaperPlayback;
+        public PlaybackPolicy WallpaperPlaybackPolicy
         {
             get => _wallpaperPlayback;
             set
             {
                 _wallpaperPlayback = value;
-                PlaybackStateChanged?.Invoke(this, _wallpaperPlayback);
+                PlaybackPolicyChanged?.Invoke(this, _wallpaperPlayback);
             }
         }
 
-        public event EventHandler<PlaybackState> PlaybackStateChanged;
+        public event EventHandler<PlaybackPolicy> PlaybackPolicyChanged;
+        public event EventHandler<WallpaperControlEventArgs> WallpaperControlChanged;
 
         private readonly DispatcherTimer dispatcherTimer;
         private bool isLockScreen, isRemoteSession;
         private bool disposedValue;
 
         private readonly IUserSettingsService userSettings;
-        private readonly IDesktopCore desktopCore;
         private readonly IDisplayManager displayManager;
         private readonly IScreensaverService screenSaver;
 
         public Playback(IUserSettingsService userSettings,
-            IDesktopCore desktopCore,
             IDisplayManager displayManager,
             IScreensaverService screenSaver)
         {
             this.userSettings = userSettings;
-            this.desktopCore = desktopCore;
             this.displayManager = displayManager;
             this.screenSaver = screenSaver;
 
@@ -58,7 +56,7 @@ namespace Lively.Core.Suspend
             dispatcherTimer = new();
             dispatcherTimer.Tick += new EventHandler(Timer_Tick);
             dispatcherTimer.Interval = new TimeSpan(0, 0, 0, 0, userSettings.Settings.ProcessTimerInterval);
-            WallpaperPlayback = PlaybackState.play;
+            WallpaperPlaybackPolicy = PlaybackPolicy.automatic;
             isLockScreen = IsSystemLocked();
             if (isLockScreen)
                 Logger.Info("Lockscreen Session already started!");
@@ -112,6 +110,11 @@ namespace Lively.Core.Suspend
         public void Stop()
         {
             dispatcherTimer.Stop();
+        }
+
+        public IDisposable DeferPlayback()
+        {
+            return new PlaybackDeferrer(this);
         }
 
         private void Timer_Tick(object sender, EventArgs e)
@@ -315,60 +318,32 @@ namespace Lively.Core.Suspend
 
         private void PauseWallpapers()
         {
-            foreach (var x in desktopCore.Wallpapers)
-                x.Pause();
+            WallpaperControlChanged?.Invoke(this, new WallpaperControlEventArgs(WallpaperControlAction.Pause));
         }
 
         private void PlayWallpapers()
         {
-            foreach (var x in desktopCore.Wallpapers)
-            {
-                x.Play();
-            }
+            WallpaperControlChanged?.Invoke(this, new WallpaperControlEventArgs(WallpaperControlAction.Play));
         }
 
         private void PauseWallpaper(DisplayMonitor display)
         {
-            foreach (var x in desktopCore.Wallpapers)
-            {
-                if (x.Screen.Equals(display))
-                {
-                    x.Pause();
-                    break;
-                }
-            }
+            WallpaperControlChanged?.Invoke(this, new WallpaperControlEventArgs(WallpaperControlAction.Pause, display));
         }
 
         private void PlayWallpaper(DisplayMonitor display)
         {
-            foreach (var x in desktopCore.Wallpapers)
-            {
-                if (x.Screen.Equals(display))
-                {
-                    x.Play();
-                    break;
-                }
-            }
+            WallpaperControlChanged?.Invoke(this, new WallpaperControlEventArgs(WallpaperControlAction.Play, display));
         }
 
         private void SetWallpaperVolume(int volume)
         {
-            foreach (var x in desktopCore.Wallpapers)
-            {
-                x.SetVolume(volume);
-            }
+            WallpaperControlChanged?.Invoke(this, new WallpaperControlEventArgs(WallpaperControlAction.SetVolume, null, volume));
         }
 
         private void SetWallpaperVolume(int volume, DisplayMonitor display)
         {
-            foreach (var x in desktopCore.Wallpapers)
-            {
-                if (x.Screen.Equals(display))
-                {
-                    x.SetVolume(volume);
-                    break;
-                }
-            }
+            WallpaperControlChanged?.Invoke(this, new WallpaperControlEventArgs(WallpaperControlAction.SetVolume, display, volume));
         }
 
         private bool IsPauseDueToSystemState()
@@ -378,7 +353,7 @@ namespace Lively.Core.Suspend
                 // Pause running wallpaper if screensaver is using a separate instance of wallpaper.
                 return screenSaver.Mode == ScreensaverApplyMode.process;
             }
-            else if (WallpaperPlayback == PlaybackState.paused || isLockScreen ||
+            else if (WallpaperPlaybackPolicy == PlaybackPolicy.alwaysPaused || isLockScreen ||
                 (isRemoteSession && userSettings.Settings.RemoteDesktopPause == AppRules.pause))
             {
                 return true;
@@ -394,11 +369,6 @@ namespace Lively.Core.Suspend
                 return true;
             }
             return false;
-        }
-
-        private bool IsWallpaperPlugin(int pid)
-        {
-            return desktopCore.Wallpapers.Any(x => x.Pid != null && x.Pid == pid);
         }
 
         private bool IsExcludedApp(IntPtr hwnd)

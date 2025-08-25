@@ -30,5 +30,25 @@ namespace Lively.Common.Extensions
         /// </summary>
         public static bool IsDirectoryProject(this WallpaperType type) =>
             IsApplicationWallpaper(type) || IsLocalWebWallpaper(type);
+
+        public static bool IsDeviceInputAllowed(this WallpaperType type)
+        {
+            return type switch
+            {
+                WallpaperType.app => true,
+                WallpaperType.web => true,
+                WallpaperType.webaudio => true,
+                WallpaperType.url => true,
+                WallpaperType.bizhawk => true,
+                WallpaperType.unity => true,
+                WallpaperType.godot => true,
+                WallpaperType.video => false,
+                WallpaperType.gif => false,
+                WallpaperType.unityaudio => true,
+                WallpaperType.videostream => false,
+                WallpaperType.picture => false,
+                _ => false,
+            };
+        }
     }
 }

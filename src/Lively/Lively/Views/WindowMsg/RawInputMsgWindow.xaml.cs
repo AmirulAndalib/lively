@@ -1,56 +1,30 @@
 ﻿using Linearstar.Windows.RawInput;
 using Lively.Common.Helpers.Pinvoke;
-using Lively.Common.Helpers.Shell;
-using Lively.Common.Services;
-using Lively.Core;
-using Lively.Core.Display;
-using Lively.Models;
 using Lively.Models.Enums;
 using System;
 using System.Windows;
 using System.Windows.Interop;
-using Point = System.Drawing.Point;
 
 namespace Lively.Views.WindowMsg
 {
     /// <summary>
-    /// Mouseinput retrival and forwarding to wallpaper using DirectX RawInput.
-    /// ref: https://docs.microsoft.com/en-us/windows/win32/inputdev/raw-input
+    /// DirectX rawinput hook.
+    /// Ref: https://docs.microsoft.com/en-us/windows/win32/inputdev/raw-input
     /// </summary>
     public partial class RawInputMsgWindow : Window
     {
-        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
-        private IntPtr progmanHwnd, desktopHwnd;
         public InputForwardMode InputMode { get; private set; }
         //public events
         public event EventHandler<MouseRawArgs> MouseMoveRaw;
         public event EventHandler<MouseClickRawArgs> MouseDownRaw;
         public event EventHandler<MouseClickRawArgs> MouseUpRaw;
         public event EventHandler<KeyboardClickRawArgs> KeyboardClickRaw;
-        //public event EventHandler<KeyboardClickRawArgs> KeyboardUpRaw;
 
-        private readonly IUserSettingsService userSettings;
-        private readonly IDesktopCore desktopCore;
-        private readonly IDisplayManager displayManager;
-        private readonly bool isMouseButtonsSwapped;
-
-        public RawInputMsgWindow(IUserSettingsService userSettings, IDesktopCore desktopCore, IDisplayManager displayManager)
+        public RawInputMsgWindow()
         {
             InitializeComponent();
-            this.userSettings = userSettings;
-            this.desktopCore = desktopCore;
-            this.displayManager = displayManager;
 
-            this.isMouseButtonsSwapped = IsMouseButtonsSwapped();
             this.InputMode = InputForwardMode.mousekeyboard;
-            UpdateDesktopHandles();
-            desktopCore.WallpaperReset += (s, e) => UpdateDesktopHandles();
-        }
-
-        private void UpdateDesktopHandles()
-        {
-            progmanHwnd = DesktopUtil.GetProgman();
-            desktopHwnd = DesktopUtil.GetDesktopWorkerW();
         }
 
         private void Window_SourceInitialized(object sender, EventArgs e)
@@ -123,42 +97,26 @@ namespace Lively.Views.WindowMsg
                         {
                             case Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.LeftButtonDown:
                                 {
-                                    if (!isMouseButtonsSwapped)
-                                        ForwardMessageMouse(P.X, P.Y, (int)NativeMethods.WM.LBUTTONDOWN, (IntPtr)0x0001);
-  
                                     MouseDownRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.left));
                                 }
                                 break;
                             case Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.LeftButtonUp:
                                 {
-                                    if (!isMouseButtonsSwapped)
-                                        ForwardMessageMouse(P.X, P.Y, (int)NativeMethods.WM.LBUTTONUP, (IntPtr)0x0001);
-
                                     MouseUpRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.left));
                                 }
                                 break;
                             case Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.RightButtonDown:
                                 {
-                                    // Note: Right click is being skipped since it conflicts with desktop contextmenu.
-                                    // ForwardMessageMouse(P.X, P.Y, (int)NativeMethods.WM.RBUTTONDOWN, (IntPtr)0x0002)
-
-                                    if (isMouseButtonsSwapped)
-                                        ForwardMessageMouse(P.X, P.Y, (int)NativeMethods.WM.LBUTTONDOWN, (IntPtr)0x0001);
-
                                     MouseDownRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.right));
                                 }
                                 break;
                             case Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.RightButtonUp:
                                 {
-                                    if (isMouseButtonsSwapped)
-                                        ForwardMessageMouse(P.X, P.Y, (int)NativeMethods.WM.LBUTTONUP, (IntPtr)0x0001);
-
                                     MouseUpRaw?.Invoke(this, new MouseClickRawArgs(P.X, P.Y, RawInputMouseBtn.right));
                                 }
                                 break;
                             case Linearstar.Windows.RawInput.Native.RawMouseButtonFlags.None:
                                 {
-                                    ForwardMessageMouse(P.X, P.Y, (int)NativeMethods.WM.MOUSEMOVE, (IntPtr)0x0020);
                                     MouseMoveRaw?.Invoke(this, new MouseRawArgs(P.X, P.Y));
                                 }
                                 break;
@@ -194,169 +152,17 @@ namespace Lively.Views.WindowMsg
                         }
                         break;
                     case RawInputKeyboardData keyboard:
-                        ForwardMessageKeyboard((int)keyboard.Keyboard.WindowMessage, 
-                            (IntPtr)keyboard.Keyboard.VirutalKey, keyboard.Keyboard.ScanCode,
-                            (keyboard.Keyboard.Flags != Linearstar.Windows.RawInput.Native.RawKeyboardFlags.Up));
-                        KeyboardClickRaw?.Invoke(this, new KeyboardClickRawArgs());
+                        {
+                            KeyboardClickRaw?.Invoke(this,
+                                new KeyboardClickRawArgs((int)keyboard.Keyboard.WindowMessage,
+                                    (IntPtr)keyboard.Keyboard.VirutalKey,
+                                    keyboard.Keyboard.ScanCode,
+                                    (keyboard.Keyboard.Flags != Linearstar.Windows.RawInput.Native.RawKeyboardFlags.Up)));
+                        }
                         break;
                 }
             }
             return IntPtr.Zero;
-        }
-
-        /// <summary>
-        /// Forwards the keyboard message to the required wallpaper window based on given cursor location.<br/>
-        /// Skips if desktop is not focused.
-        /// </summary>
-        /// <param name="msg">key press msg.</param>
-        /// <param name="wParam">Virtual-Key code.</param>
-        /// <param name="scanCode">OEM code of the key.</param>
-        /// <param name="isPressed">Key is pressed.</param>
-        private void ForwardMessageKeyboard(int msg, IntPtr wParam, int scanCode, bool isPressed)
-        {
-            try
-            {
-                //Don't forward when not on desktop.
-                if (userSettings.Settings.InputForward == InputForwardMode.mousekeyboard && IsDesktop())
-                {
-                    //Detect active wp based on cursor pos, better way to do this?
-                    if (!NativeMethods.GetCursorPos(out NativeMethods.POINT P))
-                        return;
-
-                    var display = displayManager.GetDisplayMonitorFromPoint(new Point(P.X, P.Y));
-                    foreach (var wallpaper in desktopCore.Wallpapers)
-                    {
-                        if (IsInputAllowed(wallpaper.Category))
-                        {
-                            if (display.Equals(wallpaper.Screen) || userSettings.Settings.WallpaperArrangement == WallpaperArrangement.span)
-                            {
-                                //ref:
-                                //https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-keydown
-                                //https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-keyup
-                                uint lParam = 1u; //press
-                                lParam |= (uint)scanCode << 16; //oem code
-                                lParam |= 1u << 24; //extended key
-                                lParam |= 0u << 29; //context code; Note: Alt key combos wont't work
-                                /* Same as:
-                                 * lParam = isPressed ? (lParam |= 0u << 30) : (lParam |= 1u << 30); //prev key state
-                                 * lParam = isPressed ? (lParam |= 0u << 31) : (lParam |= 1u << 31); //transition state
-                                 */
-                                lParam = isPressed ? lParam : (lParam |= 3u << 30);
-                                NativeMethods.PostMessageW(wallpaper.InputHandle, msg, wParam, (UIntPtr)lParam);
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.Error("Keyboard Forwarding Error:" + e.Message);
-            }
-        }
-
-        /// <summary>
-        /// Forwards the mouse message to the required wallpaper window based on given cursor location.<br/>
-        /// Skips if apps are in foreground.
-        /// </summary>
-        /// <param name="x">Cursor pos x</param>
-        /// <param name="y">Cursor pos y</param>
-        /// <param name="msg">mouse message</param>
-        /// <param name="wParam">additional msg parameter</param>
-        private void ForwardMessageMouse(int x, int y, int msg, IntPtr wParam)
-        {
-            if (userSettings.Settings.InputForward == InputForwardMode.off)
-            {
-                return;
-            }
-            else if (!IsDesktop()) //Don't forward when not on desktop.
-            {
-                if (msg != (int)NativeMethods.WM.MOUSEMOVE || !userSettings.Settings.MouseInputMovAlways)
-                {
-                    return;
-                }
-            }
-
-            try
-            {
-                var display = displayManager.GetDisplayMonitorFromPoint(new System.Drawing.Point(x, y));
-                var mouse = CalculateMousePos(x, y, display, userSettings.Settings.WallpaperArrangement);
-                foreach (var wallpaper in desktopCore.Wallpapers)
-                {
-                    if (IsInputAllowed(wallpaper.Category))
-                    {
-                        if (wallpaper.Screen.Equals(display) || userSettings.Settings.WallpaperArrangement == WallpaperArrangement.span)
-                        {
-                            //The low-order word specifies the x-coordinate of the cursor, the high-order word specifies the y-coordinate of the cursor.
-                            //ref: https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-mousemove
-                            uint lParam = Convert.ToUInt32(mouse.Y);
-                            lParam <<= 16;
-                            lParam |= Convert.ToUInt32(mouse.X);
-                            NativeMethods.PostMessageW(wallpaper.InputHandle, msg, wParam, (UIntPtr)lParam);
-                        }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.Error("Mouse Forwarding Error:" + e.Message);
-            }
-        }
-
-        /// <summary>
-        /// Converts global mouse cursor position value to per display localised value.
-        /// </summary>
-        /// <param name="x">Cursor pos x</param>
-        /// <param name="y">Cursor pos y</param>
-        /// <param name="display">Target display device</param>
-        /// <returns>Localised cursor value</returns>
-        private Point CalculateMousePos(int x, int y, DisplayMonitor display, WallpaperArrangement arrangement)
-        {
-            if (displayManager.IsMultiScreen())
-            {
-                if (arrangement == WallpaperArrangement.span)
-                {
-                    var screenArea = displayManager.VirtualScreenBounds;
-                    x -= screenArea.Location.X;
-                    y -= screenArea.Location.Y;
-                }
-                else //per-display or duplicate mode.
-                {
-                    x += -1 * display.Bounds.X;
-                    y += -1 * display.Bounds.Y;
-                }
-            }
-            return new Point(x, y);
-        }
-
-        private static bool IsInputAllowed(WallpaperType category)
-        {
-            return category switch
-            {
-                WallpaperType.app => true,
-                WallpaperType.web => true,
-                WallpaperType.webaudio => true,
-                WallpaperType.url => true,
-                WallpaperType.bizhawk => true,
-                WallpaperType.unity => true,
-                WallpaperType.godot => true,
-                WallpaperType.video => false,
-                WallpaperType.gif => false,
-                WallpaperType.unityaudio => true,
-                WallpaperType.videostream => false,
-                WallpaperType.picture => false,
-                _ => false,
-            };
-        }
-
-        private bool IsDesktop()
-        {
-            IntPtr hWnd = NativeMethods.GetForegroundWindow();
-            return (IntPtr.Equals(hWnd, desktopHwnd) || IntPtr.Equals(hWnd, progmanHwnd));
-        }
-
-        private static bool IsMouseButtonsSwapped()
-        {
-            return NativeMethods.GetSystemMetrics((int)NativeMethods.SystemMetric.SM_SWAPBUTTON) != 0;
         }
     }
 
@@ -388,6 +194,32 @@ namespace Lively.Views.WindowMsg
 
     public class KeyboardClickRawArgs : EventArgs
     {
-        // TODO
+        /// <summary>
+        /// The Windows message (WM_KEYDOWN, WM_KEYUP, etc.)
+        /// </summary>
+        public int WindowMessage { get; }
+
+        /// <summary>
+        /// The virtual key code.
+        /// </summary>
+        public IntPtr VirtualKey { get; }
+
+        /// <summary>
+        /// The hardware scan code.
+        /// </summary>
+        public int ScanCode { get; }
+
+        /// <summary>
+        /// True if this is a key down, false if key up.
+        /// </summary>
+        public bool IsKeyDown { get; }
+
+        public KeyboardClickRawArgs(int windowMessage, IntPtr virtualKey, int scanCode, bool isKeyDown)
+        {
+            WindowMessage = windowMessage;
+            VirtualKey = virtualKey;
+            ScanCode = scanCode;
+            IsKeyDown = isKeyDown;
+        }
     }
 }

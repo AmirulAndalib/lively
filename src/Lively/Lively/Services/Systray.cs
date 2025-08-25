@@ -96,7 +96,7 @@ namespace Lively.Services
             var pauseTrayMenu = new ToolStripMenuItem(GetMenuItemString(TrayMenuItem.pauseWallpaper), null);
             pauseTrayMenu.Click += (s, e) =>
             {
-                playbackMonitor.WallpaperPlayback = playbackMonitor.WallpaperPlayback == PlaybackState.play ? PlaybackState.paused : PlaybackState.play;
+                playbackMonitor.WallpaperPlaybackPolicy = playbackMonitor.WallpaperPlaybackPolicy == PlaybackPolicy.automatic ? PlaybackPolicy.alwaysPaused : PlaybackPolicy.automatic;
             };
             notifyIcon.ContextMenuStrip.Items.Add(pauseTrayMenu);
             trayMenuItems[TrayMenuItem.pauseWallpaper] = pauseTrayMenu;
@@ -148,7 +148,7 @@ namespace Lively.Services
             notifyIcon.ContextMenuStrip.Items.Add(exitAppTrayMenu);
             trayMenuItems[TrayMenuItem.exitApp] = exitAppTrayMenu;
 
-            playbackMonitor.PlaybackStateChanged += Playback_PlaybackStateChanged;
+            playbackMonitor.PlaybackPolicyChanged += Playback_PlaybackStateChanged;
             desktopCore.WallpaperChanged += DesktopCore_WallpaperChanged;
             appUpdater.UpdateChecked += (s, e) => { SetUpdateMenu(e.UpdateStatus); };
             i18n.CultureChanged += I18n_CultureChanged;
@@ -237,11 +237,11 @@ namespace Lively.Services
             }
         }
 
-        private void Playback_PlaybackStateChanged(object sender, PlaybackState e)
+        private void Playback_PlaybackStateChanged(object sender, PlaybackPolicy e)
         {
             _ = System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new ThreadStart(delegate
             {
-                var isPaused = e == PlaybackState.paused;
+                var isPaused = e == PlaybackPolicy.alwaysPaused;
                 notifyIcon.Icon = isPaused ? appIconGrey : appIcon;
                 trayMenuItems[TrayMenuItem.pauseWallpaper].Checked = isPaused;
             }));

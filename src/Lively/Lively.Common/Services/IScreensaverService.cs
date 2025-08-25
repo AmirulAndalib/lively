@@ -20,10 +20,6 @@ namespace Lively.Common.Services
     public enum ScreensaverApplyMode
     {
         /// <summary>
-        /// Use the currently running wallpaper window itself.
-        /// </summary>
-        wallpaper,
-        /// <summary>
         /// Create a new running wallpaper process.<bt>
         /// This is the only mode with support for running screensaver different from wallpaper.</bt>
         /// </summary>

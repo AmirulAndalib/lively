@@ -22,8 +22,6 @@ namespace Lively.Core
         Task RestartWallpaper();
         Task RestartWallpaper(DisplayMonitor display);
         void RestoreWallpaper();
-        void SeekWallpaper(LibraryModel wp, float seek, PlaybackPosType type);
-        void SeekWallpaper(DisplayMonitor display, float seek, PlaybackPosType type);
         void SendMessageWallpaper(string info_path, IpcMessage msg);
         void SendMessageWallpaper(DisplayMonitor display, string info_path, IpcMessage msg);
         Task SetWallpaperAsync(LibraryModel wallpaper, DisplayMonitor display);

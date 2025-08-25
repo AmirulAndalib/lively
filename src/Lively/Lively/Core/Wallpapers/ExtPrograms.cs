@@ -1,6 +1,5 @@
 ﻿using Lively.Common.Extensions;
 using Lively.Common.Helpers;
-using Lively.Core.Suspend;
 using Lively.Models;
 using Lively.Models.Enums;
 using Lively.Models.Message;
@@ -197,7 +196,7 @@ namespace Lively.Core.Wallpapers
         {
             try
             {
-                VolumeMixer.SetApplicationVolume(process.Id, volume);
+                VolumeMixerUtil.SetApplicationVolume(process.Id, volume);
             }
             catch { }
         }

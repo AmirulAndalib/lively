@@ -4,7 +4,6 @@ using Lively.Common.Helpers;
 using Lively.Common.Helpers.Pinvoke;
 using Lively.Common.Helpers.Storage;
 using Lively.Common.Services;
-using Lively.Core;
 using Lively.Core.Display;
 using Lively.Extensions;
 using Lively.Models;
@@ -44,7 +43,6 @@ namespace Lively.Services
         private DateTime? startTime;
 
         private readonly IUserSettingsService userSettings;
-        private readonly IDesktopCore desktopCore;
         private readonly IDisplayManager displayManager;
         private readonly IWallpaperLibraryFactory wallpaperLibraryFactory;
         private readonly RawInputMsgWindow rawInput;
@@ -52,13 +50,11 @@ namespace Lively.Services
         public event EventHandler Stopped;
 
         public ScreensaverService(IUserSettingsService userSettings,
-            IDesktopCore desktopCore,
             RawInputMsgWindow rawInput,
             IDisplayManager displayManager,
             IWallpaperLibraryFactory wallpaperLibraryFactory)
         {
             this.userSettings = userSettings;
-            this.desktopCore = desktopCore;
             this.displayManager = displayManager;
             this.rawInput = rawInput;
             this.wallpaperLibraryFactory = wallpaperLibraryFactory;
@@ -194,9 +190,6 @@ namespace Lively.Services
         {
             switch (Mode)
             {
-                case ScreensaverApplyMode.wallpaper:
-                    ShowRunningWallpaperAsScreensaver();
-                    break;
                 case ScreensaverApplyMode.process:
                     await ShowWindowAsScreensaver();
                     break;
@@ -212,12 +205,6 @@ namespace Lively.Services
         {
             switch (Mode)
             {
-                case ScreensaverApplyMode.wallpaper:
-                    {
-                        CloseRunningWallpaperAsScreensaver();
-                        CloseBlankWindowAsScreensaver();
-                    }
-                    break;
                 case ScreensaverApplyMode.process:
                     CloseWindowAsScreensaver();
                     break;
@@ -423,66 +410,6 @@ namespace Lively.Services
         {
             blankWindows.ForEach(x => x.Close());
             blankWindows.Clear();
-        }
-
-        private void ShowRunningWallpaperAsScreensaver()
-        {
-            foreach (var item in desktopCore.Wallpapers)
-            {
-                //detach wallpaper.
-                WindowUtil.TrySetParent(item.Handle, IntPtr.Zero);
-                //show on the currently running screen, not changing size.
-                if (!NativeMethods.SetWindowPos(
-                    item.Handle,
-                    -1, //topmost
-                    userSettings.Settings.WallpaperArrangement != WallpaperArrangement.span ? item.Screen.Bounds.Left : 0,
-                    userSettings.Settings.WallpaperArrangement != WallpaperArrangement.span ? item.Screen.Bounds.Top : 0,
-                    item.Screen.Bounds.Width,
-                    item.Screen.Bounds.Height,
-                    userSettings.Settings.WallpaperArrangement != WallpaperArrangement.span ? 0x0040 : 0x0001)) //ignore WxH if span
-                {
-                    Logger.Error(LogUtil.GetWin32Error("Screensaver show fail"));
-                }
-            }
-        }
-
-        private void CloseRunningWallpaperAsScreensaver()
-        {
-            if (userSettings.Settings.WallpaperArrangement == WallpaperArrangement.span)
-            {
-                if (desktopCore.Wallpapers.Count > 0)
-                {
-                    //get spawned workerw rectangle data.
-                    NativeMethods.GetWindowRect(desktopCore.DesktopWorkerW, out NativeMethods.RECT prct);
-                    WindowUtil.TrySetParent(desktopCore.Wallpapers[0].Handle, desktopCore.DesktopWorkerW);
-                    //fill wp into the whole workerw area.
-                    if (!NativeMethods.SetWindowPos(desktopCore.Wallpapers[0].Handle, 1, 0, 0, prct.Right - prct.Left, prct.Bottom - prct.Top, 0x0010))
-                    {
-                        Logger.Error(LogUtil.GetWin32Error("Screensaver hide fail"));
-                    }
-                }
-            }
-            else
-            {
-                foreach (var item in desktopCore.Wallpapers)
-                {
-                    //update position & size incase window is moved.
-                    if (!NativeMethods.SetWindowPos(item.Handle, 1, item.Screen.Bounds.Left, item.Screen.Bounds.Top, item.Screen.Bounds.Width, item.Screen.Bounds.Height, 0x0010))
-                    {
-                        //LogUtil.LogWin32Error("Failed to hide screensaver(2)");
-                    }
-                    //re-calcuate position on desktop workerw.
-                    NativeMethods.RECT prct = new NativeMethods.RECT();
-                    NativeMethods.MapWindowPoints(item.Handle, desktopCore.DesktopWorkerW, ref prct, 2);
-                    //re-attach wallpaper to desktop.
-                    WindowUtil.TrySetParent(item.Handle, desktopCore.DesktopWorkerW);
-                    //update position & size on desktop workerw.
-                    if (!NativeMethods.SetWindowPos(item.Handle, 1, prct.Left, prct.Top, item.Screen.Bounds.Width, item.Screen.Bounds.Height, 0x0010))
-                    {
-                        //LogUtil.LogWin32Error("Failed to hide screensaver(3)");
-                    }
-                }
-            }
         }
 
         private void ShowDwmThumbnailAsScreensaver()

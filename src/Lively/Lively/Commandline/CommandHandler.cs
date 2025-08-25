@@ -106,7 +106,7 @@ namespace Lively.Commandline
 
             if (opts.Play != null)
             {
-                playbackMonitor.WallpaperPlayback = (bool)opts.Play ? PlaybackState.play : PlaybackState.paused;
+                playbackMonitor.WallpaperPlaybackPolicy = (bool)opts.Play ? PlaybackPolicy.automatic : PlaybackPolicy.alwaysPaused;
             }
 
             if (opts.Startup != null)
@@ -343,11 +343,19 @@ namespace Lively.Commandline
             switch (userSettings.Settings.WallpaperArrangement)
             {
                 case WallpaperArrangement.per:
-                    desktopCore.SeekWallpaper(screen, seek, type);
+                    foreach (var wallpaper in desktopCore.Wallpapers)
+                    {
+                        if (wallpaper.Screen.Equals(screen))
+                            wallpaper.SetPlaybackPos(seek, type);
+                    }
                     break;
                 case WallpaperArrangement.span:
                 case WallpaperArrangement.duplicate:
-                    desktopCore.SeekWallpaper(wp, seek, type);
+                    foreach (var wallpaper in desktopCore.Wallpapers)
+                    {
+                        if (wallpaper.Model == wp)
+                            wallpaper.SetPlaybackPos(seek, type);
+                    }
                     break;
             }
         }
