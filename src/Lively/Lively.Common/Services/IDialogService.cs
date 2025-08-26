@@ -21,6 +21,7 @@ namespace Lively.Common.Services
             string primaryBtnText,
             string secondaryBtnText,
             bool isDefaultPrimary = true);
+        Task<bool> ShowConfirmationDialogAsync(string message);
         Task<string> ShowTextInputDialogAsync(string title, string placeholderText);
         Task ShowThemeDialogAsync();
         Task ShowPatreonSupportersDialogAsync();

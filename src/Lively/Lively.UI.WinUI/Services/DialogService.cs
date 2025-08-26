@@ -504,5 +504,18 @@ namespace Lively.UI.WinUI.Services
             };
             return folderView.Data.Count == 1 || await dlg.ShowAsyncQueue() == ContentDialogResult.Primary;
         }
+
+        public async Task<bool> ShowConfirmationDialogAsync(string message)
+        {
+            return await new ContentDialog()
+            {
+                Title = i18n.GetString("PleaseWait/Text"),
+                Content = message,
+                PrimaryButtonText = i18n.GetString("TextYes"),
+                SecondaryButtonText = i18n.GetString("TextNo"),
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = App.Services.GetRequiredService<MainWindow>().Content.XamlRoot,
+            }.ShowAsyncQueue() == ContentDialogResult.Primary;
+        }
     }
 }

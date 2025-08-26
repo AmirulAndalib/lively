@@ -13,12 +13,10 @@ using Lively.Gallery.Client;
 using Lively.Grpc.Client;
 using Lively.Models;
 using Lively.Models.Enums;
-using Lively.UI.Shared.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.IO.Packaging;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -43,6 +41,7 @@ namespace Lively.UI.Shared.ViewModels
         private readonly IUserSettingsClient userSettings;
         private readonly IWallpaperLibraryFactory wallpaperLibraryFactory;
         private readonly IDisplayManagerClient displayManager;
+        private readonly IMediaFormatConverter mediaFormatConverter;
         private readonly IDialogService dialogService;
         private readonly IFileService fileService;
         private readonly GalleryClient galleryClient;
@@ -58,9 +57,11 @@ namespace Lively.UI.Shared.ViewModels
             IDispatcherService dispatcher,
             IResourceService i18n,
             IFileService fileService,
+            IMediaFormatConverter mediaFormatConverter,
             GalleryClient galleryClient)
         {
             this.wallpaperLibraryFactory = wallpaperLibraryFactory;
+            this.mediaFormatConverter = mediaFormatConverter;
             this.desktopCore = desktopCore;
             this.displayManager = displayManager;
             this.userSettings = userSettings;
@@ -587,6 +588,22 @@ namespace Lively.UI.Shared.ViewModels
             }
             else if (FileTypes.GetFileType(filePath) is not (WallpaperType)(-1) and var fileType)
             {
+                if (mediaFormatConverter.RequiresConversion(filePath, out var newExt))
+                {
+                    if (!await dialogService.ShowConfirmationDialogAsync($"This file format isn’t supported directly. It will be converted to {newExt} before use. " +
+                        $"Do you want to continue?"))
+                        return null;
+
+                    var fileName = Path.GetFileNameWithoutExtension(filePath) + newExt;
+                    var outPath = Path.Combine(Constants.CommonPaths.TempDir, fileName);
+
+                    if (!await mediaFormatConverter.TryConvertAsync(filePath, outPath))
+                        return null;
+
+                    filePath = outPath;
+                    fileType = FileTypes.GetFileType(filePath);
+                }
+
                 var arguments = fileType.IsApplicationWallpaper() ? 
                     await dialogService.ShowTextInputDialogAsync(i18n.GetString("TextWallpaperCommandlineArgs"), "Examples: --myarguments1 -myargument2") : 
                     string.Empty;
@@ -604,20 +621,6 @@ namespace Lively.UI.Shared.ViewModels
                 return model;
             }
             throw new InvalidOperationException($"{i18n.GetString("TextUnsupportedFile")} ({Path.GetExtension(filePath)})");
-        }
-
-        public async Task<LibraryModel> AddWallpaperLink(Uri uri, bool autoSetWallpaper) => await AddWallpaperLink(uri.OriginalString, autoSetWallpaper);
-
-        public async Task<LibraryModel> AddWallpaperLink(string url, bool autoSetWallpaper)
-        {
-            var type = (userSettings.Settings.AutoDetectOnlineStreams && StreamUtil.IsSupportedStream(url)) ? WallpaperType.videostream : WallpaperType.url;
-            var result = await desktopCore.CreateWallpaper(url, type);
-            var model = result != null ? AddWallpaper(result) : null;
-
-            if (autoSetWallpaper && model != null)
-                await desktopCore.SetWallpaper(model, userSettings.Settings.SelectedDisplay);
-
-            return model;
         }
 
         /// <summary>
@@ -641,9 +644,20 @@ namespace Lively.UI.Shared.ViewModels
                     }
                     else
                     {
+                        if (mediaFormatConverter.RequiresConversion(file, out var newExt))
+                        {
+                            var fileName = Path.GetFileNameWithoutExtension(file) + newExt;
+                            var outPath = Path.Combine(Constants.CommonPaths.TempDir, fileName);
+                            if (!await mediaFormatConverter.TryConvertAsync(file, outPath))
+                                continue;
+
+                            file = outPath;
+                        }
+
                         var wallpaperDirectory = Path.Combine(userSettings.Settings.WallpaperDir,
                             Constants.CommonPartialPaths.WallpaperInstallTempDir,
                             Path.GetRandomFileName());
+
 
                         var metadata = await wallpaperLibraryFactory.CreateMediaWallpaperPackageAsync(file, wallpaperDirectory, true);
                         if (metadata != null)
@@ -656,6 +670,20 @@ namespace Lively.UI.Shared.ViewModels
                 }
                 progress.Report(100 * (i + 1) / files.Count);
             }
+        }
+
+        public async Task<LibraryModel> AddWallpaperLink(Uri uri, bool autoSetWallpaper) => await AddWallpaperLink(uri.OriginalString, autoSetWallpaper);
+
+        public async Task<LibraryModel> AddWallpaperLink(string url, bool autoSetWallpaper)
+        {
+            var type = (userSettings.Settings.AutoDetectOnlineStreams && StreamUtil.IsSupportedStream(url)) ? WallpaperType.videostream : WallpaperType.url;
+            var result = await desktopCore.CreateWallpaper(url, type);
+            var model = result != null ? AddWallpaper(result) : null;
+
+            if (autoSetWallpaper && model != null)
+                await desktopCore.SetWallpaper(model, userSettings.Settings.SelectedDisplay);
+
+            return model;
         }
 
         public LibraryModel AddWallpaperFolder(string folder)
