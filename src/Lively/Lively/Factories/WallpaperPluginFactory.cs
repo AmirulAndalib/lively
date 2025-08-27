@@ -60,7 +60,7 @@ namespace Lively.Factories
                                 display,
                                 userSettings.Settings.WebDebugPort,
                                 lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
-                                GetWebView2UserDataDir(arrangement, display),
+                                GetWebView2UserDataDir(arrangement, display, isWindowed),
                                 userSettings.Settings.ApplicationTheme,
                                 userSettings.Settings.AudioVolumeGlobal,
                                 isWindowed: isWindowed);
@@ -178,7 +178,7 @@ namespace Lively.Factories
                                                     display,
                                                     userSettings.Settings.WebDebugPort,
                                                     lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
-                                                    GetWebView2UserDataDir(arrangement, display),
+                                                    GetWebView2UserDataDir(arrangement, display, isWindowed),
                                                     userSettings.Settings.ApplicationTheme,
                                                     userSettings.Settings.AudioVolumeGlobal,
                                                     isWindowed: isWindowed),
@@ -188,9 +188,9 @@ namespace Lively.Factories
             throw new PluginNotFoundException("Wallpaper player not found.");
         }
 
-        private string GetWebView2UserDataDir(WallpaperArrangement arrangement, DisplayMonitor display)
+        private string GetWebView2UserDataDir(WallpaperArrangement arrangement, DisplayMonitor display, bool isWindowed)
         {
-            return userSettings.Settings.CefDiskCache ? 
+            return userSettings.Settings.CefDiskCache && !isWindowed ? 
                 webView2UserDataFactory.GetUserDataFolder(arrangement, display) : webView2UserDataFactory.GetTempUserDataFolder();
         }
 

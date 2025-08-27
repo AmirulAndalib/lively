@@ -176,14 +176,17 @@ namespace Lively
             {
                 // Default, same as system.
                 userSettings.Settings.Language = string.Empty;
+                // Reset webplayer settings.
                 userSettings.Settings.WebBrowser = Constants.AppDefaults.WebBrowser;
+                userSettings.Settings.CefDiskCache = false;
+                userSettings.Settings.WebDebugPort = string.Empty;
                 // New pause algorithm, lets reset.
                 userSettings.Settings.ProcessMonitorAlgorithm = ProcessMonitorAlgorithm.grid;
                 userSettings.Settings.AppFocusPause = AppRules.ignore;
                 userSettings.Settings.AppFullscreenPause = AppRules.pause;
                 userSettings.Settings.DisplayPauseSettings = DisplayPause.perdisplay;
                 userSettings.AppRules.Clear();
-                // Apple changes
+                // Apply changes
                 userSettings.Save<SettingsModel>();
                 userSettings.Save<List<ApplicationRulesModel>>();
             }
