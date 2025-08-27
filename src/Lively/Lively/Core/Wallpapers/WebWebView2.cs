@@ -57,7 +57,8 @@ namespace Lively.Core.Wallpapers
             string livelyPropertyPath,
             string userDataDir,
             AppTheme theme,
-            int volume)
+            int volume,
+            bool isWindowed)
         {
             var filePath = ResolveFilePath(path, model);
             LivelyPropertyCopyPath = livelyPropertyPath;
@@ -69,7 +70,7 @@ namespace Lively.Core.Wallpapers
             var cmdArgs = new StringBuilder();
             cmdArgs.Append(" --wallpaper-pause-media ");
             cmdArgs.Append(" --wallpaper-volume " + volume);
-            cmdArgs.Append(" --wallpaper-scale " + wallpaperScale);
+            cmdArgs.Append(!isWindowed ? " --wallpaper-scale " + wallpaperScale : " ");
             cmdArgs.Append(" --wallpaper-url " + "\"" + filePath + "\"");
             cmdArgs.Append(" --wallpaper-color-scheme " + theme + " ");
             cmdArgs.Append(" --wallpaper-user-data " + "\"" + userDataDir + "\"");

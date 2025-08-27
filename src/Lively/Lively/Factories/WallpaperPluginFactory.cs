@@ -62,7 +62,8 @@ namespace Lively.Factories
                                 lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
                                 GetWebView2UserDataDir(arrangement, display),
                                 userSettings.Settings.ApplicationTheme,
-                                userSettings.Settings.AudioVolumeGlobal);
+                                userSettings.Settings.AudioVolumeGlobal,
+                                isWindowed: isWindowed);
                     }
                     break;
                 case WallpaperType.video:
@@ -179,7 +180,8 @@ namespace Lively.Factories
                                                     lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
                                                     GetWebView2UserDataDir(arrangement, display),
                                                     userSettings.Settings.ApplicationTheme,
-                                                    userSettings.Settings.AudioVolumeGlobal),
+                                                    userSettings.Settings.AudioVolumeGlobal,
+                                                    isWindowed: isWindowed),
                         };
                     }
             }
