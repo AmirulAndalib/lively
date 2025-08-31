@@ -1,6 +1,7 @@
 ﻿using Lively.Common.Helpers;
 using Lively.Common.Services;
 using Lively.Core;
+using Lively.Core.Display;
 using Lively.Core.Wallpapers;
 using Lively.Models;
 using Lively.Models.Enums;
@@ -13,15 +14,18 @@ namespace Lively.Factories
     public class WallpaperPluginFactory : IWallpaperPluginFactory
     {
         private readonly IWebView2UserDataFactory webView2UserDataFactory;
+        private readonly IDisplayManager displayManager;
         private readonly ILivelyPropertyFactory lpFactory;
         private readonly IUserSettingsService userSettings;
 
         public WallpaperPluginFactory(ILivelyPropertyFactory lpFactory,
             IWebView2UserDataFactory webViewUserDataFactory, 
+            IDisplayManager displayManager,
             IUserSettingsService userSettings)
         {
             this.lpFactory = lpFactory;
             this.userSettings = userSettings;
+            this.displayManager = displayManager;
             this.webView2UserDataFactory = webViewUserDataFactory;
         }
 
@@ -63,7 +67,7 @@ namespace Lively.Factories
                                 GetWebView2UserDataDir(arrangement, display, isWindowed),
                                 userSettings.Settings.ApplicationTheme,
                                 userSettings.Settings.AudioVolumeGlobal,
-                                isWindowed: isWindowed);
+                                GetWebView2Scale(display, isWindowed));
                     }
                     break;
                 case WallpaperType.video:
@@ -181,7 +185,7 @@ namespace Lively.Factories
                                                     GetWebView2UserDataDir(arrangement, display, isWindowed),
                                                     userSettings.Settings.ApplicationTheme,
                                                     userSettings.Settings.AudioVolumeGlobal,
-                                                    isWindowed: isWindowed),
+                                                    GetWebView2Scale(display, isWindowed)),
                         };
                     }
             }
@@ -192,6 +196,15 @@ namespace Lively.Factories
         {
             return userSettings.Settings.CefDiskCache && !isWindowed ? 
                 webView2UserDataFactory.GetUserDataFolder(arrangement, display) : webView2UserDataFactory.GetTempUserDataFolder();
+        }
+
+        private double? GetWebView2Scale(DisplayMonitor display, bool isWindowed)
+        {
+            if (isWindowed || !displayManager.IsMultiScreen())
+                return null;
+
+            // When running as child of WorkerW/Progman, the WebView2 surface does not pick up the correct DPI. 
+            return DpiUtil.TryGetDisplayScale(display.HMonitor, out double targetScale) ? targetScale : null;
         }
 
         #region exceptions

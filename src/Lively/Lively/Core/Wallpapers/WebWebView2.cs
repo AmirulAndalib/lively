@@ -58,19 +58,15 @@ namespace Lively.Core.Wallpapers
             string userDataDir,
             AppTheme theme,
             int volume,
-            bool isWindowed)
+            double? scale = null)
         {
             var filePath = ResolveFilePath(path, model);
             LivelyPropertyCopyPath = livelyPropertyPath;
-            // We correct/default the scale since dpi do not update once set as wallpaper layer.
-            var wallpaperScale = 100;
-            if (DpiUtil.TryGetDisplayScale(display.HMonitor, out double scale))
-                wallpaperScale = (int)Math.Round(scale * 100);
 
             var cmdArgs = new StringBuilder();
             cmdArgs.Append(" --wallpaper-pause-media ");
             cmdArgs.Append(" --wallpaper-volume " + volume);
-            cmdArgs.Append(!isWindowed ? " --wallpaper-scale " + wallpaperScale : " ");
+            cmdArgs.Append(scale != null ? " --wallpaper-scale " + JsonConvert.SerializeObject(scale.Value) : " ");
             cmdArgs.Append(" --wallpaper-url " + "\"" + filePath + "\"");
             cmdArgs.Append(" --wallpaper-color-scheme " + theme + " ");
             cmdArgs.Append(" --wallpaper-user-data " + "\"" + userDataDir + "\"");

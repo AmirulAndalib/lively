@@ -1,6 +1,5 @@
 ﻿using CommandLine;
 using Lively.Common;
-using Lively.Common.Exceptions;
 using Lively.Common.Extensions;
 using Lively.Common.Helpers;
 using Lively.Common.JsonConverters;
@@ -15,7 +14,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -147,13 +145,31 @@ namespace Lively.Player.WebView2
             webView.CoreWebView2.Profile.PreferredColorScheme = startArgs.Theme.GetPreferredColorScheme();
             if (startArgs.Scale != null)
             {
-                using var g = Graphics.FromHwnd(webView.Handle);
-                // 100% scale = 96 dpi
-                var currentScale = g.DpiX / 96d;
-                var adjustedScale = (startArgs.Scale.Value / 100d) / currentScale;
-                // Adjust zoom to neutralize current DPI and apply target scale.
-                $"Setting ZoomFactor: {adjustedScale}".SendLog(SendToParent);
-                webView.ZoomFactor = adjustedScale;
+                $"Attempt to set scale: {startArgs.Scale.Value}".SendLog(SendToParent);
+                try
+                {
+                    // RasterizationScale is better choice than ZoomFactor since it is not affected by system text size but not exposed in .NET, ref:
+                    // https://github.com/MicrosoftEdge/WebView2Feedback/issues/4775
+                    // https://github.com/MicrosoftEdge/WebView2Feedback/issues/3839
+                    // https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2controller.rasterizationscale
+                    var field = typeof(WebView).GetField("_coreWebView2Controller", BindingFlags.Instance | BindingFlags.NonPublic);
+                    if (field?.GetValue(webView) is CoreWebView2Controller controller)
+                    {
+                        controller.ShouldDetectMonitorScaleChanges = false;
+                        // Bug: Initial value is always 1, ref: https://github.com/MicrosoftEdge/WebView2Feedback/issues/5329
+                        $"Current scale: {controller.RasterizationScale}".SendLog(SendToParent);
+                        controller.RasterizationScale = startArgs.Scale.Value;
+                        $"Updated scale: {controller.RasterizationScale}".SendLog(SendToParent);
+                    }
+                    else
+                    {
+                        "CoreWebView2Controller not found".SendError(SendToParent);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ex.SendError(SendToParent, "Failed to set scale");
+                }
             }
 
             if (!IsDebugging)

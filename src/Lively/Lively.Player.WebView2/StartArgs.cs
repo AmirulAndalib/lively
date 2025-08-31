@@ -34,7 +34,7 @@ namespace Lively.Player.WebView2
         [Option("wallpaper-scale",
         Required = false,
         HelpText = "Wallpaper scale factor.")]
-        public int? Scale { get; set; }
+        public double? Scale { get; set; }
 
         [Option("wallpaper-audio",
         Default = false,
