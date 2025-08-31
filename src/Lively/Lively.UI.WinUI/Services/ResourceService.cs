@@ -57,8 +57,8 @@ namespace Lively.UI.WinUI.Services
             }
             catch
             {
-                // Fallback
-                culture = CultureInfo.InvariantCulture;
+                // Invalid culture, just keep using system default.
+                return;
             }
 
             // Setting is persisted between sessions (?.)

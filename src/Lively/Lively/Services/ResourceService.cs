@@ -32,8 +32,8 @@ namespace Lively.Services
             }
             catch
             {
-                // Fallback
-                culture = CultureInfo.InvariantCulture;
+                // Invalid culture, just keep using system default.
+                return;
             }
 
             if (CultureInfo.DefaultThreadCurrentCulture?.Name == culture.Name)
