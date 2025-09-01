@@ -96,7 +96,12 @@ namespace Lively.Player.WebView2
             InitializeWebView2Async().Await(() => {
                 _ = ListenToParent();
             }, 
-            (err) => err.SendError(SendToParent, "Failed to initialize WebView2"));
+            (err) =>
+            {
+                err.SendError(SendToParent, "Failed to initialize WebView2");
+                // Exit or display custom error page.
+                Environment.Exit(1);
+            });
         }
 
         // Hide from taskview and taskbar.
@@ -128,7 +133,6 @@ namespace Lively.Player.WebView2
                 DefaultBackgroundColor = Color.Transparent
             };
             webView.NavigationCompleted += WebView_NavigationCompleted;
-            webView.CoreWebView2InitializationCompleted += WebView_CoreWebView2InitializationCompleted;
 
             var webViewStartArgs =
                 // Allow media autoplay even if not muted.
@@ -226,6 +230,11 @@ namespace Lively.Player.WebView2
             }
             this.Controls.Add(webView);
             webView.Dock = DockStyle.Fill;
+
+            // Make sure to do this after WebView control is attached to form to avoid issues.
+            SendToParent(new LivelyMessageHwnd() {
+                Hwnd = webView.Handle.ToInt32()
+            });
         }
 
         private void CoreWebView2_DocumentTitleChanged(object sender, object e)
@@ -252,14 +261,6 @@ namespace Lively.Player.WebView2
                 // Open new tab/window  hyperlink (target="_blank") in default browser.
                 LinkUtil.OpenBrowser(e.Uri);
             }
-        }
-
-        private void WebView_CoreWebView2InitializationCompleted(object sender, CoreWebView2InitializationCompletedEventArgs e)
-        {
-            SendToParent(new LivelyMessageHwnd()
-            {
-                Hwnd = webView.Handle.ToInt32()
-            });
         }
 
         private void CoreWebView2_DownloadStarting(object sender, CoreWebView2DownloadStartingEventArgs e)
