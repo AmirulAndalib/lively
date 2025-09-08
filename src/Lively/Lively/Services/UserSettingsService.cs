@@ -16,12 +16,15 @@ namespace Lively.Services
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
+        private readonly IDisplayManager displayManager;
         private readonly string settingsPath = Constants.CommonPaths.UserSettingsPath;
         private readonly string appRulesPath = Constants.CommonPaths.AppRulesPath;
         private readonly string wallpaperLayoutPath = Constants.CommonPaths.WallpaperLayoutPath;
 
         public UserSettingsService(IDisplayManager displayManager)
         {
+            this.displayManager = displayManager;
+
             Load<SettingsModel>();
             Load<List<ApplicationRulesModel>>();
             Load<List<WallpaperLayoutModel>>();
@@ -31,10 +34,9 @@ namespace Lively.Services
             Settings.GifPlayer = GetAvailableGifPlayerOrDefault(Settings.GifPlayer);
             Settings.WebBrowser = GetAvailableWebPlayerOrDefault(Settings.WebBrowser);
             Settings.PicturePlayer = GetAvailablePicturePlayerOrDefault(Settings.PicturePlayer);
-
-            Settings.SelectedDisplay = Settings.SelectedDisplay != null ?
-                displayManager.DisplayMonitors.FirstOrDefault(x => x.Equals(Settings.SelectedDisplay)) ?? displayManager.PrimaryDisplayMonitor :
-                displayManager.PrimaryDisplayMonitor;
+            // Fallback incase display disconnected or not set.
+            Settings.SelectedAudioOutputDisplay = ResolveDisplay(Settings.SelectedAudioOutputDisplay);
+            Settings.SelectedDisplay = ResolveDisplay(Settings.SelectedDisplay);
 
             // Previous installed version is different from current instance.  
             if (!Settings.AppVersion.Equals(Assembly.GetExecutingAssembly().GetName().Version.ToString(), StringComparison.OrdinalIgnoreCase))
@@ -186,6 +188,13 @@ namespace Lively.Services
                 _ => false,
             };
             return isAvailable ? wp : Constants.AppDefaults.WebBrowser;
+        }
+
+        private DisplayMonitor ResolveDisplay(DisplayMonitor current)
+        {
+            return current != null
+                ? displayManager.DisplayMonitors.FirstOrDefault(x => x.Equals(current)) ?? displayManager.PrimaryDisplayMonitor
+                : displayManager.PrimaryDisplayMonitor;
         }
     }
 }

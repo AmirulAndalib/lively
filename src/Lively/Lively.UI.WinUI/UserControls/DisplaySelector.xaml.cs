@@ -90,6 +90,7 @@ namespace Lively.UI.WinUI.UserControls
         public DisplaySelector()
         {
             this.InitializeComponent();
+            this.RegisterPropertyChangedCallback(IsEnabledProperty, OnIsEnabledChanged);
         }
 
         private void UpdateCanvas()
@@ -198,18 +199,21 @@ namespace Lively.UI.WinUI.UserControls
             }
         }
 
+        private void UpdateDisplaySelection()
+        {
+            if (Displays is null)
+                return;
+
+            // Only visual change
+            foreach (var item in Displays)
+                item.IsSelected = Layout != WallpaperArrangement.per || item == SelectedItem;
+        }
+
         private void Displays_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
             // Call the update methods whenever the collection changes
             UpdateCanvas();
             UpdateDisplaySelection();
-        }
-
-        private void UpdateDisplaySelection()
-        {
-            // Only visual change
-            foreach (var item in Displays)
-                item.IsSelected = Layout != WallpaperArrangement.per || item == SelectedItem;
         }
 
         private void Grid_PointerPressed(object sender, PointerRoutedEventArgs e)
@@ -253,6 +257,11 @@ namespace Lively.UI.WinUI.UserControls
         {
             //TODO: Unsubcribe Grid_PointerPressed().. ?
             //TODO: Unsub CollectionChanged event ViewModel ?
+        }
+
+        private void OnIsEnabledChanged(DependencyObject sender, DependencyProperty dp)
+        {
+            this.Opacity = this.IsEnabled ? 1.0 : 0.25;
         }
     }
 }

@@ -5,6 +5,7 @@
     xmlns:animations="using:CommunityToolkit.WinUI.Animations"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:converters="using:CommunityToolkit.WinUI.Converters"
+    xmlns:customControls="using:Lively.UI.WinUI.UserControls"
     xmlns:customConverters="using:Lively.UI.WinUI.Helpers.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:Lively.UI.WinUI.Views.Pages.Settings"
@@ -112,21 +113,42 @@
                         x:Uid="AudioGroup"
                         Margin="0,0,0,10"
                         FontWeight="SemiBold" />
-                    <controls:SettingsExpander
-                        x:Uid="Audio"
-                        HeaderIcon="{Binding GlobalWallpaperVolume, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource AudioVolumeGlyphConverter}}"
-                        IsExpanded="True">
+                    <controls:SettingsCard x:Uid="Audio" HeaderIcon="{Binding GlobalWallpaperVolume, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource AudioVolumeGlyphConverter}}">
                         <Slider
                             MinWidth="{StaticResource SettingActionControlMinWidth}"
                             Maximum="100"
                             Minimum="0"
                             Value="{Binding GlobalWallpaperVolume, Mode=TwoWay}" />
+                    </controls:SettingsCard>
+
+                    <controls:SettingsExpander
+                        Description="Choose how wallpaper audio is played across your screens"
+                        Header="Display pause rule"
+                        IsExpanded="{Binding IsAudioOutputScreenSelection, Mode=OneWay}">
+                        <controls:SettingsExpander.HeaderIcon>
+                            <FontIcon Glyph="&#xE7F4;" />
+                        </controls:SettingsExpander.HeaderIcon>
+                        <ComboBox MinWidth="{StaticResource SettingActionControlMinWidth}" SelectedIndex="{Binding SelectedDisplayAudioOutputIndex, Mode=TwoWay}">
+                            <ComboBoxItem x:Uid="DisplayPauseRulePerScreen" />
+                            <ComboBoxItem x:Uid="DisplayPauseRuleAllScreen" />
+                        </ComboBox>
                         <controls:SettingsExpander.Items>
                             <controls:SettingsCard ContentAlignment="Left">
-                                <CheckBox x:Uid="AudioFocused" IsChecked="{Binding IsAudioOnlyOnDesktop, Mode=TwoWay}" />
+                                <ScrollViewer>
+                                    <customControls:DisplaySelector
+                                        Width="450"
+                                        Height="150"
+                                        Displays="{Binding AudioOutputscreens, Mode=OneWay}"
+                                        IsEnabled="{Binding IsAudioOutputScreenSelection, Mode=OneWay}"
+                                        SelectedItem="{Binding SelectedAudioOutputScreen, Mode=TwoWay}" />
+                                </ScrollViewer>
                             </controls:SettingsCard>
                         </controls:SettingsExpander.Items>
                     </controls:SettingsExpander>
+
+                    <controls:SettingsCard ContentAlignment="Left">
+                        <CheckBox x:Uid="AudioFocused" IsChecked="{Binding IsAudioOnlyOnDesktop, Mode=TwoWay}" />
+                    </controls:SettingsCard>
                 </StackPanel>
 
                 <!--  Icon="&#xF12B;"  -->

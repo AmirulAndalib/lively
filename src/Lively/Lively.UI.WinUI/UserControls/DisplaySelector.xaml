@@ -2,7 +2,6 @@
     x:Class="Lively.UI.WinUI.UserControls.DisplaySelector"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:Core="using:Microsoft.Xaml.Interactions.Core"
     xmlns:Interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:customConverters="using:Lively.UI.WinUI.Helpers.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"

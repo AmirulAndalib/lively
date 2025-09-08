@@ -270,16 +270,39 @@ namespace Lively.Core.Suspend
                     break;
             }
 
-            // For now unmute audio per display, in the future let user select the audio output display.
+            // Audio playback impl.
             foreach (var display in displayManager.DisplayMonitors)
             {
                 var windowsOnDisplay = monitorWindowsMap.GetValueOrDefault(display) ?? [];
                 var isDesktop = windowsOnDisplay.Count == 0;
 
-                if (isDesktop)
-                    SetWallpaperVolume(userSettings.Settings.AudioVolumeGlobal, display);
-                else
-                    SetWallpaperVolume(userSettings.Settings.AudioOnlyOnDesktop ? 0 : userSettings.Settings.AudioVolumeGlobal, display);
+                switch (userSettings.Settings.DisplayAudioOutput)
+                {
+                    case DisplayAudioMode.selection:
+                        {
+                            if (display.Equals(userSettings.Settings.SelectedAudioOutputDisplay)
+                                || userSettings.Settings.ScreensaverArragement != WallpaperArrangement.per
+                                || !displayManager.IsMultiScreen())
+                            {
+                                if (isDesktop)
+                                    SetWallpaperVolume(userSettings.Settings.AudioVolumeGlobal, display);
+                                else
+                                    SetWallpaperVolume(userSettings.Settings.AudioOnlyOnDesktop ? 0 : userSettings.Settings.AudioVolumeGlobal, display);
+                            }
+                            else {
+                                SetWallpaperVolume(0, display);
+                            }
+                        }
+                        break;
+                    case DisplayAudioMode.all:
+                        {
+                            if (isDesktop)
+                                SetWallpaperVolume(userSettings.Settings.AudioVolumeGlobal, display);
+                            else
+                                SetWallpaperVolume(userSettings.Settings.AudioOnlyOnDesktop ? 0 : userSettings.Settings.AudioVolumeGlobal, display);
+                        }
+                        break;
+                }
             }
         }
 

@@ -261,6 +261,30 @@ namespace Lively.Grpc.Client
                 ScreensaverVolumeGlobal = settings.ScreensaverGlobalVolume,
                 ScreensaverFadeIn = settings.ScreensaverFadeIn,
                 VideoTargetColorSpaceMode = (TargetColorSpaceMode)settings.VideoTargetColorSpaceMode,
+                DisplayAudioOutput = (Common.Proto.Settings.DisplayAudioMode)((int)settings.DisplayAudioOutput),
+                SelectedAudioOutputDisplay = new GetScreensResponse()
+                {
+                    DeviceId = settings.SelectedAudioOutputDisplay.DeviceId,
+                    DeviceName = settings.SelectedAudioOutputDisplay.DeviceName,
+                    DisplayName = settings.SelectedAudioOutputDisplay.DisplayName,
+                    HMonitor = settings.SelectedAudioOutputDisplay.HMonitor.ToInt32(),
+                    IsPrimary = settings.SelectedAudioOutputDisplay.IsPrimary,
+                    Index = settings.SelectedAudioOutputDisplay.Index,
+                    WorkingArea = new Rectangle()
+                    {
+                        X = settings.SelectedAudioOutputDisplay.WorkingArea.X,
+                        Y = settings.SelectedAudioOutputDisplay.WorkingArea.Y,
+                        Width = settings.SelectedAudioOutputDisplay.WorkingArea.Width,
+                        Height = settings.SelectedAudioOutputDisplay.WorkingArea.Height
+                    },
+                    Bounds = new Rectangle()
+                    {
+                        X = settings.SelectedAudioOutputDisplay.Bounds.X,
+                        Y = settings.SelectedAudioOutputDisplay.Bounds.Y,
+                        Width = settings.SelectedAudioOutputDisplay.Bounds.Width,
+                        Height = settings.SelectedAudioOutputDisplay.Bounds.Height
+                    }
+                }
             };
         }
 
@@ -354,7 +378,27 @@ namespace Lively.Grpc.Client
                 IsScreensaverPluginNotify = settings.ScreensaverPluginNotify,
                 ScreensaverGlobalVolume = settings.ScreensaverVolumeGlobal,
                 ScreensaverFadeIn = settings.ScreensaverFadeIn,
-                VideoTargetColorSpaceMode = (TargetColorspaceHintMode)settings.VideoTargetColorSpaceMode
+                VideoTargetColorSpaceMode = (TargetColorspaceHintMode)settings.VideoTargetColorSpaceMode,
+                DisplayAudioOutput = (Models.Enums.DisplayAudioMode)settings.DisplayAudioOutput,
+                SelectedAudioOutputDisplay = new DisplayMonitor()
+                {
+                    DeviceId = settings.SelectedAudioOutputDisplay.DeviceId,
+                    DisplayName = settings.SelectedAudioOutputDisplay.DisplayName,
+                    DeviceName = settings.SelectedAudioOutputDisplay.DeviceName,
+                    HMonitor = new IntPtr(settings.SelectedAudioOutputDisplay.HMonitor),
+                    IsPrimary = settings.SelectedAudioOutputDisplay.IsPrimary,
+                    Index = settings.SelectedAudioOutputDisplay.Index,
+                    Bounds = new System.Drawing.Rectangle(
+                        settings.SelectedAudioOutputDisplay.Bounds.X,
+                        settings.SelectedAudioOutputDisplay.Bounds.Y,
+                        settings.SelectedAudioOutputDisplay.Bounds.Width,
+                        settings.SelectedAudioOutputDisplay.Bounds.Height),
+                    WorkingArea = new System.Drawing.Rectangle(
+                        settings.SelectedAudioOutputDisplay.WorkingArea.X,
+                        settings.SelectedAudioOutputDisplay.WorkingArea.Y,
+                        settings.SelectedAudioOutputDisplay.WorkingArea.Width,
+                        settings.SelectedAudioOutputDisplay.WorkingArea.Height),
+                },
             };
         }
 

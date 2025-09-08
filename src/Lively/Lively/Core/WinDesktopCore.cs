@@ -356,7 +356,7 @@ namespace Lively.Core
                                 // Synchronizing position and audio
                                 foreach (var item in wallpapers)
                                 {
-                                    if (item.Category.IsVideoWallpaper() && !item.Screen.IsPrimary)
+                                    if (!item.Screen.IsPrimary)
                                     {
                                         Logger.Info($"Disabling audio track on screen {item.Screen.DeviceName} (duplicate.)");
                                         item.SetMute(true);

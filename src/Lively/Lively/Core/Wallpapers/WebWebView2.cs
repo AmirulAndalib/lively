@@ -27,7 +27,9 @@ namespace Lively.Core.Wallpapers
         private int cefD3DRenderingSubProcessPid;
         private static int globalCount;
         private readonly int uniqueId;
+        private int currentVolume = 0;
         private bool isInitialized;
+        private bool isMuted;
 
         public event EventHandler Exited;
         public event EventHandler Loaded;
@@ -160,12 +162,21 @@ namespace Lively.Core.Wallpapers
 
         public void SetVolume(int volume)
         {
-            SendMessage(new LivelyVolumeCmd() { Volume = volume });
+            currentVolume = volume;
+
+            if (!isMuted)
+                SendMessage(new LivelyVolumeCmd() { Volume = volume });
         }
 
         public void SetMute(bool mute)
         {
-            //todo
+            isMuted = mute;
+            // WebView2 does not have volume control, only IsMuted property, so we use that to set volume internally.
+            // Ref: https://github.com/MicrosoftEdge/WebView2Feedback/issues/41
+            if (isMuted)
+                SendMessage(new LivelyVolumeCmd() { Volume = 0 });
+            else
+                SendMessage(new LivelyVolumeCmd { Volume = currentVolume });
         }
 
         public async Task ShowAsync()

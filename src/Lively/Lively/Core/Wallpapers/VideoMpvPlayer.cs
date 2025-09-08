@@ -195,14 +195,12 @@ namespace Lively.Core.Wallpapers
 
         public void SetMute(bool mute)
         {
+            // Assume default track is 1.
+            // We use mute as part of LivelyProperties, so disable track instead.
             if (mute)
-            {
                 SendMessage("{\"command\":[\"set_property\",\"aid\",\"no\"]}\n");
-            }
             else
-            {
-                //todo
-            }
+                SendMessage("{\"command\":[\"set_property\",\"aid\",\"1\"]}\n");
         }
 
         public void SetPlaybackPos(float pos, PlaybackPosType type)

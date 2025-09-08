@@ -80,6 +80,8 @@ message SettingsDataModel {
     int32 screensaver_volume_global = 68;
     bool screensaver_fade_in = 69;
     TargetColorSpaceMode video_target_color_space_mode = 70;
+    DisplayAudioMode display_audio_output = 71;
+    GetScreensResponse selected_audio_output_display = 72;
 }
 
 message AppRulesSettings {
@@ -246,4 +248,10 @@ enum TargetColorSpaceMode
     target = 0;
     source = 1;
     sourceDynamic = 2;
+}
+
+enum DisplayAudioMode
+{
+    selection = 0;
+    all_ = 1;
 }

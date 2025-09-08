@@ -136,6 +136,8 @@ namespace Lively.Models
         public double ProcessMonitorGridTileCoverageThreshold { get; set; }
         public int ProcessMonitorGridTileSize { get; set; }
         public TargetColorspaceHintMode VideoTargetColorSpaceMode { get; set; }
+        public DisplayAudioMode DisplayAudioOutput { get; set; }
+        public DisplayMonitor SelectedAudioOutputDisplay { get; set; }
 
         public SettingsModel()
         {
@@ -184,7 +186,6 @@ namespace Lively.Models
 
             TileSize = 1;
             DisplayIdentification = DisplayIdentificationMode.deviceId;
-            //SelectedDisplay = ScreenHelper.GetPrimaryScreen();
             UIMode = LivelyGUIState.normal;
             WallpaperDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Lively Wallpaper", "Library");
             WallpaperDirMoveExistingWallpaperNewDir = true;
@@ -222,6 +223,7 @@ namespace Lively.Models
             TaskbarCrashTimeOutDelay = 30;
             Language = string.Empty;
             VideoTargetColorSpaceMode = TargetColorspaceHintMode.target;
+            DisplayAudioOutput = DisplayAudioMode.all;
         }
     }
 }

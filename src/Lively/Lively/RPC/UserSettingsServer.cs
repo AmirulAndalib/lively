@@ -6,7 +6,6 @@ using Lively.Grpc.Common.Proto.Settings;
 using Lively.Helpers;
 using Lively.Models;
 using Lively.Models.Enums;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -188,6 +187,8 @@ namespace Lively.RPC
             userSettings.Settings.ScreensaverGlobalVolume = req.ScreensaverVolumeGlobal;
             userSettings.Settings.ScreensaverFadeIn = req.ScreensaverFadeIn;
             userSettings.Settings.VideoTargetColorSpaceMode = (TargetColorspaceHintMode)req.VideoTargetColorSpaceMode;
+            userSettings.Settings.DisplayAudioOutput = (Models.Enums.DisplayAudioMode)req.DisplayAudioOutput;
+            userSettings.Settings.SelectedAudioOutputDisplay = displayManager.DisplayMonitors.FirstOrDefault(x => req.SelectedAudioOutputDisplay.DeviceId == x.DeviceId) ?? displayManager.PrimaryDisplayMonitor;
 
             try
             {
@@ -302,6 +303,30 @@ namespace Lively.RPC
                 ScreensaverVolumeGlobal = settings.ScreensaverGlobalVolume,
                 ScreensaverFadeIn = settings.ScreensaverFadeIn,
                 VideoTargetColorSpaceMode = (TargetColorSpaceMode)settings.VideoTargetColorSpaceMode,
+                DisplayAudioOutput = (Grpc.Common.Proto.Settings.DisplayAudioMode)settings.DisplayAudioOutput,
+                SelectedAudioOutputDisplay = new GetScreensResponse()
+                {
+                    DeviceId = settings.SelectedAudioOutputDisplay.DeviceId ?? string.Empty,
+                    DeviceName = settings.SelectedAudioOutputDisplay.DeviceName ?? string.Empty,
+                    DisplayName = settings.SelectedAudioOutputDisplay.DisplayName ?? string.Empty,
+                    HMonitor = settings.SelectedAudioOutputDisplay.HMonitor.ToInt32(),
+                    IsPrimary = settings.SelectedAudioOutputDisplay.IsPrimary,
+                    Index = settings.SelectedAudioOutputDisplay.Index,
+                    WorkingArea = new Rectangle()
+                    {
+                        X = settings.SelectedAudioOutputDisplay.WorkingArea.X,
+                        Y = settings.SelectedAudioOutputDisplay.WorkingArea.Y,
+                        Width = settings.SelectedAudioOutputDisplay.WorkingArea.Width,
+                        Height = settings.SelectedAudioOutputDisplay.WorkingArea.Height
+                    },
+                    Bounds = new Rectangle()
+                    {
+                        X = settings.SelectedAudioOutputDisplay.Bounds.X,
+                        Y = settings.SelectedAudioOutputDisplay.Bounds.Y,
+                        Width = settings.SelectedAudioOutputDisplay.Bounds.Width,
+                        Height = settings.SelectedAudioOutputDisplay.Bounds.Height
+                    }
+                },
             };
             return Task.FromResult(resp);
         }

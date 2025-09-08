@@ -6,13 +6,11 @@ using Lively.Common.Services;
 using Lively.Grpc.Client;
 using Lively.Models;
 using Lively.Models.Enums;
-using Lively.UI.Shared.Helpers;
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace Lively.UI.Shared.ViewModels
 {
@@ -20,6 +18,7 @@ namespace Lively.UI.Shared.ViewModels
     {
         private readonly IUserSettingsClient userSettings;
         private readonly IDesktopCoreClient desktopCore;
+        private readonly IDisplayManagerClient displayManager;
         private readonly IDialogService dialogService;
         private readonly LibraryViewModel libraryVm;
         private readonly IResourceService i18n;
@@ -28,6 +27,7 @@ namespace Lively.UI.Shared.ViewModels
 
         public SettingsGeneralViewModel(LibraryViewModel libraryVm, IDesktopCoreClient desktopCore,
             IUserSettingsClient userSettings,
+            IDisplayManagerClient displayManager,
             IDispatcherService dispatcher,
             IFileService fileService,
             IResourceService i18n,
@@ -35,6 +35,7 @@ namespace Lively.UI.Shared.ViewModels
         {
             this.libraryVm = libraryVm;
             this.desktopCore = desktopCore;
+            this.displayManager = displayManager;
             this.userSettings = userSettings;
             this.dialogService = dialogService;
             this.dispatcher = dispatcher;
@@ -53,6 +54,10 @@ namespace Lively.UI.Shared.ViewModels
             IsAudioOnlyOnDesktop = userSettings.Settings.AudioOnlyOnDesktop;
             IsReducedMotion = userSettings.Settings.UIMode != LivelyGUIState.normal;
             MoveExistingWallpaperNewDir = userSettings.Settings.WallpaperDirMoveExistingWallpaperNewDir;
+            SelectedDisplayAudioOutputIndex = (int)userSettings.Settings.DisplayAudioOutput;
+            UpdateAudioOutputScreens();
+
+            displayManager.DisplayChanged += DisplayManager_DisplayChanged;
         }
 
         private bool _isStartup;
@@ -149,6 +154,49 @@ namespace Lively.UI.Shared.ViewModels
                     UpdateSettingsConfigFile();
                 }
                 SetProperty(ref _isAudioOnlyOnDesktop, value);
+            }
+        }
+
+        private int _selectedDisplayAudioOutputIndex;
+        public int SelectedDisplayAudioOutputIndex
+        {
+            get => _selectedDisplayAudioOutputIndex;
+            set
+            {
+                if (value < 0)
+                    return;
+
+                if (userSettings.Settings.DisplayAudioOutput != (DisplayAudioMode)value)
+                {
+                    userSettings.Settings.DisplayAudioOutput = (DisplayAudioMode)value;
+                    UpdateSettingsConfigFile();
+                }
+                SetProperty(ref _selectedDisplayAudioOutputIndex, value);
+                IsAudioOutputScreenSelection = (DisplayAudioMode)value == DisplayAudioMode.selection;
+            }
+        }
+
+        [ObservableProperty]
+        private bool isAudioOutputScreenSelection;
+
+        [ObservableProperty]
+        private ObservableCollection<ScreenLayoutModel> audioOutputscreens = [];
+
+        private ScreenLayoutModel _selectedAudioOutputScreen;
+        public ScreenLayoutModel SelectedAudioOutputScreen
+        {
+            get => _selectedAudioOutputScreen;
+            set
+            {
+                if (value is null)
+                    return;
+
+                SetProperty(ref _selectedAudioOutputScreen, value);
+                if (!userSettings.Settings.SelectedAudioOutputDisplay.Equals(value.Screen))
+                {
+                    userSettings.Settings.SelectedAudioOutputDisplay = value.Screen;
+                    UpdateSettingsConfigFile();
+                }
             }
         }
 
@@ -275,6 +323,27 @@ namespace Lively.UI.Shared.ViewModels
                     //TODO: Dialogue
                 }
             }
+        }
+
+        public void OnClose()
+        {
+            displayManager.DisplayChanged -= DisplayManager_DisplayChanged;
+        }
+
+        private void DisplayManager_DisplayChanged(object sender, EventArgs e)
+        {
+            dispatcher.TryEnqueue(UpdateAudioOutputScreens);
+        }
+
+        private void UpdateAudioOutputScreens()
+        {
+            AudioOutputscreens.Clear();
+            foreach (var display in displayManager.DisplayMonitors)
+            {
+                AudioOutputscreens.Add(new ScreenLayoutModel(display, null, null, string.Empty));
+            }
+            SelectedAudioOutputScreen = AudioOutputscreens.FirstOrDefault(x => x.Screen.Equals(userSettings.Settings.SelectedAudioOutputDisplay))
+                ?? AudioOutputscreens.FirstOrDefault(x => x.Screen.IsPrimary);
         }
 
         public void UpdateSettingsConfigFile()
