@@ -7,8 +7,8 @@ using Lively.Gallery.Client;
 using Lively.Grpc.Client;
 using Lively.ML.DepthEstimate;
 using Lively.Models.Enums;
+using Lively.UI.Shared.Factories;
 using Lively.UI.Shared.ViewModels;
-using Lively.UI.WinUI.Factories;
 using Lively.UI.WinUI.Services;
 using Lively.UI.WinUI.Views.LivelyProperty;
 using Microsoft.Extensions.DependencyInjection;
@@ -186,7 +186,8 @@ namespace Lively.UI.WinUI
                 .AddTransient<IWallpaperLibraryFactory, WallpaperLibraryFactory>()
                 .AddTransient<IAppThemeFactory, AppThemeFactory>()
                 .AddTransient<IDownloadService, HttpDownloadService>()
-                 .AddTransient<IMediaFormatConverter, MediaFormatConverter>()
+                .AddTransient<IMediaFormatConverter, MediaFormatConverter>()
+                .AddTransient<IAudioDeviceFactory, AudioDeviceFactory>()
                 //https://docs.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests
                 .AddHttpClient()
                 .BuildServiceProvider();

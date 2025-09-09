@@ -82,6 +82,7 @@ message SettingsDataModel {
     TargetColorSpaceMode video_target_color_space_mode = 70;
     DisplayAudioMode display_audio_output = 71;
     GetScreensResponse selected_audio_output_display = 72;
+    string visualizer_audio_device_id = 73;
 }
 
 message AppRulesSettings {

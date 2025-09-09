@@ -121,7 +121,7 @@ namespace Lively.Models
         public bool RememberSelectedScreen { get; set; }
         public bool IsUpdated { get; set; }
         public bool IsUpdatedNotify { get; set; }
-
+        public string VisualizerAudioDeviceId { get; set; }
         /// <summary>
         /// Notify user if plugin is missing.
         /// </summary>
@@ -223,6 +223,7 @@ namespace Lively.Models
             TaskbarCrashTimeOutDelay = 30;
             Language = string.Empty;
             VideoTargetColorSpaceMode = TargetColorspaceHintMode.target;
+            VisualizerAudioDeviceId = string.Empty;
             DisplayAudioOutput = DisplayAudioMode.all;
         }
     }

@@ -57,7 +57,8 @@ namespace Lively.Factories
                                 userSettings.Settings.WebDebugPort,
                                 userSettings.Settings.CefDiskCache,
                                 userSettings.Settings.ApplicationTheme,
-                                userSettings.Settings.AudioVolumeGlobal);
+                                userSettings.Settings.AudioVolumeGlobal,
+                                userSettings.Settings.VisualizerAudioDeviceId);
                         case LivelyWebBrowser.webview2:
                             return new WebWebView2(model.FilePath,
                                 model,
@@ -67,7 +68,8 @@ namespace Lively.Factories
                                 GetWebView2UserDataDir(arrangement, display, isWindowed),
                                 userSettings.Settings.ApplicationTheme,
                                 userSettings.Settings.AudioVolumeGlobal,
-                                GetWebView2Scale(display, isWindowed));
+                                GetWebView2Scale(display, isWindowed),
+                                userSettings.Settings.VisualizerAudioDeviceId);
                     }
                     break;
                 case WallpaperType.video:

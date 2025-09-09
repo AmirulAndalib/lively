@@ -349,7 +349,7 @@ namespace Lively.Player.WebView2
                         }
                         catch { }
                     };
-                    visualizerService.Start();
+                    visualizerService.Start(startArgs.AudioVisualizerDeviceId);
                 }
             }
         }

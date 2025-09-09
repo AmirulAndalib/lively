@@ -8,6 +8,7 @@ using Lively.Common.Services;
 using Lively.Grpc.Client;
 using Lively.Models;
 using Lively.Models.Enums;
+using Lively.UI.Shared.Factories;
 using Lively.UI.Shared.Helpers;
 using System;
 using System.Collections.Generic;
@@ -25,6 +26,8 @@ namespace Lively.UI.Shared.ViewModels
         private readonly IDialogService dialogService;
         private readonly IDispatcherService dispatcher;
         private readonly IDownloadService downloader;
+        private readonly IResourceService i18n;
+        private readonly IAudioDeviceFactory audioDeviceFactory;
         private readonly IApplicationsRulesFactory appRuleFactory;
         private readonly ICommandsClient commandsClient;
 
@@ -34,13 +37,17 @@ namespace Lively.UI.Shared.ViewModels
             IDispatcherService dispatcher,
             ICommandsClient commandsClient,
             IDownloadService downloader,
+            IResourceService i18n,
+            IAudioDeviceFactory audioDeviceFactory,
             IApplicationsRulesFactory appRuleFactory)
         {
+            this.i18n = i18n;
             this.userSettings = userSettings;
             this.desktopCore = desktopCore;
             this.dialogService = dialogService;
             this.appRuleFactory = appRuleFactory;
             this.commandsClient = commandsClient;
+            this.audioDeviceFactory = audioDeviceFactory;
             this.dispatcher = dispatcher;
             this.downloader = downloader;
 
@@ -60,6 +67,7 @@ namespace Lively.UI.Shared.ViewModels
             CefDiskCache = userSettings.Settings.CefDiskCache;
             SelectedWallpaperStreamQualityIndex = (int)userSettings.Settings.StreamQuality;
             DetectStreamWallpaper = userSettings.Settings.AutoDetectOnlineStreams;
+            // AudioDevices is populated only when IsShowAudioDevices is true for better UX.
         }
 
         private bool _isDesktopAutoWallpaper;
@@ -371,7 +379,49 @@ namespace Lively.UI.Shared.ViewModels
         #region apprules
 
         [ObservableProperty]
-        private bool isAppMusicExclusionRuleChanged;
+        private bool isMusicSettingsChanged;
+
+        private bool _isShowAudioDevices;
+        public bool IsShowAudioDevices
+        {
+            get => _isShowAudioDevices;
+            set
+            {
+                if (value && AudioDevices == null)
+                {
+                    try
+                    {
+                        AudioDevices = new ObservableCollection<AudioDevice>(audioDeviceFactory.GetRenderDevices());
+                    }
+                    catch {
+                        AudioDevices = [];
+                    }
+                    AudioDevices.Insert(0, new(string.Empty, i18n.GetString("TextDefault/Text"), "ms-appx:///Assets/icons8-application-window-96.png"));
+                    SelectedAudioDevice = AudioDevices.FirstOrDefault(x => x.Id == userSettings.Settings.VisualizerAudioDeviceId) ?? AudioDevices[0];
+                }
+                SetProperty(ref _isShowAudioDevices, value);
+            }
+        }
+
+        [ObservableProperty]
+        private ObservableCollection<AudioDevice> audioDevices;
+
+        private AudioDevice _selectedAudioDevice;
+        public AudioDevice SelectedAudioDevice
+        {
+            get => _selectedAudioDevice;
+            set
+            {
+                if (value != null && userSettings.Settings.VisualizerAudioDeviceId != value.Id)
+                {
+                    userSettings.Settings.VisualizerAudioDeviceId = value.Id;
+                    UpdateSettingsConfigFile();
+
+                    IsMusicSettingsChanged = true;
+                }
+                SetProperty(ref _selectedAudioDevice, value);
+            }
+        }
 
         [ObservableProperty]
         private ObservableCollection<AppMusicExclusionRuleModel> appMusicExclusionRules;
@@ -401,7 +451,7 @@ namespace Lively.UI.Shared.ViewModels
                     return;
 
                 AppMusicExclusionRules.Add(rule);
-                IsAppMusicExclusionRuleChanged = true;
+                IsMusicSettingsChanged = true;
                 UpdateAppMusicExclusionRule();
             }
             catch { /* Failed to parse program information, ignore. */ }
@@ -411,7 +461,7 @@ namespace Lively.UI.Shared.ViewModels
         private void RemoveAppMusicExclusionRule()
         {
             AppMusicExclusionRules.Remove(SelectedAppMusicExclusionRuleItem);
-            IsAppMusicExclusionRuleChanged = true;
+            IsMusicSettingsChanged = true;
             UpdateAppMusicExclusionRule();
         }
 
@@ -420,7 +470,7 @@ namespace Lively.UI.Shared.ViewModels
         [RelayCommand]
         private async Task RestartMusicWallpapers()
         {
-            IsAppMusicExclusionRuleChanged = false;
+            IsMusicSettingsChanged = false;
             await WallpaperRestart([WallpaperType.web, WallpaperType.webaudio]);
         }
 

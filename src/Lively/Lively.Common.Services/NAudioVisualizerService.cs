@@ -1,4 +1,5 @@
-﻿using MathNet.Numerics.IntegralTransforms;
+﻿using Lively.Models;
+using MathNet.Numerics.IntegralTransforms;
 using NAudio.CoreAudioApi;
 using NAudio.CoreAudioApi.Interfaces;
 using NAudio.Wave;
@@ -21,30 +22,38 @@ namespace Lively.Common.Services
         private readonly static int vertical_smoothness = 2;
         private readonly static int horizontal_smoothness = 1;
         private readonly MMDeviceEnumerator deviceEnum = new();
+        private string captureDeviceId = null;
 
         public NAudioVisualizerService()
         {
-            try
+            var HRESULT = deviceEnum.RegisterEndpointNotificationCallback(this);
+            if (HRESULT != 0)
             {
-                var HRESULT = deviceEnum.RegisterEndpointNotificationCallback(this);
-                if (HRESULT != 0)
-                {
-                    Debug.WriteLine("Failed to register audio device notifications.");
-                }
-                capture = CreateWasapiLoopbackCapture();
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine($"Failed to initialize audio visualizer: {e.Message}");
+                Debug.WriteLine("Failed to register audio device notifications.");
             }
         }
 
-        public void Start() => capture?.StartRecording();
-
-        public void Stop() => capture?.StopRecording();
-
-        private WasapiLoopbackCapture CreateWasapiLoopbackCapture(MMDevice device = null)
+        public void Start(string deviceId = null)
         {
+            try
+            {
+                captureDeviceId = deviceId;
+                capture ??= CreateWasapiLoopbackCapture(captureDeviceId);
+                capture?.StartRecording();
+            }
+            catch (Exception ex) {
+                Debug.WriteLine($"Failed to initialize audio visualizer: {ex.Message}");
+            }
+        }
+
+        public void Stop()
+        {
+            capture?.StopRecording();
+        }
+
+        private WasapiLoopbackCapture CreateWasapiLoopbackCapture(string deviceId)
+        {
+            var device = GetDeviceById(deviceId);
             var tempCapture = device != null ? new WasapiLoopbackCapture(device) : new WasapiLoopbackCapture();
             tempCapture.DataAvailable += ProcessAudioData;
             tempCapture.RecordingStopped += (s, a) =>
@@ -115,7 +124,7 @@ namespace Lively.Common.Services
                     capture?.StopRecording();
                     //var enumerator = new MMDeviceEnumerator();
                     //var defaultDevice = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
-                    capture = CreateWasapiLoopbackCapture();
+                    capture = CreateWasapiLoopbackCapture(captureDeviceId);
                     capture.StartRecording();
                 }
                 catch (Exception e)
@@ -151,6 +160,20 @@ namespace Lively.Common.Services
             Stop();
             //Calling dispose outside hangs.
             //capture?.Dispose();
+        }
+
+        private static MMDevice GetDeviceById(string id)
+        {
+            try
+            {
+                using var enumerator = new MMDeviceEnumerator();
+                return enumerator.GetDevice(id);
+            }
+            catch
+            {
+                // device not found or unavailable
+                return null;
+            }
         }
     }
 }

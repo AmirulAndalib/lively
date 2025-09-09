@@ -261,6 +261,7 @@ namespace Lively.Grpc.Client
                 ScreensaverVolumeGlobal = settings.ScreensaverGlobalVolume,
                 ScreensaverFadeIn = settings.ScreensaverFadeIn,
                 VideoTargetColorSpaceMode = (TargetColorSpaceMode)settings.VideoTargetColorSpaceMode,
+                VisualizerAudioDeviceId = settings.VisualizerAudioDeviceId,
                 DisplayAudioOutput = (Common.Proto.Settings.DisplayAudioMode)((int)settings.DisplayAudioOutput),
                 SelectedAudioOutputDisplay = new GetScreensResponse()
                 {
@@ -379,6 +380,7 @@ namespace Lively.Grpc.Client
                 ScreensaverGlobalVolume = settings.ScreensaverVolumeGlobal,
                 ScreensaverFadeIn = settings.ScreensaverFadeIn,
                 VideoTargetColorSpaceMode = (TargetColorspaceHintMode)settings.VideoTargetColorSpaceMode,
+                VisualizerAudioDeviceId = settings.VisualizerAudioDeviceId,
                 DisplayAudioOutput = (Models.Enums.DisplayAudioMode)settings.DisplayAudioOutput,
                 SelectedAudioOutputDisplay = new DisplayMonitor()
                 {

@@ -56,7 +56,8 @@ namespace Lively.Core.Wallpapers
             string debugPort,
             bool diskCache,
             AppTheme theme,
-            int volume)
+            int volume,
+            string audioVisualizerId = null)
         {
             //Streams can also use browser.
             var isWeb = model.LivelyInfo.Type == WallpaperType.url || model.LivelyInfo.Type == WallpaperType.web || model.LivelyInfo.Type == WallpaperType.webaudio;
@@ -71,6 +72,7 @@ namespace Lively.Core.Wallpapers
             cmdArgs.Append(" --wallpaper-geometry " + display.Bounds.Width + "x" + display.Bounds.Height);
             //--audio false Issue: https://github.com/commandlineparser/commandline/issues/702
             cmdArgs.Append(model.LivelyInfo.Type == WallpaperType.webaudio ? " --wallpaper-audio true" : " ");
+            cmdArgs.Append(!string.IsNullOrEmpty(audioVisualizerId) ? " --wallpaper-audio-id " + audioVisualizerId : " ");
             cmdArgs.Append(!string.IsNullOrWhiteSpace(debugPort) ? " --wallpaper-debug " + debugPort : " ");
             cmdArgs.Append(model.LivelyInfo.Type == WallpaperType.url || model.LivelyInfo.Type == WallpaperType.videostream ? " --wallpaper-type online" : " --wallpaper-type local");
             cmdArgs.Append(diskCache && model.LivelyInfo.Type == WallpaperType.url ? " --wallpaper-cache " + "\"" + Path.Combine(Constants.CommonPaths.TempCefDir, "Lively.PlayerCefSharp", display.Index.ToString()) + "\"" : " ");

@@ -41,6 +41,11 @@ namespace Lively.Player.WebView2
         HelpText = "Analyse system audio(visualiser data.)")]
         public bool AudioVisualizer { get; set; }
 
+        [Option("wallpaper-audio-id",
+        Required = false,
+        HelpText = "Audio output device ID used for the visualizer.")]
+        public string AudioVisualizerDeviceId { get; set; }
+
         [Option("wallpaper-debug",
         Required = false,
         HelpText = "Debugging port.")]

@@ -6,7 +6,7 @@ using Lively.Common.Services;
 using Lively.Grpc.Client;
 using Lively.Models;
 using Lively.Models.Enums;
-using Lively.UI.WinUI.Factories;
+using Lively.UI.Shared.Factories;
 using System;
 using System.Collections.ObjectModel;
 using System.IO;

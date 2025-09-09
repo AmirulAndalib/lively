@@ -7,6 +7,7 @@ using Lively.Common.JsonConverters;
 using Lively.Models;
 using Lively.Models.Enums;
 using Lively.Models.Message;
+using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
@@ -60,7 +61,8 @@ namespace Lively.Core.Wallpapers
             string userDataDir,
             AppTheme theme,
             int volume,
-            double? scale = null)
+            double? scale = null,
+            string audioVisualizerId = null)
         {
             var filePath = ResolveFilePath(path, model);
             LivelyPropertyCopyPath = livelyPropertyPath;
@@ -77,6 +79,7 @@ namespace Lively.Core.Wallpapers
             cmdArgs.Append(" --wallpaper-geometry " + display.Bounds.Width + "x" + display.Bounds.Height);
             // --audio false Issue: https://github.com/commandlineparser/commandline/issues/702
             cmdArgs.Append(model.LivelyInfo.Type == WallpaperType.webaudio ? " --wallpaper-audio true" : " ");
+            cmdArgs.Append(!string.IsNullOrEmpty(audioVisualizerId) ? " --wallpaper-audio-id " + audioVisualizerId : " ");
             cmdArgs.Append(!string.IsNullOrWhiteSpace(debugPort) ? " --wallpaper-debug " + debugPort : " ");
             cmdArgs.Append(model.LivelyInfo.Type.IsOnlineWallpaper() ? " --wallpaper-type online" : " --wallpaper-type local");
             if (TryParseUserCommandArgs(model.LivelyInfo.Arguments, out string parsedArgs))

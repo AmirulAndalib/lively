@@ -187,6 +187,7 @@ namespace Lively.RPC
             userSettings.Settings.ScreensaverGlobalVolume = req.ScreensaverVolumeGlobal;
             userSettings.Settings.ScreensaverFadeIn = req.ScreensaverFadeIn;
             userSettings.Settings.VideoTargetColorSpaceMode = (TargetColorspaceHintMode)req.VideoTargetColorSpaceMode;
+            userSettings.Settings.VisualizerAudioDeviceId = req.VisualizerAudioDeviceId;
             userSettings.Settings.DisplayAudioOutput = (Models.Enums.DisplayAudioMode)req.DisplayAudioOutput;
             userSettings.Settings.SelectedAudioOutputDisplay = displayManager.DisplayMonitors.FirstOrDefault(x => req.SelectedAudioOutputDisplay.DeviceId == x.DeviceId) ?? displayManager.PrimaryDisplayMonitor;
 
@@ -303,6 +304,7 @@ namespace Lively.RPC
                 ScreensaverVolumeGlobal = settings.ScreensaverGlobalVolume,
                 ScreensaverFadeIn = settings.ScreensaverFadeIn,
                 VideoTargetColorSpaceMode = (TargetColorSpaceMode)settings.VideoTargetColorSpaceMode,
+                VisualizerAudioDeviceId = settings.VisualizerAudioDeviceId ?? string.Empty,
                 DisplayAudioOutput = (Grpc.Common.Proto.Settings.DisplayAudioMode)settings.DisplayAudioOutput,
                 SelectedAudioOutputDisplay = new GetScreensResponse()
                 {

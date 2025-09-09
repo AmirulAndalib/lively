@@ -23,7 +23,7 @@ namespace Lively.UI.WinUI.Views.Pages.Settings
 
         private async void ViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(SettingsWallpaperViewModel.IsAppMusicExclusionRuleChanged) && viewModel.IsAppMusicExclusionRuleChanged)
+            if (e.PropertyName == nameof(SettingsWallpaperViewModel.IsMusicSettingsChanged) && viewModel.IsMusicSettingsChanged)
             {
                 // Delay for the infobar show animation
                 await Task.Delay(500);

@@ -457,7 +457,7 @@ namespace Lively.Player.CefSharp
                             //TODO
                         }
                     };
-                    audioVisualizerService.Start();
+                    audioVisualizerService.Start(startArgs.AudioVisualizerDeviceId);
                 }
 
                 if (startArgs.NowPlaying)

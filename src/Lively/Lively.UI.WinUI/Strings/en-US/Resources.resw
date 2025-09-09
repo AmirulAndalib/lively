@@ -1286,4 +1286,10 @@ If still not working, close &amp; start Lively again/restart windows.
   <data name="DisplayAudioPauseRule.Description" xml:space="preserve">
     <value>Control how wallpaper audio plays across your screens</value>
   </data>
+  <data name="VisualizerAudioDevice.Description" xml:space="preserve">
+    <value>Select the playback device used for visualizing sound</value>
+  </data>
+  <data name="VisualizerAudioDevice.Header" xml:space="preserve">
+    <value>Audio device</value>
+  </data>
 </root>

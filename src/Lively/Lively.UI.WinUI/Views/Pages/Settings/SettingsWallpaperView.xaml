@@ -307,6 +307,37 @@
                         x:Uid="WallpaperMusicGroup"
                         Margin="0,0,0,10"
                         FontWeight="SemiBold" />
+                    <controls:SettingsExpander x:Uid="VisualizerAudioDevice" IsExpanded="{Binding IsShowAudioDevices, Mode=TwoWay}">
+                        <controls:SettingsExpander.HeaderIcon>
+                            <FontIcon Glyph="&#xE8d6;" />
+                        </controls:SettingsExpander.HeaderIcon>
+                        <controls:SettingsExpander.Items>
+                            <controls:SettingsCard ContentAlignment="Left">
+                                <ListView
+                                    MinWidth="500"
+                                    MinHeight="200"
+                                    MaxHeight="200"
+                                    Background="{ThemeResource ControlFillColorDefault}"
+                                    CornerRadius="5"
+                                    ItemsSource="{Binding AudioDevices, Mode=OneWay}"
+                                    SelectedItem="{Binding SelectedAudioDevice, Mode=TwoWay}"
+                                    SelectionMode="Single">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <Image
+                                                    Width="24"
+                                                    Height="24"
+                                                    Source="{Binding DeviceIcon}" />
+                                                <TextBlock VerticalAlignment="Center" Text="{Binding Name}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+                            </controls:SettingsCard>
+                        </controls:SettingsExpander.Items>
+                    </controls:SettingsExpander>
+
                     <controls:SettingsExpander x:Uid="AppMusicExclusion" IsExpanded="False">
                         <controls:SettingsExpander.HeaderIcon>
                             <FontIcon Glyph="&#xF0E3;" />
@@ -354,7 +385,7 @@
                         IsClosable="False"
                         IsOpen="True"
                         Severity="Informational"
-                        Visibility="{Binding IsAppMusicExclusionRuleChanged, Converter={StaticResource VisibilityConverter}, Mode=OneWay}">
+                        Visibility="{Binding IsMusicSettingsChanged, Converter={StaticResource VisibilityConverter}, Mode=OneWay}">
                         <InfoBar.ActionButton>
                             <Button x:Uid="RestartCommand" Command="{Binding RestartMusicWallpapersCommand}" />
                         </InfoBar.ActionButton>
