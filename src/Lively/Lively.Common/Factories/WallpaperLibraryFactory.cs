@@ -4,6 +4,7 @@ using Lively.Common.Helpers.Shell;
 using Lively.Common.Helpers.Storage;
 using Lively.Models;
 using Lively.Models.Enums;
+using System;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Threading.Tasks;
@@ -113,15 +114,24 @@ namespace Lively.Common.Factories
 
         public LivelyInfoModel CreateWallpaperPackage(string filePath, string destDirectory, WallpaperType type, string arguments = null)
         {
-            var contact = type.IsOnlineWallpaper() ? filePath : string.Empty;
-            var title = type.IsOnlineWallpaper() ? LinkUtil.GetLastSegmentUrl(filePath) : Path.GetFileNameWithoutExtension(filePath);
+            if (type.IsDirectoryProject())
+            {
+                var folderPath = Path.GetDirectoryName(filePath);
+                var metadaPath = Path.Combine(folderPath, "LivelyInfo.json");
+                if (File.Exists(metadaPath))
+                    throw new InvalidOperationException("A LivelyInfo.json file was found in this project folder.\n" +
+                        "It looks like this project is already packaged.\n" +
+                        "To create a new project, please remove the existing LivelyInfo.json first.");
+            }
+
             var metadata = new LivelyInfoModel()
             {
-                Title = title,
+                Title = type.IsOnlineWallpaper() ? 
+                    LinkUtil.GetLastSegmentUrl(filePath) : Path.GetFileNameWithoutExtension(filePath),
                 Type = type,
                 IsAbsolutePath = true,
                 FileName = filePath,
-                Contact = contact,
+                Contact = type.IsOnlineWallpaper() ? filePath : string.Empty,
                 Preview = string.Empty,
                 Thumbnail = string.Empty,
                 Arguments = arguments,
