@@ -4,10 +4,8 @@ using Lively.Core.Display;
 using Lively.Extensions;
 using Lively.Views;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Threading;
 
 namespace Lively.Services
 {
@@ -20,6 +18,7 @@ namespace Lively.Services
         private readonly List<WindowCoverageDebugOverlay> gridOverlays = [];
         private bool isGridOverlayVisible;
         private DebugLog debugLogWindow;
+        private DiagnosticMenu diagnosticWindow;
 
         public WindowService(IRunnerService runner, IDisplayManager displayManager)
         {
@@ -35,6 +34,16 @@ namespace Lively.Services
             debugLogWindow = new DebugLog();
             debugLogWindow.Closed += (s, e) => debugLogWindow = null;
             debugLogWindow.Show();
+        }
+
+        public void ShowDiagnosticWindow()
+        {
+            if (diagnosticWindow != null)
+                return;
+
+            diagnosticWindow = new DiagnosticMenu();
+            diagnosticWindow.Closed += (s, e) => diagnosticWindow = null;
+            diagnosticWindow.Show();
         }
 
         public void ShowGridOverlay(bool isVisible)

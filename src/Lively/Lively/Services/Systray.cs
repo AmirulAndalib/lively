@@ -39,7 +39,6 @@ namespace Lively.Services
         private readonly IAppUpdaterService appUpdater;
         private readonly IWallpaperLibraryFactory wallpaperLibraryFactory;
 
-        private DiagnosticMenu diagnosticMenu;
         private AppTheme? currentTheme = null;
 
         public Systray(IResourceService i18n,
@@ -49,6 +48,7 @@ namespace Lively.Services
             IAppUpdaterService appUpdater,
             IDisplayManager displayManager,
             IPlayback playbackMonitor,
+            IWindowService windowService,
             IWallpaperLibraryFactory wallpaperLibraryFactory)
         {
             this.i18n = i18n;
@@ -129,15 +129,7 @@ namespace Lively.Services
             }
 
             var reportBugTrayMenu = new ToolStripMenuItem(GetMenuItemString(TrayMenuItem.reportBug), Properties.Icons.icons8_website_bug_96);
-            reportBugTrayMenu.Click += (s, e) =>
-            {
-                if (diagnosticMenu is null)
-                {
-                    diagnosticMenu = new DiagnosticMenu();
-                    diagnosticMenu.Closed += (s, e) => diagnosticMenu = null;
-                    diagnosticMenu.Show();
-                }
-            };
+            reportBugTrayMenu.Click += (s, e) => windowService.ShowDiagnosticWindow();
             notifyIcon.ContextMenuStrip.Items.Add(CreateToolStripSeparator(toolStripColor));
             notifyIcon.ContextMenuStrip.Items.Add(reportBugTrayMenu);
             trayMenuItems[TrayMenuItem.reportBug] = reportBugTrayMenu;

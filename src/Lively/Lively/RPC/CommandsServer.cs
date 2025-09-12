@@ -58,7 +58,7 @@ namespace Lively.RPC
         {
             Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new ThreadStart(delegate
             {
-                windowService.ShowLogWindow();
+                windowService.ShowDiagnosticWindow();
             }));
             return Task.FromResult(new Empty());
         }

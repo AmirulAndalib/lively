@@ -6,6 +6,7 @@ namespace Lively.Common.Services
     {
         bool IsGridOverlayVisible { get; }
         void ShowLogWindow();
+        void ShowDiagnosticWindow();
         void ShowGridOverlay(bool isVisible);
         Task<bool> ShowWallpaperDialogWindowAsync(object wallpaper);
     }
