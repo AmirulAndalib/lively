@@ -102,10 +102,9 @@
                         <!--  Swtich to Stable channel  -->
                         <Grid Background="#2525ff00" Visibility="{Binding IsBetaBuild, Converter={StaticResource VisibilityConverter}, Mode=OneWay}">
                             <controls:SettingsCard
+                                x:Uid="SwitchReleaseBranchStable"
                                 Background="Transparent"
                                 Command="{Binding SwitchReleaseChannelCommand}"
-                                Description="Return to the regular public release for the most reliable updates."
-                                Header="Switch to Stable release"
                                 IsClickEnabled="True">
                                 <controls:SettingsCard.HeaderIcon>
                                     <FontIcon Glyph="&#xE90f;" />
@@ -115,10 +114,9 @@
                         <!--  Switch to Beta channel  -->
                         <Grid Background="#25ffff00" Visibility="{Binding IsBetaBuild, Converter={StaticResource VisibilityConverter}, Mode=OneWay, ConverterParameter=Reverse}">
                             <controls:SettingsCard
+                                x:Uid="SwitchReleaseBranchBeta"
                                 Background="Transparent"
                                 Command="{Binding SwitchReleaseChannelCommand}"
-                                Description="Get early features and help test them before public release. These builds may be unstable."
-                                Header="Join the Beta release"
                                 IsClickEnabled="True">
                                 <controls:SettingsCard.HeaderIcon>
                                     <FontIcon Glyph="&#xE90f;" />

@@ -493,12 +493,6 @@ If still not working, close &amp; start Lively again/restart windows.
   <data name="TextSupport.Content" xml:space="preserve">
     <value>Support</value>
   </data>
-  <data name="TextSwitchBranchDev" xml:space="preserve">
-    <value>Switch to beta (Dev channel)</value>
-  </data>
-  <data name="TextSwitchBranchOfficial" xml:space="preserve">
-    <value>Switch to stable (Default channel)</value>
-  </data>
   <data name="TextTags" xml:space="preserve">
     <value>Tags</value>
   </data>
@@ -666,9 +660,6 @@ If still not working, close &amp; start Lively again/restart windows.
   </data>
   <data name="StreamWallpaperVideoQuality.Description" xml:space="preserve">
     <value>Select the desired video quality for online streams</value>
-  </data>
-  <data name="TipSwitchSoftwareBranch" xml:space="preserve">
-    <value>Change software release from beta to stable or vice versa</value>
   </data>
   <data name="TaskbarTheme.Description" xml:space="preserve">
     <value>Change system taskbar appearance</value>
@@ -1291,5 +1282,17 @@ If still not working, close &amp; start Lively again/restart windows.
   </data>
   <data name="VisualizerAudioDevice.Header" xml:space="preserve">
     <value>Audio device</value>
+  </data>
+  <data name="SwitchReleaseBranchBeta.Description" xml:space="preserve">
+    <value>Get early features and help test them before public release. These builds may be unstable.</value>
+  </data>
+  <data name="SwitchReleaseBranchBeta.Header" xml:space="preserve">
+    <value>Join the Beta release</value>
+  </data>
+  <data name="SwitchReleaseBranchStable.Description" xml:space="preserve">
+    <value>Return to the regular public release for the most reliable updates.</value>
+  </data>
+  <data name="SwitchReleaseBranchStable.Header" xml:space="preserve">
+    <value>Switch to Stable release</value>
   </data>
 </root>
