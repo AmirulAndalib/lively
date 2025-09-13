@@ -1,6 +1,7 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Lively.Common;
+using Lively.Common.Helpers;
 using Lively.Common.Services;
 using Lively.Grpc.Common.Proto.Update;
 using Lively.Models.Services;
@@ -90,6 +91,9 @@ namespace Lively.RPC
         {
             try
             {
+                if (PackageUtil.IsRunningAsPackaged)
+                    throw new InvalidOperationException("msix not supported.");
+
                 var isRequestedBetaChannel = request.Channel == ReleaseChannel.Beta;
                 var isCurrentBetaChannel = Constants.ApplicationType.IsTestBuild;
 
