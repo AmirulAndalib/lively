@@ -174,7 +174,11 @@ namespace Lively.Core.Suspend
                 isDesktop = hwnd == NativeMethods.GetDesktopWindow() || hwnd == NativeMethods.GetShellWindow() || WindowUtil.IsExcludedDesktopWindowClass(hwnd);
             }
 
-            if (isDesktop || !isValidWindow || IsExcludedApp(hwnd))
+            if (IsPauseRuleApp(hwnd))
+            {
+                PauseWallpapers();
+            }
+            else if (isDesktop || !isValidWindow)
             {
                 // Fallback to playback if desktop, uncertain or user exclusion.
                 PlayWallpapers();
@@ -220,10 +224,9 @@ namespace Lively.Core.Suspend
         private void EvaluatePlaybackByVisibleWindow(Func<DisplayMonitor, List<IntPtr>, bool> coverageCheck)
         {
             var windows = WindowUtil.GetVisibleTopLevelWindows();
-            if (windows.Exists(IsExcludedApp))
+            if (windows.Exists(IsPauseRuleApp))
             {
-                PlayWallpapers();
-                SetWallpaperVolume(userSettings.Settings.AudioVolumeGlobal);
+                PauseWallpapers();
                 return;
             }
 
@@ -419,7 +422,7 @@ namespace Lively.Core.Suspend
             return false;
         }
 
-        private bool IsExcludedApp(IntPtr hwnd)
+        private bool IsPauseRuleApp(IntPtr hwnd)
         {
             var result = false;
             try
