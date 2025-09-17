@@ -232,8 +232,6 @@ namespace Lively.Core.Suspend
                 .ToDictionary(g => g.Key, g => g.ToList());
             var effectiveDisplayPauseSetting = userSettings.Settings.WallpaperArrangement switch
             {
-                WallpaperArrangement.per => userSettings.Settings.DisplayPauseSettings,
-                WallpaperArrangement.span => DisplayPause.all,
                 WallpaperArrangement.duplicate => DisplayPause.all,
                 _ => userSettings.Settings.DisplayPauseSettings,
             };
@@ -242,15 +240,37 @@ namespace Lively.Core.Suspend
             {
                 case DisplayPause.perdisplay:
                     {
-                        foreach (var display in displayManager.DisplayMonitors)
+                        switch (userSettings.Settings.WallpaperArrangement)
                         {
-                            var windowsOnDisplay = monitorWindowsMap.GetValueOrDefault(display) ?? [];
-                            var shouldPause = ShouldPauseWallpaper(display, windowsOnDisplay, coverageCheck);
+                            case WallpaperArrangement.per:
+                            case WallpaperArrangement.duplicate:
+                                {
+                                    foreach (var display in displayManager.DisplayMonitors)
+                                    {
+                                        var windowsOnDisplay = monitorWindowsMap.GetValueOrDefault(display) ?? [];
+                                        var shouldPause = ShouldPauseWallpaper(display, windowsOnDisplay, coverageCheck);
 
-                            if (shouldPause)
-                                PauseWallpaper(display);
-                            else
-                                PlayWallpaper(display);
+                                        if (shouldPause)
+                                            PauseWallpaper(display);
+                                        else
+                                            PlayWallpaper(display);
+                                    }
+                                }
+                                break;
+                            case WallpaperArrangement.span:
+                                {
+                                    var shouldPause = displayManager.DisplayMonitors.All(display =>
+                                    {
+                                        var windowsOnDisplay = monitorWindowsMap.GetValueOrDefault(display) ?? [];
+                                        return ShouldPauseWallpaper(display, windowsOnDisplay, coverageCheck);
+                                    });
+
+                                    if (shouldPause)
+                                        PauseWallpapers();
+                                    else
+                                        PlayWallpapers();
+                                }
+                                break;
                         }
                     }
                     break;
