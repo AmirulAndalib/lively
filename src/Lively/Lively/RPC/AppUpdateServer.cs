@@ -112,6 +112,7 @@ namespace Lively.RPC
             catch (Exception ex)
             {
                 Logger.Error(ex);
+                throw new RpcException(new Status(StatusCode.Internal, ex.Message));
             }
             return await Task.FromResult(new Empty());
         }
