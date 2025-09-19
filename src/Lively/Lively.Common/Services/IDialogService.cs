@@ -2,6 +2,7 @@
 using Lively.Models.Gallery.API;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Lively.Common.Services
@@ -38,7 +39,7 @@ namespace Lively.Common.Services
         Task<bool> ShowWallpaperProjectDirectoryDialogAsync(string folderPath);
         Task<IEnumerable<GalleryModel>> ShowGalleryRestoreWallpaperDialogAsync(IEnumerable<WallpaperDto> wallpapers);
         Task ShowGalleryEditProfileDialogAsync();
-        Task<bool> ShowCancellableProgressDialogAsync(string message);
+        Task<bool> ShowCancellableProgressDialogAsync(string message, CancellationToken ct);
     }
 
     public enum DialogResult

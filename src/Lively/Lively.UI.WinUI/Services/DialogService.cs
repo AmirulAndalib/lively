@@ -16,6 +16,7 @@ using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Lively.UI.WinUI.Services
@@ -518,15 +519,21 @@ namespace Lively.UI.WinUI.Services
             }.ShowAsyncQueue() == ContentDialogResult.Primary;
         }
 
-        public async Task<bool> ShowCancellableProgressDialogAsync(string message)
+        public async Task<bool> ShowCancellableProgressDialogAsync(string message, CancellationToken ct)
         {
-            return await new ContentDialog()
+            var dlg = new ContentDialog()
             {
                 Title = message,
                 Content = new ProgressBar() { IsIndeterminate = true },
                 PrimaryButtonText = i18n.GetString("Cancel/Content"),
                 XamlRoot = App.Services.GetRequiredService<MainWindow>().Content.XamlRoot,
-            }.ShowAsyncQueue() == ContentDialogResult.Primary;
+            };
+
+            using (ct.Register(dlg.Hide))
+            {
+                var result = await dlg.ShowAsyncQueue();
+                return result == ContentDialogResult.Primary;
+            }
         }
     }
 }

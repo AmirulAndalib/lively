@@ -25,7 +25,6 @@ namespace Lively.UI.Shared.ViewModels
         private readonly IResourceService i18n;
 
         private bool isSwitchingChannel;
-        private CancellationTokenSource? switchCts;
 
         public SettingsSystemViewModel(IUserSettingsClient userSettings, 
             ICommandsClient commands,
@@ -78,11 +77,12 @@ namespace Lively.UI.Shared.ViewModels
                 return;
 
             isSwitchingChannel = true;
-            switchCts = new CancellationTokenSource();
+            using var switchCts = new CancellationTokenSource();
+            using var dialogCts = new CancellationTokenSource();
 
             try
             {
-                var dialogTask = dialogService.ShowCancellableProgressDialogAsync(i18n.GetString("PleaseWait/Text"));
+                var dialogTask = dialogService.ShowCancellableProgressDialogAsync(i18n.GetString("PleaseWait/Text"), dialogCts.Token);
                 var switchTask = appUpdater.SwitchReleaseChannel(!IsBetaBuild, switchCts.Token);
                 var completed = await Task.WhenAny(dialogTask, switchTask);
 
@@ -90,7 +90,7 @@ namespace Lively.UI.Shared.ViewModels
                 {
                     bool userCancelled = await dialogTask;
                     if (userCancelled)
-                        switchCts?.Cancel();
+                        switchCts.Cancel();
 
                     // Still need to await the switchTask so that any exception is observed
                     await switchTask;
@@ -104,12 +104,11 @@ namespace Lively.UI.Shared.ViewModels
             catch (Exception ex)
             {
                 Logger.Error(ex);
+                dialogCts.Cancel();
             }
             finally
             {
                 isSwitchingChannel = false;
-                switchCts.Dispose();
-                switchCts = null;
             }
         }
 
