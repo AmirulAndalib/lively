@@ -244,20 +244,6 @@ namespace Lively.UI.WinUI
             switch (args.Reason)
             {
                 case AutoSuggestionBoxTextChangeReason.UserInput:
-                    {
-                        if (string.IsNullOrWhiteSpace(SearchBox.Text))
-                        {
-                            sender.ItemsSource = null;
-                            libraryVm.LibraryItemsFiltered.Filter = _ => true;
-                        }
-                        else
-                        {
-                            sender.ItemsSource = libraryVm.LibraryItems.Where(x => x.Title.Contains(SearchBox.Text, StringComparison.InvariantCultureIgnoreCase))
-                                .Select(x => x.Title)
-                                .Distinct();
-                        }
-                    }
-                    break;
                 case AutoSuggestionBoxTextChangeReason.ProgrammaticChange:
                 case AutoSuggestionBoxTextChangeReason.SuggestionChosen:
                     {
@@ -283,7 +269,15 @@ namespace Lively.UI.WinUI
             else
             {
                 libraryVm.LibraryItemsFiltered.Filter = _ => true; //reset
-                libraryVm.LibraryItemsFiltered.Filter = x => ((LibraryModel)x).Title.Contains(SearchBox.Text, StringComparison.InvariantCultureIgnoreCase);
+                libraryVm.LibraryItemsFiltered.Filter = x =>
+                {
+                    var item = x as LibraryModel; 
+                    var text = SearchBox.Text;
+                    var tags = item.LivelyInfo.Tags;
+                    return item.Title?.Contains(text, StringComparison.InvariantCultureIgnoreCase) == true
+                        || item.Desc?.Contains(text, StringComparison.InvariantCultureIgnoreCase) == true
+                        || (tags != null && tags.Exists(tag => tag?.Contains(text, StringComparison.InvariantCultureIgnoreCase) == true));
+                };
             }
             libraryVm.UpdateSelectedWallpaper();
         }
