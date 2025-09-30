@@ -138,6 +138,7 @@ namespace Lively.Models
         public TargetColorspaceHintMode VideoTargetColorSpaceMode { get; set; }
         public DisplayAudioMode DisplayAudioOutput { get; set; }
         public DisplayMonitor SelectedAudioOutputDisplay { get; set; }
+        public bool IsRestartAfterLockscreen { get; set; }
 
         public SettingsModel()
         {
@@ -225,6 +226,7 @@ namespace Lively.Models
             VideoTargetColorSpaceMode = TargetColorspaceHintMode.target;
             VisualizerAudioDeviceId = string.Empty;
             DisplayAudioOutput = DisplayAudioMode.all;
+            IsRestartAfterLockscreen = false;
         }
     }
 }

@@ -1103,19 +1103,27 @@ namespace Lively.Core
         {
             if (e.Reason == SessionSwitchReason.SessionUnlock)
             {
-                //Issue: https://github.com/rocksdanister/lively/issues/802
-                if (!(DesktopWorkerW == IntPtr.Zero || NativeMethods.IsWindow(DesktopWorkerW)))
+                if (userSettings.Settings.IsRestartAfterLockscreen)
                 {
-                    Logger.Info("WorkerW invalid after unlock, resetting..");
+                    Logger.Info("Desktop unlocked, resetting wallpaper service.");
                     await ResetWallpaperAsync();
                 }
                 else
                 {
-                    await Task.Delay(500);
-                    if (Wallpapers.Any(x => x.IsExited))
+                    //Issue: https://github.com/rocksdanister/lively/issues/802
+                    if (!(DesktopWorkerW == IntPtr.Zero || NativeMethods.IsWindow(DesktopWorkerW)))
                     {
-                        Logger.Info("Wallpaper crashed after unlock, resetting..");
+                        Logger.Info("WorkerW invalid after unlock, resetting..");
                         await ResetWallpaperAsync();
+                    }
+                    else
+                    {
+                        await Task.Delay(1000);
+                        if (Wallpapers.Any(x => x.IsExited))
+                        {
+                            Logger.Info("Wallpaper crashed after unlock, resetting..");
+                            await ResetWallpaperAsync();
+                        }
                     }
                 }
             }
