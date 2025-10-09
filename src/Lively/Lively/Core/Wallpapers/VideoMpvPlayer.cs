@@ -18,6 +18,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Interop;
 
 namespace Lively.Core.Wallpapers
 {
@@ -229,7 +230,11 @@ namespace Lively.Core.Wallpapers
                     switch (control)
                     {
                         case SliderModel sliderModel:
-                            SendMessage(GetMpvCommand("set_property", sliderModel.Name, sliderModel.Value.ToString()));
+                            // Mpv is strongly typed; sending decimal value for integer commands fails.
+                            var isFraction = (sliderModel.Step % 1) != 0;
+                            SendMessage(GetMpvCommand("set_property", 
+                                sliderModel.Name,
+                                isFraction ? sliderModel.Value : Convert.ToInt32(sliderModel.Value)));
                             break;
                         case CheckboxModel checkbox:
                             SendMessage(GetMpvCommand("set_property", checkbox.Name, checkbox.Value));
@@ -405,15 +410,9 @@ namespace Lively.Core.Wallpapers
                     case MessageType.lp_slider:
                         {
                             var sl = (LivelySlider)obj;
-                            if ((sl.Step % 1) != 0)
-                            {
-                                msg = GetMpvCommand("set_property", sl.Name, sl.Value);
-                            }
-                            else
-                            {
-                                //mpv is strongly typed; sending decimal value for integer commands fails..
-                                msg = GetMpvCommand("set_property", sl.Name, Convert.ToInt32(sl.Value));
-                            }
+                            // Mpv is strongly typed; sending decimal value for integer commands fails.
+                            var isFraction = (sl.Step % 1) != 0;
+                            msg = GetMpvCommand("set_property", sl.Name, isFraction ? sl.Value : Convert.ToInt32(sl.Value));
                         }
                         break;
                     case MessageType.lp_chekbox:
