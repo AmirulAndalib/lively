@@ -675,7 +675,7 @@ namespace Lively.UI.Shared.ViewModels
 
         public async Task<LibraryModel> AddWallpaperLink(string url, bool autoSetWallpaper)
         {
-            var type = (userSettings.Settings.AutoDetectOnlineStreams && StreamUtil.IsSupportedStream(url)) ? WallpaperType.videostream : WallpaperType.url;
+            var type = (userSettings.Settings.AutoDetectOnlineStreams && WebContentUtil.IsSupportedVideoStream(url)) ? WallpaperType.videostream : WallpaperType.url;
             var result = await desktopCore.CreateWallpaper(url, type);
             var model = result != null ? AddWallpaper(result) : null;
 

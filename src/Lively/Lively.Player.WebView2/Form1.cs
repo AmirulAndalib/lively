@@ -202,22 +202,43 @@ namespace Lively.Player.WebView2
             {
                 case WebPageType.online:
                     {
-                        string tmp = null;
-                        if (StreamUtil.TryParseShadertoy(startArgs.Url, ref tmp))
+                        var (contentType, id) = WebContentUtil.GetContentType(startArgs.Url);
+                        switch (contentType)
                         {
-                            $"Opening shadertoy shader: {tmp}".SendLog(SendToParent);
-                            webView.CoreWebView2.NavigateToString(tmp);
-                        }
-                        else if (StreamUtil.TryParseYouTubeVideoIdFromUrl(startArgs.Url, ref tmp))
-                        {
-                            isVideoStream = true;
-                            $"Opening yt stream: {tmp}".SendLog(SendToParent);
-                            webView.CoreWebView2.Navigate($"https://www.youtube.com/embed/{tmp}?version=3&rel=0&autoplay=1&loop=1&controls=0&playlist={tmp}");
-                        }
-                        else
-                        {
-                            $"Opening address: {startArgs.Url}".SendLog(SendToParent);
-                            webView.CoreWebView2.Navigate(startArgs.Url);
+                            case WebContentType.shadertoy:
+                                {
+                                    $"Opening shadertoy shader: {id}".SendLog(SendToParent);
+                                    webView.CoreWebView2.Navigate($"https://www.shadertoy.com/embed/{id}?gui=false&t=10&paused=false&muted=true");
+                                }
+                                break;
+                            case WebContentType.youtube:
+                                {
+                                    isVideoStream = true;
+                                    $"Opening yt stream: {id}".SendLog(SendToParent);
+                                    // Error 153, ref: https://github.com/rocksdanister/lively/issues/2991
+                                    webView.CoreWebView2.AddWebResourceRequestedFilter("*youtube.com/*", CoreWebView2WebResourceContext.All);
+                                    webView.CoreWebView2.WebResourceRequested += (s, e) =>
+                                    {
+                                        var headers = e.Request.Headers;
+                                        if (!headers.Contains("Referer"))
+                                            headers.SetHeader("Referer", "https://localhost/");
+                                    };
+                                    webView.CoreWebView2.Navigate($"https://www.youtube.com/embed/{id}?version=3&rel=0&autoplay=1&loop=1&controls=0&playlist={id}");
+                                }
+                                break;
+                            case WebContentType.generic:
+                                {
+                                    $"Opening address: {startArgs.Url}".SendLog(SendToParent);
+                                    webView.CoreWebView2.Navigate(startArgs.Url);
+                                }
+                                break;
+                            case WebContentType.none:
+                                {
+                                    "Failed to parse url".SendError(SendToParent);
+                                    throw new ArgumentException(startArgs.Url);
+                                }
+                            default:
+                                throw new NotImplementedException();
                         }
                     }
                     break;
@@ -227,8 +248,6 @@ namespace Lively.Player.WebView2
                         webView.NavigateToLocalPath(startArgs.Url);
                     }
                     break;
-                default:
-                    throw new NotImplementedException();
             }
             this.Controls.Add(webView);
             webView.Dock = DockStyle.Fill;
@@ -285,7 +304,20 @@ namespace Lively.Player.WebView2
             if (!webView.TryGetCefD3DRenderingSubProcessId(out cefD3DRenderingSubProcessId))
                 "Failed to retrieve GetCefD3DRenderingSubProcessId".SendError(SendToParent);
 
-            await RestoreLivelyProperties(startArgs.Properties);
+            switch (startArgs.Type)
+            {
+                case WebPageType.online:
+                    switch (WebContentUtil.GetContentType(startArgs.Url).ContentType)
+                    {
+                        case WebContentType.shadertoy:
+                            await webView.TryHideShaderToyGui();
+                            break;
+                    }
+                    break;
+                case WebPageType.local:
+                    await RestoreLivelyProperties(startArgs.Properties);
+                    break;
+            }
             SendToParent(new LivelyMessageWallpaperLoaded() { Success = e.IsSuccess });
 
             if (!initializedServices)

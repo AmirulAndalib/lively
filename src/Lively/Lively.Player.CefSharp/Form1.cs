@@ -372,23 +372,37 @@ namespace Lively.Player.CefSharp
             switch (startArgs.Type)
             {
                 case WebPageType.online:
+                    Cef.Initialize(settings);
+                    var (contentType, id) = WebContentUtil.GetContentType(startArgs.Url);
+                    switch (contentType)
                     {
-                        string tmp = null;
-                        Cef.Initialize(settings);
-                        if (StreamUtil.TryParseShadertoy(startArgs.Url, ref tmp))
-                        {
-                            chromeBrowser = new ChromiumWebBrowser(string.Empty);
-                            chromeBrowser.LoadHtml(tmp);
-                        }
-                        else if (StreamUtil.TryParseYouTubeVideoIdFromUrl(startArgs.Url, ref tmp))
-                        {
-                            chromeBrowser = new ChromiumWebBrowser(string.Empty);
-                            chromeBrowser.LoadHtml($"https://www.youtube.com/embed/{tmp}?version=3&rel=0&autoplay=1&loop=1&controls=0&playlist={tmp}");
-                        }
-                        else
-                        {
-                            chromeBrowser = new ChromiumWebBrowser(startArgs.Url);
-                        }
+                        case WebContentType.shadertoy:
+                            {
+                                chromeBrowser = new ChromiumWebBrowser();
+                                chromeBrowser.Load($"https://www.shadertoy.com/embed/{id}?gui=false&t=10&paused=false&muted=true");
+                            }
+                            break;
+                        case WebContentType.youtube:
+                            {
+                                chromeBrowser = new ChromiumWebBrowser
+                                {
+                                    RequestHandler = new YoutubeRequestHandler()
+                                };
+                                chromeBrowser.Load($"https://www.youtube.com/embed/{id}?version=3&rel=0&autoplay=1&loop=1&controls=0&playlist={id}");
+                            }
+                            break;
+                        case WebContentType.generic:
+                            {
+                                chromeBrowser = new ChromiumWebBrowser(startArgs.Url);
+                            }
+                            break;
+                        case WebContentType.none:
+                            {
+                                "Failed to parse url".SendError(SendToParent);
+                                throw new ArgumentException(startArgs.Url);
+                            }
+                        default:
+                            throw new NotImplementedException();
                     }
                     break;
                 case WebPageType.local:
@@ -447,7 +461,22 @@ namespace Lively.Player.CefSharp
             if (!chromeBrowser.TryGetCefD3DRenderingSubProcessId(out cefD3DRenderingSubProcessId))
                 "Failed to retrieve GetCefD3DRenderingSubProcessId".SendError(SendToParent);
 
-            RestoreLivelyProperties(startArgs.Properties);
+            switch (startArgs.Type)
+            {
+                case WebPageType.online:
+                    {
+                        switch (WebContentUtil.GetContentType(startArgs.Url).ContentType)
+                        {
+                            case WebContentType.shadertoy:
+                                _ = chromeBrowser.TryHideShaderToyGui();
+                                break;
+                        }
+                    }
+                    break;
+                case WebPageType.local:
+                    RestoreLivelyProperties(startArgs.Properties);
+                    break;
+            }
             SendToParent(new LivelyMessageWallpaperLoaded() { Success = true });
 
             if (!initializedServices)

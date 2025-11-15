@@ -82,6 +82,23 @@ namespace Lively.Player.WebView2.Extensions.WebView2
             return true;
         }
 
+        public static async Task<bool> TryHideShaderToyGui(this WebView webView)
+        {
+            try
+            {
+                var script = @"document.querySelector('canvas').style.cursor='auto';
+                    document.querySelector('canvas').ondblclick=()=>{};
+                    document.querySelector('#shaderInfo').style.display='none';
+                    document.querySelector('#playerBar').style.display='none';";
+                await webView.ExecuteScriptAsync(script);
+            }
+            catch
+            {
+                return false;
+            }
+            return true;
+        }
+
         public static CoreWebView2PreferredColorScheme GetPreferredColorScheme(this AppTheme theme)
         {
             return theme switch

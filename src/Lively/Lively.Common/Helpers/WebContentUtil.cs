@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Lively.Models.Enums;
+using System;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 
 namespace Lively.Common.Helpers
 {
-    public static class StreamUtil
+    public static class WebContentUtil
     {
-        public static bool IsSupportedStream(Uri uri)
+        public static bool IsSupportedVideoStream(Uri uri)
         {
             bool status = false;
             string host, url, tmp = string.Empty;
@@ -40,11 +39,11 @@ namespace Lively.Common.Helpers
             return status;
         }
 
-        public static bool IsSupportedStream(string url)
+        public static bool IsSupportedVideoStream(string url)
         {
             try
             {
-                return IsSupportedStream(new Uri(url));
+                return IsSupportedVideoStream(new Uri(url));
             }
             catch 
             { 
@@ -52,7 +51,7 @@ namespace Lively.Common.Helpers
             }
         }
 
-        //ref: https://stackoverflow.com/questions/39777659/extract-the-video-id-from-youtube-url-in-net
+        // Ref: https://stackoverflow.com/questions/39777659/extract-the-video-id-from-youtube-url-in-net
         public static bool TryParseYouTubeVideoIdFromUrl(string url, ref string id)
         {
             Uri uri;
@@ -107,7 +106,7 @@ namespace Lively.Common.Helpers
             }
         }
 
-        public static bool TryParseShadertoy(string url, ref string html)
+        public static bool TryParseShadertoyIdFromUrl(string url, ref string id)
         {
             if (!url.Contains("shadertoy.com/view"))
                 return false;
@@ -115,12 +114,37 @@ namespace Lively.Common.Helpers
             if (!LinkUtil.TrySanitizeUrl(url, out _))
                 return false;
 
-            url = url.Replace("view/", "embed/");
-            html = @"<!DOCTYPE html><html lang=""en"" dir=""ltr""> <head> <meta charset=""utf - 8""> 
-                    <title>Digital Brain</title> <style media=""screen""> iframe { position: fixed; width: 100%; height: 100%; top: 0; right: 0; bottom: 0;
-                    left: 0; z-index; -1; pointer-events: none;  } </style> </head> <body> <iframe width=""640"" height=""360"" frameborder=""0"" 
-                    src=" + url + @"?gui=false&t=10&paused=false&muted=true""></iframe> </body></html>";
-            return true;
+            try
+            {
+                var segments = url.Split(["/"], StringSplitOptions.RemoveEmptyEntries);
+                int index = Array.IndexOf(segments, "view");
+
+                if (index < 0 || index + 1 >= segments.Length)
+                    return false;
+
+                id = segments[index + 1];
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static (WebContentType ContentType, string Id) GetContentType(string url)
+        {
+            if (string.IsNullOrEmpty(url))
+                return (WebContentType.none, null);
+
+            string id = null;
+
+            if (TryParseShadertoyIdFromUrl(url, ref id))
+                return (WebContentType.shadertoy, id);
+
+            if (TryParseYouTubeVideoIdFromUrl(url, ref id))
+                return (WebContentType.youtube, id);
+
+            return (WebContentType.generic, null);
         }
     }
 }

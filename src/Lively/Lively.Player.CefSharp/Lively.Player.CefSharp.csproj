@@ -91,6 +91,8 @@
     <Compile Include="Extensions\CefSharp\PopUpHandle.cs" />
     <Compile Include="Extensions\CefSharp\DevTools\DevToolsExtensions.cs" />
     <Compile Include="Extensions\CefSharp\DevTools\TaskMethodDevToolsMessageObserver.cs" />
+    <Compile Include="Extensions\CefSharp\YoutubeRequestHandler.cs" />
+    <Compile Include="Extensions\CefSharp\YoutubeResourceRequestHandler.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>

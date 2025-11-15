@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Lively.Player.CefSharp.Extensions.CefSharp
 {
@@ -68,6 +69,24 @@ namespace Lively.Player.CefSharp.Extensions.CefSharp
             }
             script.Append(");");
             chromeBrowser?.ExecuteScriptAsync(script.ToString());
+        }
+
+        public static async Task<bool> TryHideShaderToyGui(this IWebBrowser browser)
+        {
+            try
+            {
+                var script = @"document.querySelector('canvas').style.cursor='auto';
+                    document.querySelector('canvas').ondblclick=()=>{};
+                    document.querySelector('#shaderInfo').style.display='none';
+                    document.querySelector('#playerBar').style.display='none';";
+
+                var result = await browser.EvaluateScriptAsync(script);
+                return result.Success;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
