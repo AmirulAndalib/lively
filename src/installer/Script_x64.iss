@@ -2,7 +2,7 @@
 ; https://jrsoftware.org/isinfo.php
 
 #define MyAppName "Lively Wallpaper"
-#define MyAppVersion "2.2.0.0"
+#define MyAppVersion "2.2.1.4"
 #define MyAppPublisher "rocksdanister"
 #define MyAppURL "https://github.com/rocksdanister/lively"
 #define MyAppExeName "Lively.exe"
@@ -98,7 +98,7 @@ Source: "VC\VC_redist.x64.exe"; DestDir: {tmp}; Flags: deleteafterinstall
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 Source: "Release\Lively.exe"; DestDir: "{app}"; Flags: ignoreversion;
 Source: "Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs;
-Source: "dotnetcore\windowsdesktop-runtime-9.0.8-win-x64.exe"; DestDir: {tmp}; Flags: deleteafterinstall
+Source: "dotnetcore\windowsdesktop-runtime-9.0.11-win-x64.exe"; DestDir: {tmp}; Flags: deleteafterinstall
 Source: "dotnetcore\netcorecheck.exe"; DestDir: {tmp}; Flags: deleteafterinstall
 
 [Icons]
@@ -110,7 +110,7 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 ;skipifsilent
 Filename: "{tmp}\VC_redist.x64.exe"; Parameters: /install /quiet /norestart; Check: VCRedistNeedsInstall; StatusMsg: Installing Visual C++ Redistributable...
 ;Filename: "{tmp}\WindowsAppRuntimeInstall_x86.exe"; Parameters: --quiet; Check: DependencyInstall; Flags: runhidden; StatusMsg: Installing Windows App SDK...
-Filename: "{tmp}\windowsdesktop-runtime-9.0.8-win-x64.exe"; Parameters: /install /quiet /norestart; Check: NetCoreNeedsInstall('9.0.8');  StatusMsg: Installing .NET Desktop Runtime 9.0.8...
+Filename: "{tmp}\windowsdesktop-runtime-9.0.11-win-x64.exe"; Parameters: /install /quiet /norestart; Check: NetCoreNeedsInstall('9.0.11');  StatusMsg: Installing .NET Desktop Runtime 9.0.11...
 
 [Code]
 var
